@@ -103,6 +103,14 @@ function deployStories() {
   if (!values["dry-run"]) command("stories", ["deploy", "--prebuilt"])
 }
 try {
+  // Release jobs have a fresh checkout, independent of the verification build.
+  // Build package exports before cf bundles Workers that import those files.
+  const dependencies = spawnSync(
+    process.execPath,
+    [resolve(root, "node_modules/turbo/bin/turbo"), "run", "build", "--filter=./packages/*"],
+    { cwd: root, stdio: "inherit", windowsHide: true }
+  )
+  if (dependencies.error || dependencies.status !== 0) throw new Error("Shared deployment package build failed")
   if (["all", "services"].includes(values.component)) {
     // Existing telemetry signing keys are retained, never regenerated during deployment.
     deploy("telemetry")
