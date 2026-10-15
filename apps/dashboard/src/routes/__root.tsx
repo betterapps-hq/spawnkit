@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { shadcn } from "@clerk/ui/themes"
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router"
+import { NotFoundPage } from "@/components/public/not-found-page"
 import { ThemeProvider, themeScript } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { getSession } from "@/lib/server"
@@ -21,14 +22,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ]
   }),
   component: Root,
-  notFoundComponent: () => (
-    <main className="p-12">
-      <h1 className="text-2xl font-semibold">Page not found</h1>
-      <a href="/" className="text-primary underline">
-        Return to game discovery
-      </a>
-    </main>
-  ),
+  notFoundComponent: NotFoundPage,
   errorComponent: () => (
     <main className="p-12">
       <h1 className="text-2xl font-semibold">Something went wrong</h1>

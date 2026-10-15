@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./not-found": "./src/not-found.ts",
+    "./not-found.css": "./src/not-found.css",
     "./releases": "./src/releases.ts"
   },
   "scripts": {

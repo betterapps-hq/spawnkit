@@ -1,3 +1,5 @@
+import { gameNotFound } from "./not-found"
+
 const types: Record<string, string> = {
   html: "text/html; charset=utf-8",
   js: "text/javascript; charset=utf-8",
@@ -31,11 +33,7 @@ export default {
     )
       .bind(env.SLOT || hostname)
       .first<{ project_id: string; current_release_id: string | null; immutable?: number }>()
-    if (!target?.current_release_id)
-      return new Response("No release is live at this address.", {
-        status: 404,
-        headers: { "cache-control": "no-store" }
-      })
+    if (!target?.current_release_id) return gameNotFound(request)
     let path: string
     try {
       path = decodeURIComponent(new URL(request.url).pathname).replace(/^\//, "") || "index.html"
@@ -70,7 +68,7 @@ export default {
       return new Response(request.method === "HEAD" ? null : cached.body, { headers })
     }
     const object = await env.ARTIFACTS.get(key)
-    if (!object) return new Response("Not found", { status: 404 })
+    if (!object) return gameNotFound(request)
     const headers = new Headers({
       "content-type": types[path.split(".").at(-1)!] ?? "application/octet-stream",
       "x-content-type-options": "nosniff",

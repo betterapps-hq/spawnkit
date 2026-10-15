@@ -320,7 +320,7 @@ test("dashboard remains protected and legacy dashboard links redirect", async ({
   await page.goto("/?view=templates")
   await expect(page).toHaveURL(/\/sign-in/)
   await page.goto("/games/unknown-game")
-  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Game not found" })).toBeVisible()
 })
 
 test("game feedback is editable, persistent and scoped to the game", async ({ page }, info) => {
