@@ -1,5 +1,6 @@
 import { githubConfigured } from "./github"
 import { githubSource } from "./github-source"
+import { HttpError } from "./http"
 
 interface GitHubEvent {
   id: string
@@ -93,13 +94,20 @@ export async function processGitHubEvents(env: Env) {
         )
       ])
       await env.BUILD_JOBS.getByName(deploymentId).start(deploymentId)
-    } catch {
+    } catch (error) {
       await env.DATABASE.prepare(
         "UPDATE github_events SET status='failed' WHERE id=? AND status IN ('pending','preparing')"
       )
         .bind(event.id)
         .run()
-      console.error(JSON.stringify({ event: "github_build_submission_failed", deliveryId: event.id }))
+      console.error(
+        JSON.stringify({
+          event: "github_build_submission_failed",
+          deliveryId: event.id,
+          errorType: error instanceof Error ? error.name : "Unknown",
+          ...(error instanceof HttpError ? { code: error.code, reason: error.message } : {})
+        })
+      )
     }
   }
 }

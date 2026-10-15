@@ -61,7 +61,7 @@ it("resolves both versions within the authorized project before accessing GitHub
 it("returns real commit messages and linked PRs/issues without exposing credentials", async () => {
   const { env } = fixture()
   const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (url, options) => {
-    expect(options?.redirect).toBe("error")
+    expect(options?.redirect).toBe("manual")
     if (String(url).endsWith("/graphql"))
       return Response.json({
         data: {

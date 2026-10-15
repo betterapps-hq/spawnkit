@@ -21,7 +21,7 @@ async function github(path: string, token: string, body?: unknown): Promise<unkn
       ...(body ? { "content-type": "application/json" } : {})
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
-    redirect: "error",
+    redirect: "manual",
     signal: AbortSignal.timeout(15_000)
   })
   if (!response.ok || !response.body) throw unavailable()

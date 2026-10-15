@@ -22,8 +22,11 @@ export async function convertGitHubArchive(bytes: Uint8Array) {
         }
         requireValue(header.type === "file", "Repository archives cannot contain links or special files.")
         const path = header.name.split("/").slice(1).join("/")
-        // Environment examples belong in source control, but never in a build upload.
-        if (/^\.env(?:\.|$)/i.test(path.split("/").at(-1)!)) {
+        // Match CLI exclusions for generated metadata and credential-bearing local configuration.
+        if (
+          path.split("/")[0]?.toLowerCase() === ".spawn" ||
+          /^(?:\.env(?:\.|$)|\.npmrc$)/i.test(path.split("/").at(-1)!)
+        ) {
           stream.resume()
           stream.on("end", next)
           return
@@ -73,7 +76,7 @@ export async function githubSource(
     "Invalid GitHub archive origin."
   )
   // Never forward installation credentials to a redirect destination.
-  const archive = await fetch(location, { redirect: "error", signal: AbortSignal.timeout(30_000) })
+  const archive = await fetch(location, { redirect: "manual", signal: AbortSignal.timeout(30_000) })
   requireValue(archive.ok && archive.body, "GitHub source download failed.")
   const bytes = await boundedBody(
     new Request("https://internal.invalid", { method: "POST", body: archive.body }),

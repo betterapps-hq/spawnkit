@@ -111,7 +111,7 @@ async function githubJson(path: string, token: string, method = "GET", body?: un
       ...(body ? { "content-type": "application/json" } : {})
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
-    redirect: "error",
+    redirect: "manual",
     signal: AbortSignal.timeout(15_000)
   })
   if (!response.ok)
@@ -193,11 +193,12 @@ export async function githubCallback(request: Request, env: Env, ownerId: string
       code,
       redirect_uri: `${env.DASHBOARD_URL}/api/platform/v1/github/callback`
     }),
-    redirect: "error",
+    redirect: "manual",
     signal: AbortSignal.timeout(15_000)
   })
+  requireValue(exchange.ok, "GitHub authorization failed.")
   const data = record(await exchange.json())
-  requireValue(exchange.ok && typeof data.access_token === "string", "GitHub authorization failed.")
+  requireValue(typeof data.access_token === "string", "GitHub authorization failed.")
   const token = data.access_token
   const installations = await githubJson("/user/installations?per_page=100", token)
   requireValue(Array.isArray(installations.installations), "No GitHub installation is available.")
@@ -239,7 +240,10 @@ export async function githubCallback(request: Request, env: Env, ownerId: string
       new Date().toISOString()
     )
     .run()
-  return Response.redirect(`${env.DASHBOARD_URL}/?page=settings&project=${encodeURIComponent(pending.project_id)}`, 303)
+  return Response.redirect(
+    `${env.DASHBOARD_URL}/dashboard?page=settings&project=${encodeURIComponent(pending.project_id)}`,
+    303
+  )
 }
 
 export async function githubWebhook(request: Request, env: Env) {

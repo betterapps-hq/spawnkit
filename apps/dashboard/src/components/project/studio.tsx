@@ -505,7 +505,7 @@ function StudioContent({
                     onVersion={inspectVersion}
                     onAction={setPanel}
                     initialSection={section}
-                    onConfigureHosting={!cloudEnabled && editable ? configureHosting : undefined}
+                    onConfigureHosting={editable ? configureHosting : undefined}
                   />
                 )))
               ) : page === "domains" ? (
@@ -542,7 +542,7 @@ function StudioContent({
                   project={active}
                   canEdit={editable}
                   onAction={onAction}
-                  onConfigureSource={!cloudEnabled && editable ? () => configureHosting("repository") : undefined}
+                  onConfigureSource={editable ? () => configureHosting("repository") : undefined}
                 />
               ) : (
                 <Backend project={active} canEdit={operable} onAction={onAction} />
