@@ -1,0 +1,18 @@
+name: Retire PR preview
+on:
+  pull_request_target:
+    types: [closed]
+permissions:
+  contents: read
+  pull-requests: read
+  deployments: write
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/release.yml
+    with:
+      environment: preview
+      ref: main
+      pr: ${{ github.event.pull_request.number }}
+      cleanup: true
+    secrets: inherit

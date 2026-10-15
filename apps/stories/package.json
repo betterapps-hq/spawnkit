@@ -1,0 +1,18 @@
+{
+  "name": "@spawn/stories",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check:types": "tsc --noEmit",
+    "lint": "oxlint --max-warnings=0 cloudflare.config.ts build.mjs"
+  },
+  "devDependencies": {
+    "@spawn/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "cf": "1.0.0-beta.13",
+    "typescript": "catalog:",
+    "@cloudflare/build-output-utils": "0.8.6"
+  }
+}

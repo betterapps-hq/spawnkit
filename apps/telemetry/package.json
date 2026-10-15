@@ -1,0 +1,33 @@
+{
+  "name": "@spawn/telemetry-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "cf dev",
+    "build": "cf build",
+    "deploy": "cf deploy",
+    "check:types": "tsc --noEmit",
+    "lint": "oxlint --max-warnings=0 src",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@spawn/telemetry": "workspace:*"
+  },
+  "devDependencies": {
+    "@opentelemetry/exporter-logs-otlp-http": "0.223.0",
+    "@opentelemetry/sdk-logs": "0.223.0",
+    "@cloudflare/vite-plugin": "2.0.0-beta.sha-52b0dc0e9",
+    "@cloudflare/workers-types": "5.20261014.1",
+    "@spawn/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "cf": "1.0.0-beta.13",
+    "miniflare": "5.20261006.0-alpha",
+    "rolldown": "1.2.13",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

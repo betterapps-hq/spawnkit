@@ -1,0 +1,11 @@
+{
+  "extends": "@spawn/typescript-config/react.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "cloudflare.config.ts", ".storybook"]
+}

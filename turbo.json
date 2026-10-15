@@ -1,0 +1,97 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "build": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": ["dist/**"]
+    },
+    "@spawn/control-api#build": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": [".cloudflare/output/**"],
+      "env": [
+        "SPAWN_ENABLE_BUILD_CONTAINERS",
+        "SPAWN_ENABLE_GITHUB",
+        "SPAWN_DASHBOARD_ORIGINS",
+        "SPAWN_CUSTOM_DOMAINS",
+        "SPAWN_CONTROL_ENVIRONMENT",
+        "SPAWN_HOSTING_PROVISIONER"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/deploy/previews.json",
+        "$TURBO_ROOT$/deploy/local-origins.json",
+        "$TURBO_ROOT$/deploy/github.json"
+      ]
+    },
+    "@spawn/game-host#build": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": [".cloudflare/output/**"],
+      "env": [
+        "SPAWN_HOST_SLOT",
+        "SPAWN_CUSTOM_DOMAINS",
+        "SPAWN_DYNAMIC_HOSTING",
+        "SPAWN_CONTROL_ENVIRONMENT",
+        "SPAWN_CONFIGURE_CUSTOM_DOMAINS"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/deploy/previews.json",
+        "$TURBO_ROOT$/deploy/customer-domains.json",
+        "$TURBO_ROOT$/deploy/hook-slots.json"
+      ]
+    },
+    "@spawn/telemetry#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!scaffold.js", "!scaffold.d.ts"],
+      "outputs": ["dist/**", "scaffold.js", "scaffold.d.ts"]
+    },
+    "@spawn/telemetry-worker#build": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": [".cloudflare/output/**"],
+      "env": ["SPAWN_TELEMETRY_PUBLIC_ENDPOINT", "SPAWN_CUSTOM_DOMAINS", "SPAWN_CONTROL_ENVIRONMENT"]
+    },
+    "check:types": {
+      "dependsOn": ["^check:types"]
+    },
+    "@spawn/telemetry#check:types": {
+      "dependsOn": ["build", "^check:types"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "test": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": ["coverage/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "@spawn/dashboard#build": {
+      "dependsOn": ["^build", "^transit"],
+      "outputs": [".cloudflare/output/**"],
+      "env": [
+        "VITE_CLERK_PUBLISHABLE_KEY",
+        "CLERK_OAUTH_CLIENT_ID",
+        "CLERK_OAUTH_ISSUER",
+        "SPAWN_SITE_URL",
+        "SPAWN_CONTROL_API_URL",
+        "SPAWN_PREVIEW_NAME",
+        "SPAWN_CUSTOM_DOMAINS",
+        "SPAWN_DASHBOARD_ENVIRONMENT",
+        "VITE_SPAWN_SOCIAL_PROVIDERS"
+      ]
+    },
+    "@spawn/stories#build": {
+      "cache": false,
+      "env": ["SPAWN_CONTROL_ENVIRONMENT", "SPAWN_DASHBOARD_ENVIRONMENT", "SPAWN_PREVIEW_NAME", "SPAWN_DEPLOY_SHA"]
+    }
+  }
+}

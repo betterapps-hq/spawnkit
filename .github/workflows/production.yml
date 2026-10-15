@@ -1,0 +1,33 @@
+name: Promote to production
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Full commit SHA successfully deployed to staging
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  deployments: write
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Require a successful staging release for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          [[ "$COMMIT" =~ ^[a-f0-9]{40}$ ]] || { echo "Enter a full commit SHA"; exit 1; }
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&head_sha=$COMMIT" \
+            --jq '.workflow_runs | length > 0' | grep -qx true
+  production:
+    needs: validate
+    uses: ./.github/workflows/release.yml
+    with:
+      environment: production
+      ref: ${{ inputs.commit }}
+    secrets: inherit

@@ -1,0 +1,8 @@
+[
+  {
+    "hostname": "primary.hooks.local.spawnkit.cloud",
+    "id": "2f98ea64-53e8-4c33-bff2-c0f3f084eaf6",
+    "target": "https://api.local.spawnkit.cloud",
+    "path": "/api/platform/v1/github/webhook"
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "name": "@spawn/telemetry",
+  "version": "0.1.0",
+  "description": "Bounded, privacy-conscious game telemetry with OpenTelemetry log compatibility",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "scaffold.js",
+    "scaffold.d.ts"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./otel": {
+      "types": "./dist/otel.d.ts",
+      "import": "./dist/otel.js"
+    },
+    "./protocol": {
+      "types": "./dist/protocol.d.ts",
+      "import": "./dist/protocol.js"
+    },
+    "./scaffold": {
+      "types": "./scaffold.d.ts",
+      "import": "./scaffold.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && node scripts/scaffold.mjs",
+    "check:types": "tsc --noEmit",
+    "lint": "oxlint --max-warnings=0 src",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@opentelemetry/sdk-logs": "^0.223.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/sdk-logs": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@opentelemetry/sdk-logs": "0.223.0",
+    "@spawn/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

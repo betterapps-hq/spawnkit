@@ -1,0 +1,143 @@
+.an-release-health-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  align-items: start;
+}
+.an-release-history-search.an-search {
+  margin: 12px 16px;
+}
+.an-release-history,
+.an-release-comparison {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.an-release-history th,
+.an-release-history td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  font-weight: 400;
+}
+.an-release-history thead th {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.an-release-history th:first-child {
+  width: 34%;
+}
+.an-release-history th:last-child {
+  width: 90px;
+}
+.an-release-history .an-release-version {
+  overflow-wrap: anywhere;
+  text-align: left;
+  font-weight: 500;
+  font-size: 13px;
+}
+.an-release-date {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.an-release-comparison-view {
+  max-width: 980px;
+}
+.an-release-comparison th,
+.an-release-comparison td {
+  padding: 18px 24px;
+  font-weight: 400;
+}
+.an-release-comparison thead th {
+  vertical-align: bottom;
+}
+.an-release-comparison thead th:first-child {
+  width: 40%;
+}
+.an-release-comparison .an-release-trigger {
+  width: 100%;
+}
+.an-release-comparison tbody tr {
+  border-top: 1px solid var(--border);
+}
+.an-release-comparison td {
+  font-size: 16px;
+}
+.an-release-comparison strong {
+  font-weight: 600;
+}
+.an-release-comparison .an-release-samples td {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.an-release-comparison .an-label {
+  margin-bottom: 8px;
+}
+.an-release-comparison-view .an-panel-heading h3 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1150px) {
+  .an-release-health-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .an-release-history thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .an-release-history tbody tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--border);
+    padding: 14px 16px;
+    gap: 14px 8px;
+    align-items: start;
+  }
+  .an-release-history th,
+  .an-release-history td {
+    border: 0;
+    padding: 0;
+    width: auto !important;
+  }
+  .an-release-history tbody th {
+    grid-column: span 2;
+  }
+  .an-release-history td:last-child {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .an-release-history td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    margin-bottom: 5px;
+  }
+  .an-release-comparison th,
+  .an-release-comparison td {
+    padding: 14px 10px;
+  }
+  .an-release-comparison thead th:first-child {
+    width: 35%;
+  }
+  .an-release-comparison td {
+    font-size: 14px;
+  }
+  .an-release-comparison .an-release-trigger {
+    padding-inline: 7px;
+  }
+  .an-release-comparison .an-tone {
+    font-size: 10px;
+    padding-inline: 5px;
+    white-space: normal;
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "plugins": ["typescript", "react", "jsx-a11y", "vitest"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "eqeqeq": "error",
+    "react/rules-of-hooks": "error",
+    "react/jsx-key": "error",
+    "jsx-a11y/alt-text": "error",
+    "jsx-a11y/label-has-associated-control": "error"
+  }
+}

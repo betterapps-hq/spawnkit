@@ -1,0 +1,8 @@
+{
+  "production": [],
+  "staging": [
+    "game-telemetry-verification.staging.spawnkit.cloud",
+    "platform-verification.staging.spawnkit.cloud",
+    "test.staging.spawnkit.cloud"
+  ]
+}

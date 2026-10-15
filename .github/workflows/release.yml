@@ -1,0 +1,125 @@
+name: Release
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      ref:
+        type: string
+        required: true
+      pr:
+        type: number
+        default: 0
+      head-sha:
+        type: string
+        default: ""
+      cleanup:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pull-requests: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    # Queue all releases: updating the shared staging allowlist must be serialized.
+    concurrency:
+      group: cloudflare-platform-deploy
+      queue: max
+    environment:
+      name: ${{ inputs.cleanup && 'staging' || inputs.environment == 'preview' && format('preview-pr-{0}', inputs.pr) || inputs.environment }}
+      url: ${{ inputs.environment == 'production' && 'https://spawnkit.cloud' || (inputs.cleanup || inputs.environment == 'staging') && 'https://staging.spawnkit.cloud' || format('https://preview-pr-{0}.spawnkit.cloud', inputs.pr) }}
+    env:
+      CF_SEND_TELEMETRY: "false"
+      DO_NOT_TRACK: "1"
+      CLOUDFLARE_ACCOUNT_ID: "544b5bfd594cd02a5da4b79a2038cc9f"
+      SPAWN_RELEASE_ENVIRONMENT: ${{ inputs.environment }}
+      SPAWN_DEPLOY_SHA: ${{ inputs.ref }}
+    steps:
+      - name: Reject a superseded staging release
+        if: inputs.environment == 'staging'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.ref }}
+        run: test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$RELEASE_SHA"
+      # PRs never deploy their backend changes into the shared staging API.
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.environment == 'preview' && 'main' || inputs.ref }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Prepare deployment credentials
+        run: node scripts/ci-credentials.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DASHBOARD_ENV: ${{ inputs.environment == 'production' && secrets.DASHBOARD_ENV || secrets.STAGING_DASHBOARD_ENV }}
+          GITHUB_APP_ENV: ${{ inputs.environment == 'production' && secrets.SPAWN_GITHUB_APP_ENV || secrets.STAGING_GITHUB_APP_ENV }}
+          HOSTING_API_TOKEN: ${{ secrets.HOSTING_API_TOKEN }}
+      - name: Reconcile active previews and remove retired workers
+        if: inputs.environment != 'production'
+        run: node scripts/ci-previews.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SPAWN_PREVIEW_PR: ${{ inputs.pr || '' }}
+          SPAWN_PREVIEW_SHA: ${{ inputs.cleanup && '' || inputs.head-sha }}
+      - name: Update shared preview authentication from main
+        if: inputs.environment == 'preview'
+        run: pnpm run deploy --environment staging --component control-api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Clean temporary credentials before switching commits
+        if: inputs.environment == 'preview' && !inputs.cleanup
+        run: node scripts/ci-credentials.mjs clean
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: inputs.environment == 'preview' && !inputs.cleanup
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        if: inputs.environment == 'preview' && !inputs.cleanup
+      - name: Prepare preview credentials
+        if: inputs.environment == 'preview' && !inputs.cleanup
+        run: node scripts/ci-credentials.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DASHBOARD_ENV: ${{ secrets.STAGING_DASHBOARD_ENV }}
+      - name: Apply pending database migrations
+        if: inputs.environment != 'preview'
+        run: node scripts/migrate.mjs --environment "$SPAWN_RELEASE_ENVIRONMENT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Deploy app, services and Storybook
+        if: inputs.environment != 'preview'
+        run: pnpm run deploy --environment "$SPAWN_RELEASE_ENVIRONMENT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Deploy PR app and Storybook
+        if: inputs.environment == 'preview' && !inputs.cleanup
+        run: pnpm run deploy --environment preview --preview "pr-$PR_NUMBER" --component frontend
+        env:
+          PR_NUMBER: ${{ inputs.pr }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Check published pages
+        if: "!inputs.cleanup"
+        run: node scripts/deployment-smoke.mjs
+        env:
+          SPAWN_PREVIEW_PR: ${{ inputs.pr }}
+      - name: Mark retired preview deployments inactive
+        if: inputs.cleanup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/deployments?environment=preview-pr-$PR_NUMBER&per_page=100" --jq '.[].id' |
+          while read -r deployment; do
+            gh api --method POST "repos/$GITHUB_REPOSITORY/deployments/$deployment/statuses" -f state=inactive --silent
+          done
+      - name: Remove temporary credentials
+        if: always()
+        run: node scripts/ci-credentials.mjs clean

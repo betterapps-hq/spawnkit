@@ -1,0 +1,114 @@
+.an-release-trigger {
+  justify-content: space-between;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+}
+.an-release-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.an-release-popover {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  max-height: var(--radix-popover-content-available-height);
+  overflow: hidden;
+  padding: 0;
+  border-radius: 10px;
+}
+.an-release-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.an-release-search input {
+  padding: 0;
+  height: 28px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font-size: 13px;
+  outline: none;
+}
+.an-release-search input:focus-visible {
+  box-shadow: none;
+}
+.an-release-list-heading {
+  padding: 10px 14px 6px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.an-release-list {
+  min-height: 0;
+  max-height: 300px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 6px 6px;
+  scroll-padding: 6px;
+}
+.an-release-option {
+  padding: 9px 8px;
+  margin: 2px 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.an-release-option[data-active="true"] {
+  background: var(--accent);
+}
+.an-release-option[data-pinned="true"] {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.an-release-option-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.an-release-option-title > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.an-release-option[aria-selected="true"] .an-release-option-title {
+  font-weight: 600;
+}
+.an-release-option-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+}
+.an-release-option-meta > span:last-child:not(:first-child) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+}
+.an-release-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  min-height: 40px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.an-release-empty {
+  padding: 24px 16px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--muted-foreground);
+}

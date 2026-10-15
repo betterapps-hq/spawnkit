@@ -1,0 +1,55 @@
+{
+  "$schema": "https://unpkg.com/knip/schema.json",
+  "ignoreIssues": {
+    "apps/dashboard/src/components/ui/**": ["exports"]
+  },
+  "ignoreDependencies": ["cloudflare"],
+  "ignoreBinaries": ["openssl"],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "tests/**/*.ts",
+        "scripts/dev-environment.mjs",
+        "scripts/ci-*.mjs",
+        "scripts/migrate.mjs",
+        "scripts/deployment-smoke.mjs"
+      ],
+      "project": ["tests/**/*.ts", "scripts/**/*.mjs", "*.ts", "scripts/**/*.ts"]
+    },
+    "apps/dashboard": {
+      "entry": ["cloudflare.config.ts"],
+      "project": ["src/**/*.{ts,tsx,css}"]
+    },
+    "apps/control-api": {
+      "entry": ["src/index.ts", "cloudflare.config.ts", "build-runner.mjs"],
+      "project": ["src/**/*.ts", "*.ts", "*.mjs"]
+    },
+    "apps/game-host": {
+      "entry": ["src/index.ts", "cloudflare.config.ts"],
+      "project": ["src/**/*.ts", "*.ts"]
+    },
+    "apps/telemetry": {
+      "entry": ["src/index.ts", "cloudflare.config.ts"],
+      "project": ["src/**/*.ts", "*.ts"]
+    },
+    "packages/telemetry": {
+      "project": ["src/**/*.ts", "scripts/*.mjs"]
+    },
+    "packages/cli": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/templates": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/typescript-config": {},
+    "packages/oxlint-config": {},
+    "packages/storybook-config": {
+      "project": ["**/*.ts"]
+    },
+    "apps/stories": {
+      "entry": ["cloudflare.config.ts"],
+      "ignoreDependencies": ["storybook"],
+      "project": ["*.mjs", "*.ts"]
+    }
+  }
+}

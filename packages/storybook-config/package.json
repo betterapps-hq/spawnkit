@@ -1,0 +1,28 @@
+{
+  "name": "@spawn/storybook-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./main": "./main.ts",
+    "./preview": "./preview.ts"
+  },
+  "dependencies": {
+    "@chromatic-com/storybook": "^5.2.1",
+    "@storybook/addon-a11y": "10.6.2",
+    "@storybook/addon-vitest": "10.6.2",
+    "@storybook/react-vite": "10.6.2",
+    "storybook": "10.6.2"
+  },
+  "devDependencies": {
+    "@spawn/typescript-config": "workspace:*",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "scripts": {
+    "lint": "oxlint --max-warnings=0",
+    "check:types": "tsc --noEmit",
+    "check:unused": "knip --directory ../.. --workspace packages/storybook-config"
+  }
+}
