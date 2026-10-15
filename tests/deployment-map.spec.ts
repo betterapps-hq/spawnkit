@@ -12,8 +12,11 @@ async function choose(page: Page, label: string, value: string) {
 }
 async function inspect(page: Page, id: string) {
   const node = page.locator(`.react-flow__node[data-id="${id}"]`)
+  // React Flow hides new nodes until measurement; hidden nodes cannot receive focus.
+  await expect(node).toBeVisible()
   await node.focus()
-  await page.keyboard.press("Enter")
+  await expect(node).toBeFocused()
+  await node.press("Enter")
   await expect(page.getByRole("dialog")).toBeVisible()
 }
 async function close(page: Page) {
