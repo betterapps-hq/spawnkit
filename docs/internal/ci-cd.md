@@ -33,6 +33,8 @@ The GitHub deployment and job summary provide links. Previews use Clerk developm
 credentials and shared staging data; they are separate frontend Workers, not isolated
 backend databases. PR backend changes are tested by CI but never deployed to the shared
 API. Its exact-origin allowlist is updated using trusted `main` code.
+Each frontend has an exact Workers route so it takes precedence over the existing
+game-host wildcard. Preview deployments do not redeploy or change production services.
 
 Forks and Dependabot PRs run checks without deployment secrets or automatic previews.
 Repository writers are trusted to deploy branch code with staging credentials and the
@@ -84,7 +86,8 @@ endpoint supports issuing the scoped token. No token value is stored in the repo
 GitHub rejected branch protection for this private repository on the current account
 plan (Pro is required). CI runs and deployment gates are configured, but GitHub does
 not enforce required checks before a writer pushes or merges. Enable required `Verify`
-and `Browser acceptance` checks when branch protection becomes available.
+and both `Browser acceptance (desktop)` and `Browser acceptance (mobile)` checks when
+branch protection becomes available.
 
 Temporary credential files are ignored, created with restricted permissions and removed
 after each job. They are never uploaded as artifacts. Failed browser runs retain traces

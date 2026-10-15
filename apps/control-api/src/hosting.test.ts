@@ -20,7 +20,16 @@ it("separates platform and customer environments without database IDs in the URL
 
 it("normalizes names and reserves platform addresses", () => {
   expect(projectSlug("Émberfall / Our Game")).toBe("emberfall-our-game")
-  for (const name of ["api", "local", "stories", "staging", "preview-latest", "pr-42", "d-a1b2c3d4"]) {
+  for (const name of [
+    "api",
+    "local",
+    "stories",
+    "staging",
+    "preview-latest",
+    "stories-preview-pr-42",
+    "pr-42",
+    "d-a1b2c3d4"
+  ]) {
     expect(projectSlug(name)).not.toBe(name)
   }
   expect(projectSlug("!!!")).toBe("project")

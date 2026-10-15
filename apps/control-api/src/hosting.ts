@@ -31,7 +31,8 @@ export function projectSlug(name: string) {
       .replace(/[^a-z0-9]+/g, "-")
       .slice(0, 40)
       .replace(/^-+|-+$/g, "") || "project"
-  if (reserved.has(slug) || /^(preview-|pr-|d-|game-|api-|telemetry-)/.test(slug)) slug = `game-${slug}`
+  if (reserved.has(slug) || /^(preview-|stories-preview-|pr-|d-|game-|api-|telemetry-)/.test(slug))
+    slug = `game-${slug}`
   return slug
 }
 
