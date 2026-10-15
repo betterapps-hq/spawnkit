@@ -13,6 +13,7 @@ test.describe("Scaffolded game telemetry", () => {
   let fixture: string
   let gameUrl: string
   const projectId = "project-thornwatch"
+  // oxlint-disable-next-line no-empty-pattern -- Playwright requires fixture destructuring even when no fixtures are used.
   test.beforeAll(async ({}, testInfo) => {
     const gamePort = 4197 + testInfo.workerIndex
     gameUrl = `http://127.0.0.1:${gamePort}`
@@ -35,10 +36,11 @@ test.describe("Scaffolded game telemetry", () => {
     )
     const pnpmPath = process.env.npm_execpath
     if (!pnpmPath) throw Error("Run browser acceptance with pnpm exec playwright test.")
-    const native = pnpmPath.endsWith(".exe")
-    const install = spawnSync(native ? pnpmPath : process.execPath, native ? ["install"] : [pnpmPath, "install"], {
+    const script = /\.[cm]?js$/.test(pnpmPath)
+    const install = spawnSync(script ? process.execPath : pnpmPath, script ? [pnpmPath, "install"] : ["install"], {
       cwd: gamePath,
       stdio: "pipe",
+      windowsHide: true,
       timeout: 90_000
     })
     if (install.status !== 0) throw Error(`Fixture install failed: ${String(install.stderr)}`)

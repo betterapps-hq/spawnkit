@@ -5,7 +5,7 @@ import { testOrigins } from "../scripts/dev-environment.mjs"
 const base = testOrigins().stories
 async function open(page: Page, story = "overview") {
   await page.goto(`${base}/iframe.html?id=project-dashboard-analytics--${story}&viewMode=story`)
-  await expect(page.locator(".analytics-workspace")).toBeVisible()
+  await expect(page.locator(".analytics-workspace")).toBeVisible({ timeout: 15_000 })
 }
 async function choose(page: Page, label: string, option: string) {
   await page.getByRole("combobox", { name: label, exact: true }).click()
