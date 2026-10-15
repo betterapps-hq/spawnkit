@@ -134,7 +134,9 @@ export function CloudPricing() {
       </div>
       <p className="mk-pricing-note">
         <Layers3 size={16} />
-        <strong>Optional Sandbox</strong> +$5/month plus usage · one staging environment per game
+        <strong>Optional Sandbox</strong>
+        <span>+$5/month plus usage</span>
+        <span>One staging environment per game</span>
       </p>
       <p className="mk-pricing-limit">
         Free hosting does not include Sandbox. Hosting allowances and paid service quotas are being finalized. Paid

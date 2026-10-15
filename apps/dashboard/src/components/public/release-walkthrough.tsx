@@ -8,7 +8,7 @@ const steps = [
     icon: Code2,
     title: "Your source. One inspectable release.",
     text: "Upload supported source for an isolated build. Keep the output tied to the source that produced it, with build logs available when the process finishes.",
-    detail: "SOURCE → ISOLATED BUILD → ARTIFACT",
+    detail: ["Source", "Isolated build", "Artifact"],
     status: "Build complete"
   },
   {
@@ -17,7 +17,7 @@ const steps = [
     icon: PackageCheck,
     title: "Open the exact game you built.",
     text: "Every retained release has its own URL. Play through the change and check the result before moving an environment to that version.",
-    detail: "ONE VERSION · ITS OWN URL",
+    detail: ["One version with its own URL"],
     status: "Ready to inspect"
   },
   {
@@ -26,7 +26,7 @@ const steps = [
     icon: Globe2,
     title: "Same build. New destination.",
     text: "Promote a tested artifact into the intended environment. The optional Sandbox keeps staging separate from the game your players open.",
-    detail: "PROMOTE THE ARTIFACT · NO REBUILD",
+    detail: ["Promote the artifact without rebuilding"],
     status: "Production release"
   },
   {
@@ -35,7 +35,7 @@ const steps = [
     icon: RotateCcw,
     title: "Know what changed. Choose what comes next.",
     text: "Use release history and configured telemetry to investigate problems. Return to a previous artifact when you need to; rollback does not undo database changes or player data.",
-    detail: "RELEASE HISTORY · LOGS · ROLLBACK",
+    detail: ["Release history, logs and rollback"],
     status: "Release history"
   }
 ]
@@ -44,9 +44,8 @@ export function ReleaseWalkthrough() {
   return (
     <Tabs defaultValue="build" className="mk-release-walkthrough">
       <TabsList className="mk-release-tabs" aria-label="Release walkthrough">
-        {steps.map(({ id, name, icon: Icon }, index) => (
+        {steps.map(({ id, name, icon: Icon }) => (
           <TabsTrigger key={id} value={id}>
-            <span>0{index + 1}</span>
             <Icon size={18} />
             {name}
           </TabsTrigger>
@@ -60,7 +59,14 @@ export function ReleaseWalkthrough() {
             </span>
             <h3>{title}</h3>
             <p>{text}</p>
-            <span className="mk-release-detail">{detail}</span>
+            <span className="mk-release-detail mk-inline-flow">
+              {detail.map((label, index) => (
+                <span className="mk-inline-flow" key={label}>
+                  {index > 0 && <ArrowRight size={12} aria-hidden="true" />}
+                  {label}
+                </span>
+              ))}
+            </span>
           </div>
           <div className="mk-release-visual" aria-label={`Example ${id} stage for release v1.2`}>
             <div className="mk-release-art">
@@ -101,13 +107,13 @@ export function ReleaseWalkthrough() {
                 <span>
                   <GitBranch size={17} />
                   <b>Sandbox</b>
-                  <small>v1.2 · tested</small>
+                  <small>v1.2 tested</small>
                 </span>
                 <ArrowRight className="mk-promote-arrow" size={20} />
                 <span>
                   <Globe2 size={17} />
                   <b>Production</b>
-                  <small>v1.2 · same artifact</small>
+                  <small>v1.2 same artifact</small>
                 </span>
               </div>
             )}

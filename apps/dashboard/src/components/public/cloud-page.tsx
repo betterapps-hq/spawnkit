@@ -81,7 +81,10 @@ export function CloudPage() {
                 <div>
                   <small>VERSIONED RELEASE</small>
                   <strong>Your game, ready to open.</strong>
-                  <span>Source → Build → Game URL</span>
+                  <span className="mk-inline-flow">
+                    Source <ArrowRight size={12} aria-hidden="true" /> Build <ArrowRight size={12} aria-hidden="true" />{" "}
+                    Game URL
+                  </span>
                 </div>
                 <Check size={20} />
               </div>
@@ -107,7 +110,7 @@ export function CloudPage() {
           <section className="mk-cloud-section" aria-labelledby="release-heading">
             <div className="mk-section-heading">
               <div>
-                <span className="mk-eyebrow">01 / FROM BUILD TO RELEASE</span>
+                <span className="mk-eyebrow">FROM BUILD TO RELEASE</span>
                 <h2 id="release-heading">
                   Every release has a story.
                   <br />
@@ -124,7 +127,7 @@ export function CloudPage() {
           </section>
           <section className="mk-platform-section" aria-labelledby="platform-heading">
             <div className="mk-platform-copy">
-              <span className="mk-eyebrow">02 / A PLACE FOR THE WHOLE PICTURE</span>
+              <span className="mk-eyebrow">A PLACE FOR THE WHOLE PICTURE</span>
               <h2 id="platform-heading">
                 Know what’s running.
                 <br />
@@ -190,14 +193,12 @@ export function CloudPage() {
               </div>
               <div className="mk-project-timeline">
                 <span>RELEASE HISTORY</span>
-                {["v1.3 · ready to inspect", "v1.2 · current production", "v1.1 · retained release"].map(
-                  (label, index) => (
-                    <p key={label}>
-                      <span>{index === 0 ? <Box size={14} /> : <Check size={14} />}</span>
-                      {label}
-                    </p>
-                  )
-                )}
+                {["v1.3 ready to inspect", "v1.2 current production", "v1.1 retained release"].map((label, index) => (
+                  <p key={label}>
+                    <span>{index === 0 ? <Box size={14} /> : <Check size={14} />}</span>
+                    {label}
+                  </p>
+                ))}
               </div>
               <footer>
                 <Box size={14} /> One artifact. The environment you choose.
@@ -213,7 +214,7 @@ export function CloudPage() {
                 <span>!</span>
                 <div>
                   <strong>Collision update failed</strong>
-                  <small>TypeError · level-02</small>
+                  <small>TypeError in level-02</small>
                 </div>
               </div>
               <dl>
@@ -232,14 +233,17 @@ export function CloudPage() {
               </dl>
               <div className="mk-breadcrumb">
                 <span>Nearby events</span>
-                <code>level.started → checkpoint.reached → error</code>
+                <code className="mk-inline-flow">
+                  level.started <ArrowRight size={12} aria-hidden="true" /> checkpoint.reached{" "}
+                  <ArrowRight size={12} aria-hidden="true" /> error
+                </code>
               </div>
               <footer>
                 <ShieldCheck size={14} /> Capture starts with consent.
               </footer>
             </div>
             <div>
-              <span className="mk-eyebrow">03 / KEEP MAKING IT BETTER</span>
+              <span className="mk-eyebrow">KEEP MAKING IT BETTER</span>
               <h2>
                 Give a bug report
                 <br />

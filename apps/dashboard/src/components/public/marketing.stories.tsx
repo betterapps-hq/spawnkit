@@ -38,7 +38,7 @@ export const Pricing: Story = {
   )
 }
 export const EnvironmentStudy: Story = {
-  name: "Environment scene · concept",
+  name: "Environment scene concept",
   render: () => (
     <PublicShell active="/cloud">
       <div className="mk-container mk-cloud-section">

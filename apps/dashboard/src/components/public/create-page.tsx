@@ -79,7 +79,7 @@ export function CreatePage() {
               <span className="mk-art-label">Imagine what you could make</span>
               <div className="mk-cover-title">
                 <span>
-                  {engine.dimension.toUpperCase()} · {engine.name}
+                  {engine.dimension.toUpperCase()} {engine.name}
                 </span>
                 <strong>{engine.title}</strong>
               </div>
@@ -89,7 +89,7 @@ export function CreatePage() {
                 </span>
                 <div>
                   <strong>Ready for your ideas</strong>
-                  <small>TypeScript project · source included</small>
+                  <small>TypeScript project with source included</small>
                 </div>
                 <Check size={18} />
               </div>
@@ -99,7 +99,7 @@ export function CreatePage() {
           <section className="mk-engine-section" aria-labelledby="engine-heading">
             <div className="mk-section-heading">
               <div>
-                <span className="mk-eyebrow">01 / CHOOSE YOUR ENGINE</span>
+                <span className="mk-eyebrow">CHOOSE YOUR ENGINE</span>
                 <h2 id="engine-heading">Your game, your starting point.</h2>
               </div>
               <p>
@@ -118,7 +118,7 @@ export function CreatePage() {
                       <strong>{item.name}</strong>
                       <small>
                         {item.dimension.toUpperCase()}
-                        {item.id === "pixi" || item.id === "babylon" ? " · Default" : " · Alternative"}
+                        {item.id === "pixi" || item.id === "babylon" ? " default" : " alternative"}
                       </small>
                     </span>
                     <ArrowRight size={17} />
@@ -139,7 +139,7 @@ export function CreatePage() {
           <section className="mk-toolkit" id="creator-tools">
             <div className="mk-section-heading">
               <div>
-                <span className="mk-eyebrow">02 / MAKE IT YOURS</span>
+                <span className="mk-eyebrow">MAKE IT YOURS</span>
                 <h2>The fun part starts sooner.</h2>
               </div>
               <p>
@@ -239,7 +239,7 @@ export function CreatePage() {
 
           <section className="mk-start-section">
             <div>
-              <span className="mk-eyebrow">03 / START BUILDING</span>
+              <span className="mk-eyebrow">START BUILDING</span>
               <h2>Your first local playthrough.</h2>
               <p>
                 Configure your stack, inspect the files, and download your starter. Unzip it, open the project folder in

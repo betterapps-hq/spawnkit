@@ -221,7 +221,7 @@ test("cloud release walkthrough and pricing calculator are interactive", async (
   await expect(page.getByRole("tabpanel")).toContainText("Still opens v1.1")
   await page.getByRole("tab", { name: /Check/ }).press("ArrowRight")
   await expect(page.getByRole("tab", { name: /Release/ })).toHaveAttribute("aria-selected", "true")
-  await expect(page.getByRole("tabpanel")).toContainText("v1.2 · same artifact")
+  await expect(page.getByRole("tabpanel")).toContainText("v1.2 same artifact")
   await page.getByRole("tab", { name: /Improve/ }).click()
   await expect(page.getByRole("tabpanel")).toContainText("rollback does not undo database changes or player data")
   await expect(page.locator(".p-price-card").filter({ hasText: "Game services" })).toContainText("Coming soon")

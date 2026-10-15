@@ -4,6 +4,8 @@ Status: proposed messaging and design brief. Updated: 2026-10-14.
 
 The agreed creative direction is **playful and polished: game visuals, clear product explanations, restrained motion**. This brief defines the case the public site should make before further page implementation. It does not change product scope or pricing.
 
+Editorial preferences confirmed during implementation: no decorative section numbering, no text-character arrows (use icons), and no dots as separators. Use spacing, separate labels, or natural sentences instead.
+
 ## One platform, two useful starting points
 
 SpawnKit helps developers turn a game idea into a standalone web project, then bring that project to players. The site should make those two offers independently understandable:
