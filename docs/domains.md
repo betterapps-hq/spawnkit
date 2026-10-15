@@ -33,6 +33,12 @@ Each project reserves a unique public slug within its platform environment. The 
 
 Environment aliases move when a release activates or rolls back. Deployment URLs identify retained immutable artifacts. Closed or disabled preview environments must not remain accessible through a pinned URL. Existing published addresses remain compatibility aliases. The API's `sandbox` environment means customer staging; it is not the platform's staging environment.
 
+## Planned regional telemetry
+
+EU telemetry endpoints selected from game-server deployment location are an agreed requirement. Proposed names are `telemetry.eu.spawnkit.cloud` for production, `telemetry.eu.staging.spawnkit.cloud` for internal staging, and `telemetry.eu.local.spawnkit.cloud` for local regional tests. These names are not yet provisioned, registered with local routing, or verified. The `/v1/logs` path remains the log-ingestion contract.
+
+Keep the existing nonregional telemetry names as compatibility endpoints during migration. A hostname does not establish processing/storage location. Verify DNS, nested certificates, region-scoped routing and the complete data path before advertising EU handling. Configuration comes from the running server allocation; multi-region games must not have a single hardcoded global endpoint. See [regional selection and acceptance](telemetry-analytics-architecture.md#eu-endpoints-and-endpoint-selection).
+
 ## DNS, HTTPS, and isolation
 
 DNS wildcard matching and certificate wildcard matching are different. A certificate for `*.spawnkit.cloud` does not cover `staging.emberfall.spawnkit.cloud`. Provision and verify the required nested certificates before advertising those addresses. Unknown hosts fail closed. Platform hosts must bypass the customer artifact router.

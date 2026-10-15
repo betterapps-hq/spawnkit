@@ -13,6 +13,7 @@ An AI-native web-game hosting platform: “Vercel meets PlayFab” for developer
 | [Management dashboard](management-dashboard.md) | Developer workflows, operational visibility, environment controls, and billing |
 | [Project dashboard design](project-dashboard-storybook.md) | Storybook screen matrix, template creation, version operations, PR previews, and domains |
 | [Analytics experience](analytics-experience.md) | Detailed Sentry feature study, Analytics workflows, Storybook walkthrough and capability boundaries |
+| [Telemetry analytics architecture](telemetry-analytics-architecture.md) | Proposed self-hosted ClickHouse/ClickStack system, game metrics, and EU endpoint routing based on server location |
 | [Games platform](games-platform.md) | Control plane, hosting, containers, routing, isolation, metering, and provider ownership |
 | [Game services](game-services.md) | Supported official Colyseus capabilities and their configuration/persistence lifecycle |
 | [Project templates](project-templates.md) | Presets, composable stack selection, generation, import, install, and add |

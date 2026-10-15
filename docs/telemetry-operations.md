@@ -2,6 +2,8 @@
 
 Implemented 2026-10-14. [Design](telemetry-design.md), [SDK API](../packages/telemetry/README.md), [independent judge review](internal/telemetry-judge-review.md).
 
+Future work: [self-hosted analytics architecture and regional routing](telemetry-analytics-architecture.md). EU endpoints selected from game-server location are an agreed requirement; the regional hostnames, routing and data-placement controls in that proposal are not currently provisioned or verified.
+
 ## Add to a game
 
 ```sh

@@ -98,6 +98,8 @@ The existing deployed telemetry remains available in the new Analytics project d
 
 ## Backend capability map
 
+The proposed implementation path is documented in [Telemetry analytics architecture and regional routing](telemetry-analytics-architecture.md): self-hosted ClickHouse/ClickStack behind SpawnKit's API, with EU endpoints selected from the game server's location. The following gaps remain implementation work.
+
 | Capability | Today | Needed for live advanced Analytics |
 | --- | --- | --- |
 | Events, errors, scalar attributes, measurements | Implemented | Aggregation endpoints and field metadata |

@@ -26,6 +26,7 @@
 | Single-player | Frontend-only production is free; optional game services cost $5/month including service usage |
 | Game services | Official Colyseus capabilities only at launch |
 | Telemetry | Platform-managed operational telemetry, optional Sentry |
+| Regional telemetry | Add EU ingestion endpoints and select telemetry endpoints from game-server deployment location; implementation pending |
 | Templates | Composable generator with CLI install/add and import-based resource inference |
 | Void | Investigate use for Cloudflare deployment; our coordinator owns cross-provider orchestration |
 
@@ -83,6 +84,8 @@ These defaults require review. In particular, allocating 1 vCPU/2 GB to each con
 - The developer account uses email or social sign-in; do not collect usernames.
 
 ## Open decisions
+
+The proposed [telemetry analytics architecture](telemetry-analytics-architecture.md) uses self-hosted ClickHouse/ClickStack with regional Cloudflare ingestion and R2 archives. Production topology, region defaults for frontend-only games, retention, migration and end-to-end regional processing policy remain open. The EU endpoint/server-location requirement above is agreed; the proposal is not a deployed capability.
 
 | ID | Question | Affected specification |
 | --- | --- | --- |

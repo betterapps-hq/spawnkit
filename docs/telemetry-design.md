@@ -2,6 +2,8 @@
 
 Design and implementation contract, 2026-10-14.
 
+This document describes the current bounded logger. The proposed [analytics architecture and regional routing](telemetry-analytics-architecture.md) extends it with ClickHouse/ClickStack, game analytics and the agreed requirement for EU endpoints selected from server location. Those extensions are not yet implemented.
+
 ## Scope and decisions
 
 Build an installable, dependency-free browser/Node telemetry logger in `@spawn/telemetry`. Support named events, leveled logs, exceptions with bounded breadcrumbs, numeric measurements, release/environment/session context, explicit trace/span correlation, consent, and a `beforeSend` hook. Use OTLP/HTTP JSON logs as the wire contract (resourceLogs/scopeLogs/logRecords, nanosecond decimal strings, standard severity numbers, hex trace IDs). Provide an adapter for the official OpenTelemetry log SDK. Measurements are log events, not an OTLP metrics implementation; manual trace context is accepted, but no global tracing provider is installed. Session replay, DOM/network autocapture, user profiling, source-map symbolication, alert delivery, full APM traces/metrics, and feature flags are outside this logger release.
