@@ -7,7 +7,7 @@
     "dev": "cf dev",
     "build": "cf build",
     "deploy": "cf deploy",
-    "check:types": "tsc --noEmit",
+    "check:types": "cf workers types && tsc --noEmit",
     "lint": "oxlint --max-warnings=0 src",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"

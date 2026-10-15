@@ -67,14 +67,24 @@ Production environment secrets:
 | `DASHBOARD_ENV` | Contents of `apps/dashboard/.env.production` |
 | `SPAWN_GITHUB_APP_ENV` | Contents of `deploy/.env.github.production`, only when enabled |
 
-The deployment token needs Workers Scripts edit, Workers Routes edit, Workers KV Storage
-edit, D1 edit, Workers R2 Storage edit, and Account Settings read for account
-`544b5bfd594cd02a5da4b79a2038cc9f`; Zone read and DNS edit for zone
+The deployment token needs Workers Scripts edit, Workers KV Storage edit, D1 edit,
+Workers R2 Storage edit, and Account Settings read for account
+`544b5bfd594cd02a5da4b79a2038cc9f`; Workers Routes edit, Zone read and DNS edit for zone
 `2a8126a122d81d58aafe2535a2219e7c` (`spawnkit.cloud`). Container builds remain disabled;
 enabling that product requires its permissions and paid account configuration separately.
 The existing runtime hosting token is narrower and must not be reused as a deployment token.
 Do not store a local OAuth access/refresh token in Actions: use a dedicated API token.
 See [Cloudflare CI authentication](https://developers.cloudflare.com/cf/ci/).
+
+The dedicated `SpawnKit GitHub Actions` user token was created and stored in Actions
+on October 14, 2026, and expires October 15, 2027 UTC. Rotate it before expiration.
+Token listing is unavailable to the local OAuth login, but the user-token creation
+endpoint supports issuing the scoped token. No token value is stored in the repository.
+
+GitHub rejected branch protection for this private repository on the current account
+plan (Pro is required). CI runs and deployment gates are configured, but GitHub does
+not enforce required checks before a writer pushes or merges. Enable required `Verify`
+and `Browser acceptance` checks when branch protection becomes available.
 
 Temporary credential files are ignored, created with restricted permissions and removed
 after each job. They are never uploaded as artifacts. Failed browser runs retain traces
