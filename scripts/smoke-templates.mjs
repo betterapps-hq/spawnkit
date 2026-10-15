@@ -141,7 +141,7 @@ try {
       await page.keyboard.down("ArrowRight")
       if (!flags.includes("none"))
         await page.waitForFunction(
-          () => document.querySelector("#score")?.textContent?.includes("Collected: 1"),
+          () => /^Collected: [1-9][0-9]*$/.test(document.querySelector("#score")?.textContent ?? ""),
           null,
           {
             timeout: 15_000
