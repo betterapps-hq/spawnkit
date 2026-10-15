@@ -51,7 +51,16 @@ export function PhysicsDemo() {
         className="physics-host"
         ref={host}
         aria-label="Interactive Rapier 3D physics scene with three objects and a solid platform"
-      />
+      >
+        {(status === "loading" || status === "unavailable") && (
+          <div className="mk-physics-fallback" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <span />
+          </div>
+        )}
+      </figure>
       <div className="physics-toolbar">
         <Button
           variant="outline"
@@ -68,7 +77,7 @@ export function PhysicsDemo() {
           {status === "loading"
             ? "Loading physics…"
             : status === "unavailable"
-              ? "Physics unavailable"
+              ? "Static physics preview"
               : status === "falling"
                 ? "Gravity + collisions"
                 : "Rapier 3D"}

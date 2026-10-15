@@ -214,17 +214,18 @@ test("unreleased games lead to the correct starter engine", async ({ page }) => 
   await expect(page.getByRole("radio", { name: "Three.js", exact: true })).toBeChecked()
 })
 
-test("cloud illustration, pipeline and pricing calculator are interactive", async ({ page }, info) => {
+test("cloud release walkthrough and pricing calculator are interactive", async ({ page }, info) => {
   await page.goto("/cloud")
-  await expect(page.locator(".env-scene")).toHaveAttribute("data-ready", "true", { timeout: 30000 })
-  await page.locator(".env-scene").screenshot({ path: `work/public-environments-${info.project.name}.png` })
-  await page.getByRole("button", { name: "Staging", exact: true }).click()
-  await expect(page.getByText("Staging tests changes separately from production.")).toBeVisible()
-  await page.getByRole("tab", { name: /Preview/ }).click()
-  await expect(page.getByRole("tabpanel")).toContainText("Try a change in its own preview.")
-  await page.getByRole("tab", { name: /Preview/ }).press("ArrowRight")
-  await expect(page.getByRole("tab", { name: /Stage/ })).toHaveAttribute("aria-selected", "true")
-  await expect(page.getByRole("tabpanel")).toContainText("An optional Sandbox separates staging from production.")
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
+  await page.getByRole("tab", { name: /Check/ }).click()
+  await expect(page.getByRole("tabpanel")).toContainText("Still opens v1.1")
+  await page.getByRole("tab", { name: /Check/ }).press("ArrowRight")
+  await expect(page.getByRole("tab", { name: /Release/ })).toHaveAttribute("aria-selected", "true")
+  await expect(page.getByRole("tabpanel")).toContainText("v1.2 · same artifact")
+  await page.getByRole("tab", { name: /Improve/ }).click()
+  await expect(page.getByRole("tabpanel")).toContainText("rollback does not undo database changes or player data")
+  await expect(page.locator(".p-price-card").filter({ hasText: "Game services" })).toContainText("Coming soon")
+  await expect(page.locator(".p-price-card").filter({ hasText: "Multiplayer" })).toContainText("Coming soon")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: `work/public-cloud-${info.project.name}.png`, fullPage: true })
   await page.goto("/pricing")
@@ -246,7 +247,7 @@ test("cloud illustration, pipeline and pricing calculator are interactive", asyn
 test("creator page and responsive navigation connect the public experience", async ({ page }, info) => {
   await page.goto("/create")
   await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
-  await expect(page.getByRole("heading", { name: /Turn your idea into a playable game/, level: 1 })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /Start with a playable game/, level: 1 })).toBeVisible()
   await expect(page.getByText("Desktop games", { exact: true })).toBeVisible()
   await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(2)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
@@ -261,11 +262,12 @@ test("creator page and responsive navigation connect the public experience", asy
     await expect(artwork).toBeVisible()
     await expect.poll(() => artwork.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
   }
-  await expect(page.getByRole("link", { name: "Build your starter kit", exact: true })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Build your starter kit", exact: true }).first()).toHaveAttribute(
     "href",
     "/templates?engine=three"
   )
-  await expect(page.locator(".c-command-line")).toContainText("--add three,vitest")
+  await expect(page.locator(".mk-terminal-summary")).toContainText("Three.js")
+  await expect(page.locator(".c-command-line")).toContainText("pnpm dev:setup")
   await page.getByRole("tab", { name: "Browser tests", exact: true }).click()
   await expect(page.getByRole("tabpanel").filter({ hasText: "Player interactions" })).toContainText(
     "Verify the player collects an item"
@@ -294,30 +296,22 @@ test("creator page and responsive navigation connect the public experience", asy
   await expect(page.getByRole("heading", { name: "Cloud pricing", exact: true })).toBeVisible()
 })
 
-test("creator scene layers move at different depths and respect reduced motion", async ({ page }, info) => {
-  test.skip(info.project.name !== "desktop", "Pointer parallax is a desktop interaction")
+test("creator artwork stays still and physics respects reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/create")
   await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
-  const scene = page.locator(".c-scene")
+  const scene = page.locator(".mk-game-cover")
   await scene.scrollIntoViewIfNeeded()
   const bounds = (await scene.boundingBox())!
-  const separation = () =>
-    page.evaluate(() => {
-      const front = document.querySelector(".c-depth-source")!.getBoundingClientRect()
-      const back = document.querySelector(".c-depth-game")!.getBoundingClientRect()
-      return front.x - back.x
-    })
-  await page.mouse.move(bounds.x + bounds.width * 0.2, bounds.y + bounds.height * 0.45)
-  const left = await separation()
+  const before = await scene.boundingBox()
   await page.mouse.move(bounds.x + bounds.width * 0.8, bounds.y + bounds.height * 0.45)
-  await expect.poll(async () => Math.abs((await separation()) - left)).toBeGreaterThan(12)
-  expect(await scene.locator(".c-scene-inner").evaluate((element) => getComputedStyle(element).transformStyle)).toBe(
-    "preserve-3d"
-  )
-  await page.emulateMedia({ reducedMotion: "reduce" })
-  const before = await scene.evaluate((element) => element.getAttribute("style"))
-  await page.mouse.move(bounds.x + bounds.width * 0.3, bounds.y + bounds.height * 0.6)
-  expect(await scene.evaluate((element) => element.getAttribute("style"))).toBe(before)
+  expect(await scene.boundingBox()).toEqual(before)
+  expect(await scene.locator("img").evaluate((element) => getComputedStyle(element).animationName)).toBe("none")
+  const drop = page.getByRole("button", { name: "Drop objects", exact: true })
+  await drop.scrollIntoViewIfNeeded()
+  await expect(drop).toBeEnabled({ timeout: 30000 })
+  await drop.click()
+  await expect(page.locator(".physics-demo")).toHaveAttribute("data-state", "settled")
 })
 
 test("dashboard remains protected and legacy dashboard links redirect", async ({ page }) => {
@@ -398,7 +392,7 @@ test("theme, shared branding, footer destinations and reduced motion work", asyn
   await expect(page.locator(".p-device-card")).toHaveCount(3)
   await page.locator(".p-platform-showcase").screenshot({ path: `work/public-devices-${info.project.name}.png` })
   await page.emulateMedia({ reducedMotion: "reduce" })
-  expect(await page.locator(".c-depth-game").evaluate((element) => getComputedStyle(element).transitionDuration)).toBe(
+  expect(await page.locator(".mk-game-cover").evaluate((element) => getComputedStyle(element).transitionDuration)).toBe(
     "0s"
   )
   expect(

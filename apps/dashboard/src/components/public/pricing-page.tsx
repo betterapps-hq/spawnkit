@@ -8,11 +8,11 @@ import { FieldSelect } from "./field-select"
 
 const plans = [
   {
-    title: "Free",
+    title: "Frontend hosting",
     icon: Globe2,
     price: "0",
     suffix: "frontend-only production",
-    description: "Download a starter kit and build a frontend-only web game.",
+    description: "A home for a frontend-only single-player browser game.",
     features: [
       "All four web starter kits",
       "Your own standalone source code",
@@ -21,7 +21,7 @@ const plans = [
     ],
     button: "Build a starter kit",
     href: "/templates",
-    label: "Starter kits available"
+    label: "Start with a free starter kit"
   },
   {
     title: "Game services",
@@ -30,7 +30,7 @@ const plans = [
     suffix: "per game / month",
     description: "Add accounts, cloud saves, and leaderboards to a single-player game.",
     features: [
-      "Everything in Free",
+      "Frontend production hosting",
       "Colyseus player services",
       "Cloud saves & leaderboards",
       "Service usage included"
@@ -46,7 +46,7 @@ const plans = [
     suffix: "per game / month + runtime usage",
     description: "Run real-time game rooms with managed Colyseus servers.",
     features: [
-      "Everything in Free",
+      "Frontend production hosting",
       "Managed Colyseus servers",
       "Room-based state synchronization",
       "Runtime billed for allocated hours"
@@ -64,11 +64,19 @@ const faqs = [
   ],
   [
     "What does the $5 multiplayer fee include?",
-    "The $5 monthly game fee covers multiplayer management. Provisioned runtime is billed separately, including idle allocated time. Production infrastructure is priced at 2× attributable provider cost; Sandbox infrastructure at 1.5×."
+    "The $5 monthly game fee covers multiplayer management. Provisioned runtime is billed separately, including idle allocated time. The optional Sandbox adds $5/month plus usage. Paid activation and the complete usage schedule are coming soon."
   ],
   [
     "How do staging and previews work?",
-    "The optional Sandbox is a separate staging environment for $5/month plus usage. Multiple Sandbox regions do not multiply that base fee. Pull request previews let you test a change before merging it."
+    "The optional Sandbox is a separate staging environment for $5/month plus usage. Multiple Sandbox regions do not multiply that base fee. Customer pull request previews are planned; their complete publishing flow and pricing are still being verified."
+  ],
+  [
+    "What kind of game can I host?",
+    "The current build path expects a static web game with package.json, game.config.json and a frozen pnpm-lock.yaml. It runs pnpm run build and serves dist. Arbitrary backend servers and custom output directories are not supported."
+  ],
+  [
+    "Can I use my own domain?",
+    "Projects use SpawnKit game addresses. Customer-owned domain verification exists, but custom-domain TLS activation is not generally available yet."
   ],
   [
     "Can I build for desktop or mobile?",
@@ -92,13 +100,14 @@ export function CloudPricing() {
     <section id="pricing" className="p-cloud-pricing" aria-labelledby="pricing-title">
       <section className="p-pricing-heading">
         <h2 id="pricing-title">Cloud pricing</h2>
-        <p>Free starter kits and frontend hosting. Paid services when your game needs them.</p>
+        <p>Start with a browser game. Add what your game needs.</p>
       </section>
       <div className="p-pricing-grid">
         {plans.map((plan, index) => (
           <article key={plan.title} className={`p-price-card ${index === 0 ? "p-price-featured" : ""}`}>
             <plan.icon size={25} />
             <h3>{plan.title}</h3>
+            <span className="mk-plan-status">{plan.label}</span>
 
             <div className="p-price">
               <span>$</span>
@@ -123,9 +132,17 @@ export function CloudPricing() {
           </article>
         ))}
       </div>
+      <p className="mk-pricing-note">
+        <Layers3 size={16} />
+        <strong>Optional Sandbox</strong> +$5/month plus usage · one staging environment per game
+      </p>
+      <p className="mk-pricing-limit">
+        Free hosting does not include Sandbox. Hosting allowances and paid service quotas are being finalized. Paid
+        services and multiplayer activation are coming soon.
+      </p>
       <section className="p-cost-builder">
         <div>
-          <h2>Estimate your monthly fees</h2>
+          <h2>Understand your fixed fees.</h2>
           <p>See your fixed monthly fees. Runtime and other metered resources are added separately.</p>
           <label className="p-field" htmlFor="game-type">
             Game type

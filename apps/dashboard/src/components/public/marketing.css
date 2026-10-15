@@ -3,6 +3,54 @@
   --mk-mint: color-mix(in srgb, #69bda3 12%, var(--background));
   --mk-peach: color-mix(in srgb, #e7ad65 14%, var(--background));
 }
+.mk-page .mk-finale-cloud-link {
+  display: flex;
+  margin-top: 22px;
+}
+.mk-page a[data-slot="button"]:not(.p-button-outline) {
+  color: var(--primary-foreground);
+}
+.mk-page .mk-section-heading > p br::after {
+  content: " ";
+}
+.mk-physics-fallback {
+  position: absolute;
+  inset: 20px 30px 65px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 18px;
+  padding-bottom: 35px;
+}
+.mk-physics-fallback > span {
+  position: absolute;
+  width: 80%;
+  height: 32px;
+  background: #b298d4;
+  border-radius: 50%;
+  bottom: 15px;
+  box-shadow: 0 8px 0 #9679b9;
+}
+.mk-physics-fallback i {
+  z-index: 1;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #c09ae8, #9465cc);
+  box-shadow: inset -7px -7px 12px #51317c25;
+}
+.mk-physics-fallback i:nth-child(2) {
+  border-radius: 14px;
+  width: 55px;
+  height: 55px;
+  background: linear-gradient(130deg, #f1cc9f, #e9b67f);
+  rotate: 12deg;
+}
+.mk-physics-fallback i:nth-child(3) {
+  width: 45px;
+  height: 45px;
+  background: radial-gradient(circle at 30% 25%, #ede0ff, #b49aca);
+}
 .mk-container {
   max-width: 1376px;
   margin: auto;

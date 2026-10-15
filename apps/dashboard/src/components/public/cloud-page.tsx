@@ -1,230 +1,322 @@
-import { colyseusServices } from "@spawn/templates/catalog"
 import {
   Activity,
   ArrowRight,
-  Braces,
+  Box,
   Check,
+  Code2,
+  ExternalLink,
   GitBranch,
-  GitPullRequest,
   Globe2,
+  Layers3,
   Radio,
-  RotateCcw,
   Server,
-  ShieldCheck,
-  Sparkles
+  ShieldCheck
 } from "lucide-react"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { CloudScene } from "./cloud-scene"
 import { CloudPricing } from "./pricing-page"
-import { CreatorBanner, PublicShell } from "./shell"
+import { ReleaseWalkthrough } from "./release-walkthrough"
+import { PublicShell } from "./shell"
+import "./marketing.css"
+import "./cloud-marketing.css"
 
-const releaseSteps = [
-  {
-    name: "Build",
-    icon: Braces,
-    title: "Your source becomes a versioned release.",
-    description:
-      "Publish from the CLI or connect your GitHub workflow. Isolated builds keep the output tied to the source that produced it."
-  },
-  {
-    name: "Preview",
-    icon: GitPullRequest,
-    title: "Review changes in a separate preview.",
-    description:
-      "Try a change in its own preview. Review a link, test the gameplay, and keep unfinished ideas away from production."
-  },
-  {
-    name: "Stage",
-    icon: GitBranch,
-    title: "Test against a staging environment.",
-    description:
-      "An optional Sandbox separates staging from production. Test changes against the right configuration before promoting a release."
-  },
-  {
-    name: "Release",
-    icon: Globe2,
-    title: "Promote or roll back a release.",
-    description:
-      "Promote the tested build, keep its history, and roll back a release when you need to. Promotion changes the build, not your players’ saved data."
-  }
-]
 export function CloudPage() {
-  const [step, setStep] = useState(0)
   return (
     <PublicShell active="/cloud">
-      <div className="p-container p-cloud-page">
-        <section className="p-cloud-hero">
-          <div>
-            <h1>
-              Game hosting.
-              <br />
-              <span className="p-accent">From build to release.</span>
-            </h1>
-            <p>
-              Ship your web game with versioned releases, pull request previews, and rollback. Keep staging separate and
-              connect multiplayer with Colyseus.
-            </p>
-            <div className="p-hero-actions">
-              <Button asChild>
-                <a href="/dashboard" className="p-button">
-                  Open your dashboard <ArrowRight size={18} />
+      <div className="mk-page mk-cloud">
+        <div className="mk-container">
+          <section className="mk-hero">
+            <div className="mk-hero-copy">
+              <span className="mk-kicker">
+                <Globe2 size={15} /> SPAWNKIT CLOUD
+              </span>
+              <h1>
+                Bring your game <em>to players.</em>
+              </h1>
+              <p>
+                A home for your browser game, with source builds, versioned releases, and the controls to decide what
+                goes live next.
+              </p>
+              <div className="mk-actions">
+                <Button asChild size="lg">
+                  <a href="/dashboard">
+                    Open dashboard <ArrowRight size={17} />
+                  </a>
+                </Button>
+                <a href="#pricing" className="mk-secondary">
+                  See pricing <ArrowRight size={16} />
                 </a>
-              </Button>
-              <a href="#pricing" className="p-text-link">
-                Explore pricing <ArrowRight size={17} />
+              </div>
+              <div className="mk-reassurance">
+                <span>
+                  <Check size={14} /> Free frontend-only production hosting
+                </span>
+              </div>
+            </div>
+            <div className="mk-cloud-cover" aria-label="Illustration of a versioned game release">
+              <div className="mk-browser-bar">
+                <span>
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span>
+                  <Globe2 size={12} /> your-game.spawnkit.cloud
+                </span>
+                <ExternalLink size={13} />
+              </div>
+              <div className="mk-cloud-art">
+                <img src="/examples/snake.webp" alt="Orchard Trail game artwork" fetchPriority="high" />
+                <div>
+                  <span>YOUR NEXT ADVENTURE</span>
+                  <strong>
+                    One game.
+                    <br />A link to its world.
+                  </strong>
+                </div>
+              </div>
+              <div className="mk-deploy-card">
+                <span className="mk-deploy-icon">
+                  <Box size={23} />
+                </span>
+                <div>
+                  <small>VERSIONED RELEASE</small>
+                  <strong>Your game, ready to open.</strong>
+                  <span>Source → Build → Game URL</span>
+                </div>
+                <Check size={20} />
+              </div>
+              <span className="mk-cloud-sticker">
+                <GitBranch size={16} /> A version you can come back to
+              </span>
+            </div>
+          </section>
+          <div className="mk-value-strip">
+            <span>
+              <Code2 size={20} /> Source builds
+            </span>
+            <span>
+              <Box size={20} /> Immutable releases
+            </span>
+            <span>
+              <GitBranch size={20} /> Environment controls
+            </span>
+            <span>
+              <Activity size={20} /> Errors & logs
+            </span>
+          </div>
+          <section className="mk-cloud-section" aria-labelledby="release-heading">
+            <div className="mk-section-heading">
+              <div>
+                <span className="mk-eyebrow">01 / FROM BUILD TO RELEASE</span>
+                <h2 id="release-heading">
+                  Every release has a story.
+                  <br />
+                  Keep the whole thing together.
+                </h2>
+              </div>
+              <p>
+                Follow a game from source
+                <br />
+                to its next playable version.
+              </p>
+            </div>
+            <ReleaseWalkthrough />
+          </section>
+          <section className="mk-platform-section" aria-labelledby="platform-heading">
+            <div className="mk-platform-copy">
+              <span className="mk-eyebrow">02 / A PLACE FOR THE WHOLE PICTURE</span>
+              <h2 id="platform-heading">
+                Know what’s running.
+                <br />
+                <em>And what comes next.</em>
+              </h2>
+              <p>
+                The source, built artifact, environment, and release history belong to one project. Open a version,
+                inspect its build, or follow an error back to the release it came from.
+              </p>
+              <ul>
+                <li>
+                  <Globe2 size={18} />
+                  <div>
+                    <strong>A URL for your game</strong>
+                    <span>Share your project’s SpawnKit address with players.</span>
+                  </div>
+                </li>
+                <li>
+                  <GitBranch size={18} />
+                  <div>
+                    <strong>Room to try the next version</strong>
+                    <span>An optional Sandbox keeps staging separate from production.</span>
+                  </div>
+                </li>
+                <li>
+                  <ShieldCheck size={18} />
+                  <div>
+                    <strong>Infrastructure managed by the platform</strong>
+                    <span>Your project connects the build and hosting workflow.</span>
+                  </div>
+                </li>
+              </ul>
+              <a href="/dashboard" className="mk-secondary">
+                Explore your dashboard <ArrowRight size={16} />
               </a>
             </div>
-            <div className="p-proof-line">
-              <Check size={14} /> Free frontend-only production hosting
-            </div>
-          </div>
-          <CloudScene />
-        </section>
-        <section className="p-cloud-benefits">
-          <div>
-            <Globe2 />
-            <span>One link to your game</span>
-          </div>
-          <div>
-            <ShieldCheck />
-            <span>Separate environments</span>
-          </div>
-          <div>
-            <RotateCcw />
-            <span>Release rollback</span>
-          </div>
-          <div>
-            <Activity />
-            <span>Errors, logs & events</span>
-          </div>
-        </section>
-        <section className="p-section">
-          <div className="p-section-heading">
-            <div>
-              <h2>Test changes before they reach players</h2>
-            </div>
-          </div>
-          <Tabs className="p-release-demo" value={String(step)} onValueChange={(value) => setStep(Number(value))}>
-            <TabsList className="p-release-tabs" aria-label="Deployment pipeline">
-              {releaseSteps.map(({ name, icon: Icon }, index) => (
-                <TabsTrigger key={name} value={String(index)}>
-                  <span>0{index + 1}</span>
-                  <Icon size={21} />
-                  {name}
-                  <ArrowRight size={17} />
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            {releaseSteps.map(({ name, title, description, icon: Icon }, index) => (
-              <TabsContent key={name} value={String(index)} className="p-release-content">
-                <div className="p-release-icon">
-                  <Icon size={45} />
+            <div className="mk-project-illustration" aria-label="Illustration of a project release overview">
+              <header>
+                <span className="mk-project-avatar">✳</span>
+                <div>
+                  <strong>Orchard Trail</strong>
+                  <span>Project overview</span>
+                </div>
+                <span className="mk-outline-pill">Release view</span>
+              </header>
+              <div className="mk-project-environments">
+                <div>
+                  <Globe2 size={18} />
+                  <span>
+                    Production<strong>v1.2</strong>
+                    <small>Published artifact</small>
+                  </span>
+                  <span className="mk-status-dot" />
                 </div>
                 <div>
-                  <h3>{title}</h3>
-                  <p>{description}</p>
+                  <GitBranch size={18} />
+                  <span>
+                    Sandbox<strong>v1.3</strong>
+                    <small>Next version to test</small>
+                  </span>
+                  <span className="mk-status-dot mk-status-lilac" />
                 </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </section>
-        <section id="multiplayer" className="p-multiplayer">
-          <div>
-            <h2>Multiplayer with Colyseus</h2>
-            <p>
-              Build multiplayer games with authoritative servers, synchronized rooms, and matchmaking. Colyseus keeps
-              players in the same world while you focus on the gameplay.
-            </p>
-            <a href="https://docs.colyseus.io/" target="_blank" rel="noreferrer" className="p-text-link">
-              Explore Colyseus <ArrowRight size={17} />
-            </a>
-            <div className="p-server-tags">
-              <span>
-                <Radio size={14} /> State synchronization
-              </span>
-              <span>
-                <Server size={14} /> Game rooms
-              </span>
-            </div>
-          </div>
-          <div
-            className="p-room-illustration"
-            aria-label="Illustration of four clients connected to one Colyseus game room"
-          >
-            <div className="p-room-grid" />
-            <div className="p-room-center">
-              <Server size={31} />
-              <b>Colyseus</b>
-              <span>One shared world</span>
-            </div>
-            {["YOU", "PLAYER 2", "PLAYER 3", "PLAYER 4"].map((name, index) => (
-              <div key={name} className={`p-room-player player-${index}`}>
-                <span>{["✳", "✦", "◆", "●"][index]}</span>
-                <small>{name}</small>
               </div>
-            ))}
-            <span className="p-illustration-caption">MULTIPLAYER ARCHITECTURE</span>
-          </div>
-        </section>
-        <section id="services" className="p-services">
-          <div className="p-section-heading">
+              <div className="mk-project-timeline">
+                <span>RELEASE HISTORY</span>
+                {["v1.3 · ready to inspect", "v1.2 · current production", "v1.1 · retained release"].map(
+                  (label, index) => (
+                    <p key={label}>
+                      <span>{index === 0 ? <Box size={14} /> : <Check size={14} />}</span>
+                      {label}
+                    </p>
+                  )
+                )}
+              </div>
+              <footer>
+                <Box size={14} /> One artifact. The environment you choose.
+              </footer>
+            </div>
+          </section>
+          <section className="mk-observability" aria-labelledby="observability-heading">
+            <div className="mk-log-window">
+              <header>
+                <Activity size={16} /> ERROR CONTEXT <span>Example event</span>
+              </header>
+              <div className="mk-log-error">
+                <span>!</span>
+                <div>
+                  <strong>Collision update failed</strong>
+                  <small>TypeError · level-02</small>
+                </div>
+              </div>
+              <dl>
+                <div>
+                  <dt>Release</dt>
+                  <dd>v1.2</dd>
+                </div>
+                <div>
+                  <dt>Environment</dt>
+                  <dd>production</dd>
+                </div>
+                <div>
+                  <dt>Session</dt>
+                  <dd>session-42</dd>
+                </div>
+              </dl>
+              <div className="mk-breadcrumb">
+                <span>Nearby events</span>
+                <code>level.started → checkpoint.reached → error</code>
+              </div>
+              <footer>
+                <ShieldCheck size={14} /> Capture starts with consent.
+              </footer>
+            </div>
             <div>
-              <h2>Player accounts, saves, and leaderboards</h2>
-            </div>
-          </div>
-          <div className="p-services-grid">
-            {colyseusServices.slice(0, 4).map((service, index) => (
-              <a key={service.id} href={service.source} target="_blank" rel="noreferrer">
-                <span className="p-service-number">0{index + 1}</span>
-                <h3>
-                  {service.name}
-                  <ArrowRight size={16} />
-                </h3>
-                <p>{service.description}</p>
+              <span className="mk-eyebrow">03 / KEEP MAKING IT BETTER</span>
+              <h2>
+                Give a bug report
+                <br />
+                <em>some context.</em>
+              </h2>
+              <p>
+                Connect configured errors, logs, and game events to a release and session. Use that context to
+                investigate in your editor, including with your AI coding tools.
+              </p>
+              <p className="mk-small-copy">You choose what to change. Your tests help check the fix.</p>
+              <a href="/templates" className="mk-secondary">
+                Add telemetry to your starter <ArrowRight size={16} />
               </a>
-            ))}
-          </div>
-        </section>
-        <section className="p-ai-section">
-          <div className="p-ai-console">
-            <header>
-              <Activity size={16} /> ISSUE CONTEXT
-            </header>
-            <div className="p-issue">
-              <span className="p-issue-dot" />
-              <div>
-                <b>Player falls through the platform</b>
-                <small>Collision update in level-02</small>
+            </div>
+          </section>
+          <CloudPricing />
+          <section id="multiplayer" className="mk-multiplayer" aria-labelledby="multiplayer-heading">
+            <div>
+              <span className="mk-eyebrow">
+                <Radio size={15} /> THE NEXT CHAPTER <span className="mk-outline-pill">Coming soon</span>
+              </span>
+              <h2 id="multiplayer-heading">
+                More players.
+                <br />
+                One shared world.
+              </h2>
+              <p>
+                Managed multiplayer is being built around Colyseus: game rooms and synchronized state, with a runtime
+                for your players to connect to.
+              </p>
+              <a className="mk-secondary" href="https://docs.colyseus.io/" target="_blank" rel="noreferrer">
+                Explore Colyseus <ArrowRight size={16} />
+              </a>
+              <div id="services" className="mk-services-note">
+                <Layers3 size={18} />
+                <div>
+                  <strong>Game services, too</strong>
+                  <p>
+                    Planned single-player services use supported official Colyseus capabilities. Managed services and
+                    paid runtime activation are coming soon.
+                  </p>
+                </div>
               </div>
-              <span>Open</span>
             </div>
-            <div className="p-ai-thread">
-              <Sparkles size={22} />
-              <div>
-                <b>Investigate with release and session context</b>
-                <p>Error, release, session, and nearby events — together in a structured investigation.</p>
-                <code>issue → context → proposed fix → test</code>
+            <div className="mk-room" aria-label="Four players connecting to one Colyseus game room">
+              <div className="mk-room-orbit" />
+              <div className="mk-room-core">
+                <Server size={30} />
+                <strong>Colyseus</strong>
+                <span>One game room</span>
               </div>
+              {["YOU", "PLAYER 2", "PLAYER 3", "PLAYER 4"].map((player, index) => (
+                <div className={`mk-player mk-player-${index}`} key={player}>
+                  <span>{["✳", "✦", "◆", "●"][index]}</span>
+                  <small>{player}</small>
+                </div>
+              ))}
             </div>
-            <div className="p-ai-footer">
-              <ShieldCheck size={14} /> You review the change. Your tests check the fix.
+          </section>
+          <section className="mk-finale mk-cloud-finale">
+            <div>
+              <span className="mk-eyebrow">YOUR GAME’S NEXT CHAPTER</span>
+              <h2>Give your next release a home.</h2>
+              <p>Start with your project. Keep building from there.</p>
             </div>
-          </div>
-          <div>
-            <h2>Debug with your AI editor</h2>
-            <p>
-              SpawnKit telemetry collects consented errors, logs, and game events. Bring that context into your AI
-              coding workflow to investigate issues and work toward a fix.
-            </p>
-            <a href="/templates" className="p-text-link">
-              Add telemetry to your starter <ArrowRight size={17} />
-            </a>
-          </div>
-        </section>
-        <CloudPricing />
-        <CreatorBanner />
+            <div className="mk-finale-actions">
+              <Button asChild size="lg">
+                <a href="/dashboard">
+                  Open dashboard <ArrowRight size={17} />
+                </a>
+              </Button>
+              <a href="/templates" className="mk-secondary">
+                Still building? Create a starter kit <ArrowRight size={16} />
+              </a>
+            </div>
+          </section>
+        </div>
       </div>
     </PublicShell>
   )

@@ -57,7 +57,7 @@ Proposed heading: **One place to understand what is running.**
 
 Show a real project view with its active release, environment, game URL, build outcome, and recent errors. Annotate three decisions the developer can make: open this version, inspect its build, or review a problem. This is stronger evidence than an abstract cloud full of provider logos.
 
-The platform benefit is coordination: source, artifact, environment, and operational context belong to the same project. Explain platform-managed infrastructure in one short supporting paragraph. Keep Cloudflare, storage, and future runtime providers in a technical details disclosure where they help a developer evaluate the service.
+The platform benefit is coordination: source, artifact, environment, and operational context belong to the same project. Explain platform-managed infrastructure in one short supporting paragraph. Technical details should explain supported source, build output, and release behavior. Keep private hosting-provider mappings out of public copy, consistent with the development contract.
 
 ### 4. Close the feedback loop
 
@@ -83,7 +83,7 @@ Place **Optional Sandbox: +$5/month plus usage** below the cards as a shared add
 
 The calculator should say **Fixed monthly fees** if it only adds game and Sandbox fees. For example, multiplayer plus Sandbox has $10 in fixed fees **before usage**, not an estimated $10 total. Put that distinction next to the number.
 
-Keep the detailed rate basis available: attributable Neon/Vultr/D1 costs are multiplied by 2 for production and 1.5 for Sandbox; included single-player service usage is the agreed exception. Do not invent hourly prices or extrapolate a monthly total before allocation and usage policies are defined. Builds, networking, R2 and preview allowances also need explicit policy before checkout.
+Keep the detailed rate basis in internal pricing documentation. Public estimates use SpawnKit rates and plan names; do not expose provider costs or infrastructure mappings. Do not invent hourly prices or extrapolate a monthly total before allocation and usage policies are defined. Builds, networking, storage and preview allowances also need explicit policy before checkout.
 
 Paid cards should not contain an enabled purchase or activation action while billing and managed runtime delivery are unavailable. Clearly label their status and link to their explanation. Do not invent an email signup as a substitute.
 
