@@ -1,4 +1,4 @@
-import { defineConfig } from "cf/config"
+import { defineConfig, triggers } from "cf/config"
 const production = process.env.SPAWN_CONTROL_ENVIRONMENT === "production"
 const preview = process.env.SPAWN_DASHBOARD_ENVIRONMENT === "preview" ? process.env.SPAWN_PREVIEW_NAME : undefined
 if (preview !== undefined && !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(preview))
@@ -15,6 +15,9 @@ export default defineConfig({
           ? "stories.spawnkit.cloud"
           : "stories.staging.spawnkit.cloud"
     ],
+    triggers: preview
+      ? [triggers.fetch({ pattern: `stories-preview-${preview}.spawnkit.cloud/*`, zone: "spawnkit.cloud" })]
+      : [],
     assets: { htmlHandling: "none", notFoundHandling: "none" }
   }
 })

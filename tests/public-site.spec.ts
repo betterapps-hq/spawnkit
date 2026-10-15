@@ -140,7 +140,7 @@ test("cloud illustration, pipeline and pricing calculator are interactive", asyn
 test("creator page and responsive navigation connect the public experience", async ({ page }, info) => {
   await page.goto("/create")
   await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
-  await expect(page.getByRole("heading", { name: /Make it yours/, level: 1 })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /Turn your idea into a playable game/, level: 1 })).toBeVisible()
   await expect(page.getByText("Desktop games", { exact: true })).toBeVisible()
   await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(2)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
@@ -149,14 +149,15 @@ test("creator page and responsive navigation connect the public experience", asy
     await page.getByRole("button", { name: "Open menu", exact: true }).click()
     await page
       .getByRole("navigation", { name: "Mobile navigation", exact: true })
-      .getByRole("link", { name: "Pricing", exact: true })
+      .getByRole("link", { name: "Cloud", exact: true })
       .click()
   } else
     await page
       .getByRole("navigation", { name: "Main navigation", exact: true })
-      .getByRole("link", { name: "Pricing", exact: true })
+      .getByRole("link", { name: "Cloud", exact: true })
       .click()
-  await expect(page.getByRole("heading", { name: "Pricing", exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\/cloud$/)
+  await expect(page.getByRole("heading", { name: "Cloud pricing", exact: true })).toBeVisible()
 })
 
 test("dashboard remains protected and legacy dashboard links redirect", async ({ page }) => {
@@ -253,11 +254,13 @@ test("theme, shared branding, footer destinations and reduced motion work", asyn
     .getByRole("link", { name: "About", exact: true })
     .click()
   await expect(page.getByRole("heading", { name: "About SpawnKit", exact: true })).toBeVisible()
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
   await page
     .getByRole("navigation", { name: "Footer navigation" })
     .getByRole("link", { name: "Getting started", exact: true })
     .click()
   await expect(page.getByRole("heading", { name: "Run a starter kit" })).toBeVisible()
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
   await page
     .getByRole("navigation", { name: "Footer navigation" })
     .getByRole("link", { name: "Community guidelines", exact: true })

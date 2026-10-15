@@ -111,9 +111,23 @@ if (service === "register") {
         { cwd: dashboard }
       )
     } else if (service === "stories" || service === "e2e-stories") {
+      const built = service === "e2e-stories" && process.env.SPAWN_E2E_STATIC_STORIES === "1"
       process.exitCode = await run(
-        join(dashboard, "node_modules/storybook/dist/bin/dispatcher.js"),
-        ["dev", "--host", "127.0.0.1", "--port", String(port), "--exact-port", "--no-open", "--ci"],
+        join(dashboard, built ? "node_modules/vite/bin/vite.js" : "node_modules/storybook/dist/bin/dispatcher.js"),
+        built
+          ? [
+              "preview",
+              "--config",
+              ".storybook/vite.config.ts",
+              "--outDir",
+              "storybook-static",
+              "--host",
+              "127.0.0.1",
+              "--port",
+              String(port),
+              "--strictPort"
+            ]
+          : ["dev", "--host", "127.0.0.1", "--port", String(port), "--exact-port", "--no-open", "--ci"],
         { cwd: dashboard }
       )
     } else {

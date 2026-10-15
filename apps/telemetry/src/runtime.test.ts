@@ -48,6 +48,7 @@ beforeAll(async () => {
         {
           name: "admin-test",
           modules: true,
+          unsafeDirectSockets: [{ host: "127.0.0.1", port: 0 }],
           script: "export default { fetch(request, env) { return env.ADMIN.fetch(request) } }",
           compatibilityDate: "2026-10-13",
           serviceBindings: { ADMIN: { name: "telemetry", entrypoint: "TelemetryAdmin" } }
@@ -72,10 +73,12 @@ async function admin(
   body?: unknown,
   environment = "production"
 ) {
-  const worker = await mf.getWorker("admin-test")
-  return worker.fetch(`http://internal/${project}/${environment}/${operation}`, {
+  // Exercise real HTTP without Miniflare's RPC connection pool, whose idle
+  // sockets can expire during the large SQLite fixture setup below.
+  const url = new URL(`/${project}/${environment}/${operation}`, await mf.unsafeGetDirectURL("admin-test"))
+  return fetch(url, {
     method,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", connection: "close" },
     ...(body ? { body: JSON.stringify(body) } : {})
   })
 }
@@ -129,11 +132,12 @@ function payload(id = crypto.randomUUID(), body = "event") {
   }
 }
 async function ingest(key: string, body: unknown, origin = "https://game.example") {
-  return mf.dispatchFetch("http://localhost/v1/logs", {
+  return fetch(new URL("/v1/logs", await mf.ready), {
     method: "POST",
     headers: {
       "x-spawn-key": key,
       "content-type": "application/json",
+      connection: "close",
       origin,
       "cf-connecting-ip": `192.0.2.${++requestNumber % 250}`
     },
@@ -343,12 +347,17 @@ it("queries a near-capacity tenant with large records while accepting ingestion"
     flags: 0,
     fingerprint: "seed-group"
   })
-  await storage.exec(
-    "WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x < 79000) INSERT INTO events(id, received, level, kind, name, release, fingerprint, bytes, data, body) SELECT 'seed-'||x, ?, 'error', 'error', 'capacity.error', 'v1', 'seed-group', ?, ?, 'Capacity search target' FROM n",
-    now,
-    data.length,
-    data
-  )
+  // Keep each inspection RPC bounded, without reducing the measured data set.
+  for (let first = 1; first <= 79000; first += 1000) {
+    await storage.exec(
+      "WITH RECURSIVE n(x) AS (VALUES(?) UNION ALL SELECT x+1 FROM n WHERE x < ?) INSERT INTO events(id, received, level, kind, name, release, fingerprint, bytes, data, body) SELECT 'seed-'||x, ?, 'error', 'error', 'capacity.error', 'v1', 'seed-group', ?, ?, 'Capacity search target' FROM n",
+      first,
+      first + 999,
+      now,
+      data.length,
+      data
+    )
+  }
   await storage.exec(
     "INSERT INTO counters(key,value) VALUES('storage:count',79000),('storage:bytes',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
     data.length * 79000

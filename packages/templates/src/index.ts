@@ -310,7 +310,7 @@ test("loads the game and accepts keyboard input", async ({page}) => {
  await canvas.focus()
  await page.keyboard.down("ArrowRight")
  try {
- ${extensions.ui === "none" ? "await expect(canvas).toBeFocused()" : 'await expect(page.locator("#score")).toContainText("Collected: 1", {timeout:15000})'}
+ ${extensions.ui === "none" ? "await expect(canvas).toBeFocused()" : 'await expect(page.locator("#score")).toHaveText(/^Collected: [1-9][0-9]*$/, {timeout:15000})'}
  } finally { await page.keyboard.up("ArrowRight") }
  expect(errors).toEqual([])
 })

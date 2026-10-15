@@ -1,4 +1,4 @@
-import { bindings, defineConfig } from "cf/config"
+import { bindings, defineConfig, triggers } from "cf/config"
 
 export default defineConfig(({ mode }) => {
   const target = process.env.SPAWN_DASHBOARD_ENVIRONMENT ?? mode
@@ -16,6 +16,11 @@ export default defineConfig(({ mode }) => {
       compatibilityDate: "2026-10-14",
       compatibilityFlags: ["nodejs_compat"],
       domains: process.env.SPAWN_CUSTOM_DOMAINS === "false" ? [] : [hostname],
+      // Exact PR routes take precedence over the production game router's wildcard.
+      triggers:
+        environment === "preview" && process.env.SPAWN_CUSTOM_DOMAINS !== "false"
+          ? [triggers.fetch({ pattern: `${hostname}/*`, zone: "spawnkit.cloud" })]
+          : [],
       observability: { enabled: true, traces: { enabled: true, headSamplingRate: 0.1 } },
       env: {
         SPAWN_ENVIRONMENT: bindings.text(environment),

@@ -8,6 +8,8 @@ The private repository is [AndrewCraswell/spawnkit](https://github.com/AndrewCra
 configuration tests, coverage, production builds (including Storybook), generated-project
 smoke checks, telemetry-package checks, and Playwright desktop/mobile acceptance.
 Tests use loopback fixture servers without deployment credentials.
+Browser jobs build the CLI and Storybook first, then exercise the packaged stories
+instead of waiting for development-time compilation on shared runners.
 
 A passing push to `main` deploys services, app and Storybook to staging, applies pending
 D1 migrations, and checks the published app, story index and commit metadata:
@@ -33,6 +35,8 @@ The GitHub deployment and job summary provide links. Previews use Clerk developm
 credentials and shared staging data; they are separate frontend Workers, not isolated
 backend databases. PR backend changes are tested by CI but never deployed to the shared
 API. Its exact-origin allowlist is updated using trusted `main` code.
+Each frontend has an exact Workers route so it takes precedence over the existing
+game-host wildcard. Preview deployments do not redeploy or change production services.
 
 Forks and Dependabot PRs run checks without deployment secrets or automatic previews.
 Repository writers are trusted to deploy branch code with staging credentials and the
@@ -67,14 +71,25 @@ Production environment secrets:
 | `DASHBOARD_ENV` | Contents of `apps/dashboard/.env.production` |
 | `SPAWN_GITHUB_APP_ENV` | Contents of `deploy/.env.github.production`, only when enabled |
 
-The deployment token needs Workers Scripts edit, Workers Routes edit, Workers KV Storage
-edit, D1 edit, Workers R2 Storage edit, and Account Settings read for account
-`544b5bfd594cd02a5da4b79a2038cc9f`; Zone read and DNS edit for zone
+The deployment token needs Workers Scripts edit, Workers KV Storage edit, D1 edit,
+Workers R2 Storage edit, and Account Settings read for account
+`544b5bfd594cd02a5da4b79a2038cc9f`; Workers Routes edit, Zone read and DNS edit for zone
 `2a8126a122d81d58aafe2535a2219e7c` (`spawnkit.cloud`). Container builds remain disabled;
 enabling that product requires its permissions and paid account configuration separately.
 The existing runtime hosting token is narrower and must not be reused as a deployment token.
 Do not store a local OAuth access/refresh token in Actions: use a dedicated API token.
 See [Cloudflare CI authentication](https://developers.cloudflare.com/cf/ci/).
+
+The dedicated `SpawnKit GitHub Actions` user token was created and stored in Actions
+on October 14, 2026, and expires October 15, 2027 UTC. Rotate it before expiration.
+Token listing is unavailable to the local OAuth login, but the user-token creation
+endpoint supports issuing the scoped token. No token value is stored in the repository.
+
+GitHub rejected branch protection for this private repository on the current account
+plan (Pro is required). CI runs and deployment gates are configured, but GitHub does
+not enforce required checks before a writer pushes or merges. Enable required `Verify`
+and both `Browser acceptance (desktop)` and `Browser acceptance (mobile)` checks when
+branch protection becomes available.
 
 Temporary credential files are ignored, created with restricted permissions and removed
 after each job. They are never uploaded as artifacts. Failed browser runs retain traces
