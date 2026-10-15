@@ -254,11 +254,13 @@ test("theme, shared branding, footer destinations and reduced motion work", asyn
     .getByRole("link", { name: "About", exact: true })
     .click()
   await expect(page.getByRole("heading", { name: "About SpawnKit", exact: true })).toBeVisible()
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
   await page
     .getByRole("navigation", { name: "Footer navigation" })
     .getByRole("link", { name: "Getting started", exact: true })
     .click()
   await expect(page.getByRole("heading", { name: "Run a starter kit" })).toBeVisible()
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
   await page
     .getByRole("navigation", { name: "Footer navigation" })
     .getByRole("link", { name: "Community guidelines", exact: true })
