@@ -76,14 +76,20 @@ Production environment secrets:
 The deployment token needs Workers Scripts edit, Workers KV Storage edit, D1 edit,
 Workers R2 Storage edit, and Account Settings read for account
 `544b5bfd594cd02a5da4b79a2038cc9f`; Workers Routes edit, Zone read and DNS edit for zone
-`2a8126a122d81d58aafe2535a2219e7c` (`spawnkit.cloud`). Container builds remain disabled;
-enabling that product requires its permissions and paid account configuration separately.
+`2a8126a122d81d58aafe2535a2219e7c` (`spawnkit.cloud`). Hosted builds are enabled;
+the deployment token also requires account-scoped **Workers Containers Write**.
+`deploy/builds.json` keeps production and staging enabled, with local builds disabled.
 The existing runtime hosting token is narrower and must not be reused as a deployment token.
 Do not store a local OAuth access/refresh token in Actions: use a dedicated API token.
 See [Cloudflare CI authentication](https://developers.cloudflare.com/cf/ci/).
 
-The dedicated `SpawnKit GitHub Actions` user token was created and stored in Actions
-on October 14, 2026, and expires October 15, 2027 UTC. Rotate it before expiration.
+The replacement `SpawnKit GitHub Actions Containers` user token was created and stored
+in Actions on October 14, 2026, and expires October 15, 2027 UTC. Its ID is
+`b30ae8b84f75ab8f47b0ae459d21fcb3`; its value was transferred directly to the repository
+secret without writing it to disk or logs. Reading the deployed container applications
+with this token passed. Rotate it before expiration. The older `SpawnKit GitHub Actions`
+token is superseded and should be revoked from Cloudflare's token UI; its ID was not
+available to this session and token listing remains denied for the local OAuth login.
 Token listing is unavailable to the local OAuth login, but the user-token creation
 endpoint supports issuing the scoped token. No token value is stored in the repository.
 

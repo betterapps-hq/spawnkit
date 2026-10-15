@@ -9,6 +9,9 @@ An AI-native web-game hosting platform: “Vercel meets PlayFab” for developer
 | Document | Responsibility |
 | --- | --- |
 | [Decisions and open questions](decisions.md) | Agreed product boundaries, pricing, and unresolved choices |
+| [Public-site positioning](public-site-positioning.md) | Proposed audiences, offers, value, navigation, and evidence boundaries |
+| [For Creators page brief](creators-page.md) | Proposed creator narrative, copy, demonstrations, and starter-kit journey |
+| [Cloud page brief](cloud-page.md) | Proposed hosting narrative, release workflow, pricing presentation, and availability |
 | [Deployment](deployment.md) | Source upload, isolated builds, environments, promotion, rollback, and GitHub Actions |
 | [Management dashboard](management-dashboard.md) | Developer workflows, operational visibility, environment controls, and billing |
 | [Project dashboard design](project-dashboard-storybook.md) | Storybook screen matrix, template creation, version operations, PR previews, and domains |
@@ -18,6 +21,7 @@ An AI-native web-game hosting platform: “Vercel meets PlayFab” for developer
 | [Game services](game-services.md) | Supported official Colyseus capabilities and their configuration/persistence lifecycle |
 | [Project templates](project-templates.md) | Presets, composable stack selection, generation, import, install, and add |
 | [Development](development.md) | Current workspace, local commands, template implementation, and next steps |
+| [Performance and usage controls](internal/performance-and-limits.md) | Polling, cache behavior, build allowances, rate limits, CPU bounds and billing alerts |
 
 ## Reading requirements
 
@@ -77,4 +81,4 @@ examples/
 docs/
 ```
 
-This expanded structure is a proposal. The implementation includes the dashboard, CLI, templates, authenticated control API and isolated static game host. Project persistence, source uploads, release promotion, rollback and Sandbox activation have been verified against live infrastructure. Hosted builds await Workers Paid; GitHub App credentials are still needed for its end-to-end integration. SpawnKit domains follow the [domain contract](domains.md). See [platform operations](internal/platform-operations.md) for deployment instructions, verified behavior and current limits, and [development](development.md) for local commands. A separate shared game-service API remains deferred.
+This expanded structure is a proposal. The implementation includes the dashboard, CLI, templates, authenticated control API and isolated static game host. Project persistence, source uploads, release promotion, rollback and Sandbox activation have been verified against live infrastructure. Hosted builds await Workers Paid. The production GitHub App and signed ping delivery are configured; repository installation and webhook-driven deployment verification remain outstanding. SpawnKit domains follow the [domain contract](domains.md). See [platform operations](internal/platform-operations.md) for deployment instructions, verified behavior and current limits, and [development](development.md) for local commands. A separate shared game-service API remains deferred.

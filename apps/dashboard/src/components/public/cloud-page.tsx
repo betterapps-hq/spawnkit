@@ -14,7 +14,6 @@ import {
   Sparkles
 } from "lucide-react"
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { CloudScene } from "./cloud-scene"
@@ -27,52 +26,45 @@ const releaseSteps = [
     icon: Braces,
     title: "Your source becomes a versioned release.",
     description:
-      "Publish from the CLI or connect your GitHub workflow. Isolated builds keep the output tied to the source that produced it.",
-    detail: "Hosted builds are awaiting platform activation."
+      "Publish from the CLI or connect your GitHub workflow. Isolated builds keep the output tied to the source that produced it."
   },
   {
     name: "Preview",
     icon: GitPullRequest,
     title: "Review changes in a separate preview.",
     description:
-      "Try a change in its own preview. Review a link, test the gameplay, and keep unfinished ideas away from production.",
-    detail: "Managed GitHub previews are in development."
+      "Try a change in its own preview. Review a link, test the gameplay, and keep unfinished ideas away from production."
   },
   {
     name: "Stage",
     icon: GitBranch,
     title: "Test against a staging environment.",
     description:
-      "An optional Sandbox separates staging from production. Test changes against the right configuration before promoting a release.",
-    detail: "Sandbox adds $5/month plus usage when activated."
+      "An optional Sandbox separates staging from production. Test changes against the right configuration before promoting a release."
   },
   {
     name: "Release",
     icon: Globe2,
     title: "Promote or roll back a release.",
     description:
-      "Promote the tested build, keep its history, and roll back a release when you need to. Promotion changes the build, not your players’ saved data.",
-    detail: "Static release promotion and rollback are implemented."
+      "Promote the tested build, keep its history, and roll back a release when you need to. Promotion changes the build, not your players’ saved data."
   }
 ]
 export function CloudPage() {
   const [step, setStep] = useState(0)
   return (
     <PublicShell active="/cloud">
-      <div className="p-container">
+      <div className="p-container p-cloud-page">
         <section className="p-cloud-hero">
           <div>
-            <span className="p-pill">
-              <span className="p-live-dot" /> SPAWNKIT CLOUD · EARLY ACCESS
-            </span>
             <h1>
               Game hosting.
               <br />
               <span className="p-accent">From build to release.</span>
             </h1>
             <p>
-              Host your web game with versioned releases and rollback. Add separate testing environments and follow the
-              progress of managed Colyseus services.
+              Ship your web game with versioned releases, pull request previews, and rollback. Keep staging separate and
+              connect multiplayer with Colyseus.
             </p>
             <div className="p-hero-actions">
               <Button asChild>
@@ -113,7 +105,6 @@ export function CloudPage() {
             <div>
               <h2>Test changes before they reach players</h2>
             </div>
-            <p>Explore the deployment workflow and current availability.</p>
           </div>
           <Tabs className="p-release-demo" value={String(step)} onValueChange={(value) => setStep(Number(value))}>
             <TabsList className="p-release-tabs" aria-label="Deployment pipeline">
@@ -126,7 +117,7 @@ export function CloudPage() {
                 </TabsTrigger>
               ))}
             </TabsList>
-            {releaseSteps.map(({ name, title, description, detail, icon: Icon }, index) => (
+            {releaseSteps.map(({ name, title, description, icon: Icon }, index) => (
               <TabsContent key={name} value={String(index)} className="p-release-content">
                 <div className="p-release-icon">
                   <Icon size={45} />
@@ -134,18 +125,17 @@ export function CloudPage() {
                 <div>
                   <h3>{title}</h3>
                   <p>{description}</p>
-                  <span className="p-availability-note">{detail}</span>
                 </div>
               </TabsContent>
             ))}
           </Tabs>
         </section>
-        <section className="p-multiplayer">
+        <section id="multiplayer" className="p-multiplayer">
           <div>
             <h2>Multiplayer with Colyseus</h2>
             <p>
-              Colyseus brings authoritative game servers, synchronized rooms, and matchmaking. SpawnKit’s managed
-              integration is in development, so your next multiplayer idea has a clear place to go.
+              Build multiplayer games with authoritative servers, synchronized rooms, and matchmaking. Colyseus keeps
+              players in the same world while you focus on the gameplay.
             </p>
             <a href="https://docs.colyseus.io/" target="_blank" rel="noreferrer" className="p-text-link">
               Explore Colyseus <ArrowRight size={17} />
@@ -175,17 +165,14 @@ export function CloudPage() {
                 <small>{name}</small>
               </div>
             ))}
-            <span className="p-illustration-caption">MULTIPLAYER ARCHITECTURE · ILLUSTRATION</span>
+            <span className="p-illustration-caption">MULTIPLAYER ARCHITECTURE</span>
           </div>
         </section>
-        <section className="p-services">
+        <section id="services" className="p-services">
           <div className="p-section-heading">
             <div>
               <h2>Player accounts, saves, and leaderboards</h2>
             </div>
-            <Badge variant="outline" className="p-tag">
-              Managed services · coming soon
-            </Badge>
           </div>
           <div className="p-services-grid">
             {colyseusServices.slice(0, 4).map((service, index) => (
@@ -199,21 +186,17 @@ export function CloudPage() {
               </a>
             ))}
           </div>
-          <p className="p-collection-note">
-            Official Colyseus capabilities. Selecting services in a project saves your configuration; it does not
-            activate a hosted backend.
-          </p>
         </section>
         <section className="p-ai-section">
           <div className="p-ai-console">
             <header>
-              <Activity size={16} /> ISSUE CONTEXT <span>ILLUSTRATIVE</span>
+              <Activity size={16} /> ISSUE CONTEXT
             </header>
             <div className="p-issue">
               <span className="p-issue-dot" />
               <div>
                 <b>Player falls through the platform</b>
-                <small>Collision update · level-02</small>
+                <small>Collision update in level-02</small>
               </div>
               <span>Open</span>
             </div>
@@ -235,7 +218,6 @@ export function CloudPage() {
               SpawnKit telemetry collects consented errors, logs, and game events. Bring that context into your AI
               coding workflow to investigate issues and work toward a fix.
             </p>
-            <p>AI investigation tools are in development. Fixes still need your review and a test run.</p>
             <a href="/templates" className="p-text-link">
               Add telemetry to your starter <ArrowRight size={17} />
             </a>

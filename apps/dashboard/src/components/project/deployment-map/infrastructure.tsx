@@ -5,11 +5,13 @@ import type { DeploymentConfiguration, ResourceSettings } from "./configuration"
 export function Infrastructure({
   settings,
   configuration,
-  onOpen
+  onOpen,
+  details
 }: {
   settings: ResourceSettings
   configuration: DeploymentConfiguration
   onOpen: (resource: string) => void
+  details?: { client: string; servers: string; database: string; assets: string }
 }) {
   const regions = Object.entries(settings.regions)
   const count = regions.reduce((sum, [, value]) => sum + value, 0)
@@ -26,7 +28,7 @@ export function Infrastructure({
       >
         <Globe2 />
         <span>Game client</span>
-        <span className="ml-auto text-xs font-normal text-muted-foreground">Global edge</span>
+        <span className="ml-auto text-xs font-normal text-muted-foreground">{details?.client ?? "Global edge"}</span>
       </Button>
       {(configuration.servers || configuration.api) && <div className="dm-infra-stem" aria-hidden="true" />}
       {configuration.servers && (
@@ -41,16 +43,16 @@ export function Infrastructure({
           <span className="dm-infra-resource-title">
             <Server />
             <span>Game servers</span>
-            <span className="ml-auto text-xs font-normal text-muted-foreground">{count}×</span>
+            <span className="ml-auto text-xs font-normal text-muted-foreground">{details?.servers ?? `${count}×`}</span>
           </span>
           <span className="dm-infra-regions">
             {regions.slice(0, 3).map(([city, instances]) => (
               <span className="dm-infra-region" key={city}>
                 <span>
-                  <i />
+                  <i className={details ? "bg-muted-foreground!" : ""} />
                   {city}
                 </span>
-                <span>{instances}×</span>
+                <span>{details ? "Configured" : `${instances}×`}</span>
               </span>
             ))}
             {regions.length > 3 && (
@@ -97,7 +99,9 @@ export function Infrastructure({
                   <Database />
                   {configuration.database === "neon" ? "Neon Postgres" : "Database"}
                 </span>
-                <span className="text-xs font-normal text-muted-foreground">{settings.database}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {details?.database ?? settings.database}
+                </span>
               </Button>
             )}
             {configuration.assets && (
@@ -112,7 +116,9 @@ export function Infrastructure({
                   <HardDrive />
                   Assets
                 </span>
-                <span className="text-xs font-normal text-muted-foreground">2.4 GB · Global</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {details?.assets ?? "2.4 GB · Global"}
+                </span>
               </Button>
             )}
           </div>

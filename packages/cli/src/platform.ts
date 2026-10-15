@@ -111,7 +111,7 @@ export async function runPlatform(
     }
     emit(
       clean,
-      `Logs · ${target}\n\n${clean.entries.length ? clean.entries.map((entry) => `${entry.sequence}  ${entry.message}`).join("\n") : "No logs yet."}${clean.nextCursor ? `\n\nContinue: --cursor ${clean.nextCursor}` : ""}`
+      `Logs · ${target}\n\n${clean.entries.length ? clean.entries.map((entry) => `${entry.sequence}  ${entry.message}`).join("\n") : values.cursor ? "No additional logs." : "No logs yet."}${clean.nextCursor ? `\n\nContinue: --cursor ${clean.nextCursor}` : ""}`
     )
     return
   }
@@ -214,5 +214,5 @@ function checkDeployment(result: Deployment) {
   identifier(result.id)
 }
 function formatDeployment(result: Deployment) {
-  return `Deployment: ${result.id}\nEnvironment: ${result.environment === "sandbox" ? "Sandbox" : "Production"}\nStatus: ${result.status}${result.releaseId ? `\nRelease: ${result.releaseId}` : ""}${result.url ? `\nURL: ${result.url}` : ""}`
+  return `Deployment: ${result.id}\nEnvironment: ${result.environment === "sandbox" ? "Sandbox" : "Production"}\nStatus: ${result.status}${result.releaseId ? `\nRelease: ${result.releaseId}` : ""}${result.url ? `\nURL: ${result.url}` : ""}${result.deploymentUrl ? `\nDeployment URL: ${result.deploymentUrl}` : ""}`
 }

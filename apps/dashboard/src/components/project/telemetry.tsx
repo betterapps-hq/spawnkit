@@ -153,6 +153,7 @@ function TelemetryFeed({
   const feed = useQuery({
     queryKey,
     refetchInterval: paused || cursor ? false : 10_000,
+    refetchIntervalInBackground: false,
     queryFn: ({ signal }) => {
       const until = snapshot?.until ?? Date.now()
       const since = snapshot?.since ?? until - Number(hours) * 3_600_000

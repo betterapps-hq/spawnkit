@@ -12,7 +12,7 @@ export function AboutPage() {
           <h2>For players and creators</h2>
           <p>
             SpawnKit brings free browser games, configurable starter kits, and game infrastructure together. Play a
-            demo, explore a concept, or start with an engine and make something of your own using your preferred AI
+            game, discover a new idea, or start with an engine and make something of your own using your preferred AI
             editor.
           </p>
           <a href="/templates" className="p-text-link">
@@ -24,25 +24,21 @@ export function AboutPage() {
           <div className="p-info-grid">
             <article>
               <Gamepad2 />
-              <h3>Available now</h3>
+              <h3>Build for the web</h3>
               <p>
-                Three browser demos, four engine starter kits, downloadable project source, and configurable physics,
+                Free browser games, four engine starter kits, downloadable project source, and configurable physics,
                 testing, and telemetry integrations.
               </p>
             </article>
             <article>
               <Layers3 />
-              <h3>In development</h3>
+              <h3>Desktop & mobile</h3>
               <p>
-                Managed Colyseus servers, hosted build activation, GitHub previews, paid checkout, public ratings and
-                comments, and native desktop and mobile templates.
+                Native project templates for desktop and mobile are coming soon. Start with the web and bring your ideas
+                to more screens.
               </p>
             </article>
           </div>
-          <p>
-            Static release promotion and rollback are implemented. Cloud features have individual availability notes on
-            the hosting page.
-          </p>
           <a href="/cloud" className="p-text-link">
             Explore hosting <ArrowRight size={16} />
           </a>
@@ -61,15 +57,11 @@ export function HelpPage() {
         <section id="playing">
           <h2>Playing games</h2>
           <p>
-            Choose an entry marked “Playable demo,” then select Play demo. No account or install is needed. Each game
-            includes keyboard and touch controls. Space pauses the game when it has focus.
-          </p>
-          <p>
-            Entries marked “Game concept” show an idea and its artwork. Their starter links create a minimal engine
-            project, rather than the illustrated game.
+            Choose a game, then select Play now. No account or install is needed. Each game includes keyboard and touch
+            controls. Space pauses the game when it has focus.
           </p>
           <a href="/?availability=playable#games" className="p-text-link">
-            Find a playable demo <ArrowRight size={16} />
+            Find a game <ArrowRight size={16} />
           </a>
         </section>
         <section>
@@ -83,7 +75,7 @@ export function HelpPage() {
               Run <code>pnpm install</code>, then <code>pnpm dev</code>.
             </li>
           </ol>
-          <p>The included README explains the generated project. Downloading a kit does not create cloud resources.</p>
+          <p>The included README explains how to run and customize your project.</p>
           <Button asChild>
             <a href="/templates" className="p-button">
               Open the builder <ArrowRight size={16} />
@@ -93,16 +85,15 @@ export function HelpPage() {
         <section>
           <h2>Ratings and comments</h2>
           <p>
-            Community features are in preview. You can save, edit, and remove your feedback on a game page. It stays in
-            this browser, is not included in public totals, and is removed if you clear site storage. Public posting is
-            not available yet.
+            Open a game page to leave a star rating and a comment. Share what you enjoyed and what could improve. You
+            can edit or remove your feedback at any time.
           </p>
         </section>
         <section>
           <h2>Cloud setup</h2>
           <p>
-            Sign in to open your dashboard. Check individual feature availability before configuring hosting or
-            services. Paid plan checkout is not enabled in this preview.
+            Sign in to open your dashboard. Create a project, choose your services, and configure your production and
+            staging environments.
           </p>
           <a href="/cloud" className="p-text-link">
             Hosting and deployment details <ArrowRight size={16} />
@@ -139,13 +130,6 @@ export function GuidelinesPage() {
           <p>
             Critique the game without targeting the creator. Avoid harassment, spam, impersonation, and links to unsafe
             downloads. Share assets and code only when you have permission.
-          </p>
-        </section>
-        <section>
-          <h2>During the preview</h2>
-          <p>
-            Feedback is saved locally and is visible only to you. Public posting and moderation tools are still in
-            development.
           </p>
         </section>
         <a href="/#games" className="p-text-link">

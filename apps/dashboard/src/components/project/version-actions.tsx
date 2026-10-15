@@ -29,7 +29,7 @@ const titles: Record<OperationPanel, string> = {
   "enable-sandbox": "Enable Sandbox",
   "stage-version": "Deploy version to Sandbox",
   "retry-preview": "Rebuild PR preview",
-  "close-preview": "Close PR preview",
+  "close-preview": "Delete preview",
   "enable-previews": "Enable PR previews"
 }
 export function VersionActionSheet({
@@ -76,23 +76,32 @@ export function VersionActionSheet({
   )
   const selected = project.releases.find((item) => item.id === selectedId)
   const isVersionAction = ["promote", "rollback", "stage-version"].includes(panel)
-  const destination = panel === "stage-version" ? project.sandbox : project.production
+  const destination =
+    panel === "stage-version" || (panel === "deploy" && target === "sandbox") ? project.sandbox : project.production
   const checks = [
     { label: "Successful build", passed: selected?.status === "ready" },
     { label: "Artifact retained", passed: Boolean(selected?.retained && selected.build.artifact) },
     { label: "Compatible schema", passed: Boolean(selected?.compatible) }
   ]
-  const blocked = isVersionAction
-    ? checks.some((check) => !check.passed) || !destination || selected?.id === destination.release?.id
-    : panel === "enable-sandbox"
-      ? Boolean(project.sandbox)
-      : panel === "deploy"
-        ? !project.repository || !branch.trim()
-        : panel === "enable-previews"
-          ? !project.repository || project.previewsEnabled
-          : panel === "retry-preview" || panel === "close-preview"
-            ? !preview
-            : false
+  const unavailable = Boolean(
+    project.capabilities &&
+    ((["deploy", "retry-preview"].includes(panel) && !project.capabilities.builds) ||
+      (["deploy", "retry-preview", "promote", "rollback", "stage-version", "restart"].includes(panel) &&
+        project.mode === "multiplayer"))
+  )
+  const blocked =
+    unavailable ||
+    (isVersionAction
+      ? checks.some((check) => !check.passed) || !destination || selected?.id === destination.release?.id
+      : panel === "enable-sandbox"
+        ? Boolean(project.sandbox)
+        : panel === "deploy"
+          ? !project.repository || !branch.trim()
+          : panel === "enable-previews"
+            ? !project.repository || project.previewsEnabled
+            : panel === "retry-preview" || panel === "close-preview"
+              ? !preview
+              : false)
   async function submit() {
     if (!canEdit || !onAction || blocked || state === "pending") return
     setError("")
@@ -111,9 +120,13 @@ export function VersionActionSheet({
         }
       })
       setState("success")
-    } catch {
+    } catch (reason) {
       setState("error")
-      setError("We couldn't confirm this request. Check deployment status before trying again.")
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "We couldn't confirm this request. Check deployment status before trying again."
+      )
     }
   }
   const label =
@@ -126,7 +139,7 @@ export function VersionActionSheet({
           : panel === "deploy"
             ? "Build version"
             : panel === "close-preview"
-              ? "Close preview"
+              ? "Delete preview"
               : panel === "retry-preview"
                 ? "Rebuild preview"
                 : panel === "enable-previews"
@@ -448,7 +461,7 @@ export function VersionActionSheet({
                     </h2>
                     <p className="mt-3 text-xs leading-6 text-muted-foreground">
                       {panel === "close-preview"
-                        ? "Stop this preview's runtime and remove its routing. Production and Sandbox are unaffected. Retained version artifacts remain available."
+                        ? "Remove this preview environment and its routing. The GitHub pull request stays open. Retained release artifacts remain available."
                         : panel === "retry-preview"
                           ? "Build the latest pull request commit and update this preview after checks pass. The current preview remains available until replacement."
                           : "New commits update the preview automatically. Closing or merging a pull request schedules its environment for cleanup."}
@@ -465,6 +478,13 @@ export function VersionActionSheet({
                     preview charge.
                   </Notice>
                 </div>
+              )}
+              {unavailable && (
+                <Notice>
+                  {project.mode === "multiplayer"
+                    ? "Multiplayer runtime deployment is not available yet."
+                    : "Hosted builds are not enabled."}
+                </Notice>
               )}
               {error && <Notice>{error}</Notice>}
               {!canEdit && <Notice tone="info">You have view access. A project owner must submit this change.</Notice>}

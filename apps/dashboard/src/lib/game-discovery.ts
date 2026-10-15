@@ -1,3 +1,4 @@
+import { communityPreview } from "./community-preview"
 import { exampleGames } from "./example-catalog"
 
 const playable = new Set(["snake", "breakout", "space-shooter"])
@@ -19,6 +20,8 @@ export type GamesSearch = {
   genre?: string | undefined
   dimension?: string | undefined
   availability?: string | undefined
+  rating?: string | undefined
+  reviews?: string | undefined
   sort?: string | undefined
 }
 export function gamesSearch(search: Record<string, unknown>): GamesSearch {
@@ -32,7 +35,11 @@ export function gamesSearch(search: Record<string, unknown>): GamesSearch {
     dimension: search.dimension === "2D" || search.dimension === "3D" ? search.dimension : undefined,
     availability:
       search.availability === "playable" || search.availability === "concept" ? search.availability : undefined,
-    sort: search.sort === "az" || search.sort === "newest" ? search.sort : undefined
+    rating: ["4", "4.5", "4.8"].includes(String(search.rating)) ? String(search.rating) : undefined,
+    reviews: ["25", "50", "100"].includes(String(search.reviews)) ? String(search.reviews) : undefined,
+    sort: ["az", "newest", "popular", "rating", "reviews"].includes(String(search.sort))
+      ? String(search.sort)
+      : undefined
   }
 }
 export function discoverGames(search: GamesSearch) {
@@ -46,13 +53,17 @@ export function discoverGames(search: GamesSearch) {
             : game.genre === search.genre)) &&
         (!search.dimension || game.dimension === search.dimension) &&
         (!search.availability || (search.availability === "playable" ? game.playable : !game.playable)) &&
+        (!search.rating || communityPreview(game.id).rating >= Number(search.rating)) &&
+        (!search.reviews || communityPreview(game.id).reviews >= Number(search.reviews)) &&
         `${game.name} ${game.description} ${game.genre} ${game.engine}`.toLowerCase().includes(query)
     )
-    .sort((a, b) =>
-      search.sort === "az"
-        ? a.name.localeCompare(b.name)
-        : search.sort === "newest"
-          ? b.added - a.added
-          : a.order - b.order
-    )
+    .sort((a, b) => {
+      const left = communityPreview(a.id)
+      const right = communityPreview(b.id)
+      if (search.sort === "az") return a.name.localeCompare(b.name)
+      if (search.sort === "newest") return b.added - a.added
+      if (search.sort === "rating") return right.rating - left.rating || right.reviews - left.reviews
+      if (search.sort === "reviews") return right.reviews - left.reviews
+      return right.activity - left.activity || a.order - b.order
+    })
 }

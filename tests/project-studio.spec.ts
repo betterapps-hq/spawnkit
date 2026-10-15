@@ -69,7 +69,7 @@ test("promotion and rollback review the artifact and prevent unavailable operati
   await expect(page.getByRole("dialog").getByRole("button", { name: "Promote version" })).toBeDisabled()
   await story(page, "deployments--request-failed")
   await page.getByRole("dialog").getByRole("button", { name: "Promote version" }).click()
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("Check deployment status")
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("Simulated request failure")
 })
 
 test("deployments filter history and expose failed build diagnostics", async ({ page }) => {
@@ -207,9 +207,9 @@ test("PR cleanup is separate from version retention, and outdated previews canno
   await story(page, "pr-previews--open-pull-requests")
   await page.getByRole("button", { name: "Preview 41 actions", exact: true }).click()
   await page.getByRole("menuitem", { name: "Close preview environment", exact: true }).click()
-  const dialog = page.getByRole("dialog", { name: "Close PR preview", exact: true })
-  await expect(dialog).toContainText("Production and Sandbox are unaffected")
-  await dialog.getByRole("button", { name: "Close preview", exact: true }).click()
+  const dialog = page.getByRole("dialog", { name: "Delete preview", exact: true })
+  await expect(dialog).toContainText("The GitHub pull request stays open")
+  await dialog.getByRole("button", { name: "Delete preview", exact: true }).click()
   await dialog.getByRole("button", { name: "Back to project" }).click()
   await expect(page.getByRole("article").filter({ hasText: "Rework the frost mage abilities" })).toContainText(
     "closing"

@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
       entrypoint: "@tanstack/react-start/server-entry",
       compatibilityDate: "2026-10-14",
       compatibilityFlags: ["nodejs_compat"],
+      limits: { cpuMs: 100 },
       domains: process.env.SPAWN_CUSTOM_DOMAINS === "false" ? [] : [hostname],
       // Exact PR routes take precedence over the production game router's wildcard.
       triggers:

@@ -109,3 +109,19 @@ After the backend update, live authenticated project listing succeeds (one exist
 ## Updated upload and release contract verification
 
 85 CLI tests pass after checking the updated backend contract. HTTP-level deployment tests now repeat a request and assert identical upload keys, source metadata, activation keys, and activation bodies. Boundary tests cover 121- and 128-character request IDs and distinguish different long IDs. Release commands forward cursors, display continuation only when `nextCursor` exists, and omit it from exhausted JSON pages. Successful deployment URLs are preserved in both human-readable and JSON status/promotion output. CLI types, lint, and bundled build pass. No live mutations or builds were initiated for this verification. Repository verification remains blocked by formatting in concurrent telemetry/dashboard work.
+
+## Live staging CLI acceptance — October 14, 2026
+
+Waited for existing Sandbox deployment `496b5ac8-e92f-496d-b662-4a0959f78607` to succeed before submitting another build. Ran the real `runCli` / HTTP client against `https://api.staging.spawnkit.cloud/api/platform/v1`, using the existing OAuth token in memory and overriding only the API object's site. The user's credential file was checked byte-for-byte by SHA-256 before/after each invocation and remained unchanged. No credentials were printed or copied into a fixture. The CLI's standard progress callback was connected to console output in the acceptance harness; this was not a fresh browser login or a separate packaged-binary credential-profile test.
+
+Project: `verify-d269cfde-d6ec-4de8-aae8-c90ccf972c70` (Platform verification). Source: `D:/spawn/work/platform-smoke`, 17 files / 22520 compressed bytes. `deploy --dry-run` selected enabled Sandbox and printed the predecessor without uploading. `deploy --yes --request-id cli-acceptance-20261014-01` uploaded and verified the source, then returned a queued deployment. Status subsequently reported success:
+
+- Deployment: `8fd1fccf-fbd3-4383-b377-6ac8577f51c0`
+- Release: `06255d46-f0be-4189-9729-47d0ccb8b792`
+- Environment URL: https://staging.platform-verification.staging.spawnkit.cloud
+- Immutable deployment URL: https://d-00f759f6.platform-verification.staging.spawnkit.cloud
+
+Log pages showed the isolated Node.js 24 / pnpm 12 build, installation, TypeScript/Vite build, and immutable artifact completion. Cursors 72 and 100 were followed; the last page was empty. Two CLI-only improvements resulted: human-readable status now includes the immutable `deploymentUrl` supplied by the server, and an exhausted log cursor says `No additional logs.` instead of `No logs yet.` JSON retains both URLs. Regression tests cover both behaviors.
+
+Playwright verified both URLs returned HTTP 200 and the expected `platform-smoke` title, rendered a canvas, collected an item using ArrowRight, paused via the button, resumed using Escape, and produced no page errors. Evidence is in ignored `work/cli-staging-browser-results.json` and `work/cli-staging-{environment,immutable}.png`. No production deployment, promotion, rollback, project creation, or backend configuration edit was performed.
+Validation after these fixes: all 96 CLI tests, CLI TypeScript, lint, and bundled build pass. Live status displays both URLs, and the final log page displays the corrected message. `pnpm verify` stops at formatting in 21 concurrently edited control-api/dashboard/platform files outside this change; those files were left untouched.

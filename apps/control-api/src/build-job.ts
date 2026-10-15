@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { getSandbox } from "@cloudflare/sandbox"
 import { DurableObject } from "cloudflare:workers"
 import { activate, type DeploymentRow } from "./activation"
+import { claimBuildBudget } from "./build-budget"
 import { boundedBody, record, requireValue, HttpError } from "./http"
 import { decodeSource, validateSourcePath } from "./source"
 
@@ -27,6 +28,7 @@ export class BuildJob extends DurableObject<Env> {
     }
     try {
       if (sandbox) {
+        await claimBuildBudget(this.env, id, deployment.project_id)
         // A retry always starts a fresh filesystem; no source from another build is reused.
         await sandbox.destroy()
         await this.env.DATABASE.prepare("UPDATE deployments SET status='building',updated_at=? WHERE id=?")

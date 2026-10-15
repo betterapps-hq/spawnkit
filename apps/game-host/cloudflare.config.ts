@@ -16,6 +16,7 @@ export default defineConfig(() => {
         : `${production ? "spawnkit" : "spawn"}-game-${slot}`,
       entrypoint: "./src/index.ts",
       compatibilityDate: "2026-10-14",
+      limits: { cpuMs: 50 },
       workersDev: true,
       domains:
         process.env.SPAWN_CUSTOM_DOMAINS === "false"

@@ -324,7 +324,7 @@ test("production connection opens release choices and keeps changes explicit", a
     .toBe(page.viewportSize()!.width)
   await page.screenshot({ path: `work/deployment-map-version-panel-${info.project.name}.png`, scale: "css" })
   await page.getByRole("button", { name: /v1.8.0.*5 commits/ }).click()
-  await expect(page.getByRole("heading", { name: "Review release" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Promote release", exact: true })).toBeVisible()
   await expect(page.locator('.react-flow__node[data-id="production"]')).toContainText("v1.7.2")
   await page.getByRole("button", { name: "Cancel", exact: true }).click()
   await expect(control).toBeFocused()
@@ -333,6 +333,11 @@ test("production connection opens release choices and keeps changes explicit", a
   await expect(page.getByRole("combobox", { name: "Target release" })).toContainText("v1.7.1")
   await page.getByRole("button", { name: "Confirm rollback" }).click()
   await expect(page.locator(".dm-activity")).toContainText("v1.7.1 restored")
+  await page.getByRole("button", { name: "Finish drain" }).click()
+  await control.click()
+  await page.getByRole("button", { name: /v1.7.2.*2 commits/ }).click()
+  await expect(page.locator("[data-release-origin]")).toHaveText("Retained release")
+  await expect(page.getByRole("heading", { name: "Promote release", exact: true })).toBeVisible()
   await open(page, "failed-pipeline")
   await control.click()
   await page.getByRole("button", { name: /v1.8.0.*5 commits/ }).click()
@@ -353,18 +358,44 @@ test("release review compares changes and exposes linked GitHub work", async ({ 
   await expect(page.getByRole("heading", { name: "Changes added" })).toBeVisible()
   await expect(dialog.getByRole("tab", { name: "Commits 5", exact: true })).toBeVisible()
   await expect(dialog).not.toContainText("5 commits added")
-  await expect(dialog.locator(".dm-release-comparison")).toContainText("Current")
-  await expect(dialog.locator(".dm-release-comparison")).toContainText("After deployment")
-  await expect(dialog.locator(".dm-release-comparison")).not.toContainText("Staging")
+  const transfer = dialog.getByLabel("Release destination", { exact: true })
+  await expect(transfer.locator("[data-release-origin]")).toHaveText("Staging")
+  await expect(transfer.getByText("Production", { exact: true })).toBeVisible()
+  await expect(transfer.getByText("v1.8.0", { exact: true })).toHaveCount(1)
+  await expect(transfer.getByLabel("Source release", { exact: true })).toContainText("v1.8.0")
+  const destination = transfer.getByLabel("Current production release", { exact: true })
+  await expect(destination).toContainText("v1.7.2")
+  await expect(destination.getByRole("link", { name: "View commit c46d219 on GitHub" })).toHaveAttribute(
+    "href",
+    "https://github.com/studio/thornwatch/commit/c46d219"
+  )
+  expect((await transfer.getByLabel("Source release", { exact: true }).boundingBox())!.x).toBeLessThan(
+    (await destination.boundingBox())!.x
+  )
+  await expect(dialog).not.toContainText("vs.")
   await expect(dialog).toContainText("8e3a9c2")
   await expect(dialog).toContainText("Add skill-based matchmaking queues")
+  const firstCommit = dialog.locator(".dm-commit-list li").first()
+  await expect(firstCommit.getByRole("link", { name: "View commit 8e3a9c2 on GitHub" })).toHaveAttribute(
+    "href",
+    "https://github.com/studio/thornwatch/commit/8e3a9c2"
+  )
+  expect(await firstCommit.locator(".dm-commit-meta > *").allTextContents()).toEqual(["#18427", "8e3a9c2"])
+  await expect(firstCommit.locator(".dm-commit-author")).toHaveText("Alexandra Morgan-Sutherland")
+  const metadata = (await firstCommit.locator(".dm-commit-meta").boundingBox())!
+  expect((await firstCommit.locator(".dm-commit-author").boundingBox())!.y).toBeGreaterThanOrEqual(
+    metadata.y + metadata.height
+  )
   await expect
     .poll(async () => Math.round((await dialog.boundingBox())!.x + (await dialog.boundingBox())!.width))
     .toBe(page.viewportSize()!.width)
   await page.screenshot({ path: `work/deployment-map-review-${info.project.name}.png`, scale: "css" })
+  await dialog.getByText("Add queue timeout and retry coverage", { exact: true }).scrollIntoViewIfNeeded()
+  await expect(dialog.getByText("Add queue timeout and retry coverage", { exact: true })).toBeInViewport()
+  await expect(page.getByRole("button", { name: "Confirm promotion" })).toBeInViewport()
   await dialog.getByRole("tab", { name: "Pull requests 2" }).click()
   await dialog.getByRole("button", { name: /Add skill-based matchmaking/ }).click()
-  await expect(dialog).toContainText("GitHub · Pull request #140")
+  await expect(dialog).toContainText("GitHub · Pull request #18427")
   await expect(dialog).toContainText("Match players by rating")
   await dialog.getByRole("button", { name: /Keep parties on the same team/ }).click()
   await expect(dialog).toContainText("GitHub · Issue #126")
@@ -377,10 +408,24 @@ test("release review compares changes and exposes linked GitHub work", async ({ 
   await page.getByRole("button", { name: "Rollback", exact: true }).click()
   await choose(page, "Target release", "v1.7.1")
   await expect(page.getByRole("heading", { name: "Changes removed" })).toBeVisible()
+  await expect(transfer.locator("[data-release-origin]")).toHaveText("Retained release")
+  await expect(destination).toContainText("v1.8.0")
+  await expect(transfer.getByRole("combobox", { name: "Target release" })).toContainText("v1.7.1")
+  await expect(transfer).toContainText("7bf428c")
   await expect(dialog.getByRole("tab", { name: "Commits 7", exact: true })).toBeVisible()
   await expect(dialog).toContainText("Preserve player session after a brief disconnect")
   await expect(dialog).not.toContainText("Cache lobby roster between room updates")
   await page.screenshot({ path: `work/deployment-map-rollback-${info.project.name}.png`, scale: "css" })
+  await expect(transfer.locator(".dm-release-direction")).toHaveCSS("animation-name", "none")
+  await page.evaluate(() => document.documentElement.classList.add("dark"))
+  await page.screenshot({
+    path: `work/deployment-map-rollback-dark-${info.project.name}.png`,
+    scale: "css",
+    animations: "disabled"
+  })
+  await page.setViewportSize({ width: 320, height: 720 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  await expect(page.getByRole("button", { name: "Confirm rollback" })).toBeInViewport()
 })
 
 test("preview deletion confirms scope and handles deleting the final environment", async ({ page }, info) => {
@@ -458,7 +503,7 @@ test("dashboard links reuse existing environment and version pages with matching
   await expect(page.getByRole("main")).toContainText("8e3a9c2")
   await expect(page.getByRole("dialog")).toHaveCount(0)
   await page.getByRole("button", { name: "Promote version", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "Review release", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Promote release", exact: true })).toBeVisible()
   await page.getByRole("link", { name: "Open in dashboard" }).click()
   await expect(page.getByRole("dialog")).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)

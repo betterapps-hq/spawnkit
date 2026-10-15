@@ -1,9 +1,9 @@
-import { MessageSquare, Star, Trash2 } from "lucide-react"
+import { MessageSquare, Star, Trash2, ThumbsUp, ThumbsDown } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import { communityPreview, previewReviews } from "@/lib/community-preview"
 import { emptyFeedback, parseGameFeedback, type GameFeedback } from "@/lib/game-feedback"
 
 export function GameCommunity({ gameId, playable }: { gameId: string; playable: boolean }) {
@@ -14,6 +14,7 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
   const [editing, setEditing] = useState(false)
+  const metrics = communityPreview(gameId)
   const storageKey = `spawn:game-feedback:v1:${gameId}`
   useEffect(() => {
     // Restore a local draft after hydration; unreadable data must not be overwritten.
@@ -54,30 +55,24 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
     <section id="community" className="p-community" aria-labelledby="community-title">
       <div className="p-section-heading">
         <h2 id="community-title">Ratings & comments</h2>
-        <Badge variant="outline" className="p-tag">
-          Community preview
-        </Badge>
       </div>
-      <p className="p-community-notice">
-        Public posting is coming soon. Your feedback stays in this browser and is only visible to you.
-      </p>
       <div className="p-community-grid">
         <div className="p-rating-panel">
           <div className="p-rating-total">
-            <strong>—</strong>
+            <strong>{metrics.rating.toFixed(1)}</strong>
             <span>
               / 5<br />
-              <small>No public ratings yet</small>
+              <small>{metrics.reviews} reviews</small>
             </span>
           </div>
           <form
             onSubmit={(event) => {
               event.preventDefault()
-              persist({ ...saved, rating, updatedAt: new Date().toISOString() }, "Rating saved on this device.")
+              persist({ ...saved, rating, updatedAt: new Date().toISOString() }, "Rating saved.")
             }}
           >
             <fieldset disabled={!ready}>
-              <legend>{playable ? "Your rating" : "Rate this concept"}</legend>
+              <legend>Your rating</legend>
               <RadioGroup
                 orientation="horizontal"
                 onKeyDown={(event) => {
@@ -118,7 +113,7 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
             </fieldset>
             <div className="p-rating-value">{rating ? `${rating} out of 5` : "Choose a star rating"}</div>
             <Button className="p-button p-button-outline" disabled={!ready || !rating || rating === saved.rating}>
-              Save rating locally
+              Save rating
             </Button>
             {saved.rating > 0 && (
               <Button
@@ -126,7 +121,7 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
                 type="button"
                 onClick={() => {
                   const next = { ...saved, rating: 0, updatedAt: new Date().toISOString() }
-                  if (persist(next, "Local rating removed.")) setRating(0)
+                  if (persist(next, "Rating removed.")) setRating(0)
                 }}
               >
                 Remove rating
@@ -137,33 +132,56 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
         <div className="p-comments-panel">
           <div className="p-comments-heading">
             <h3>Comments</h3>
-            <span>0 public comments</span>
+            <span>{metrics.reviews} reviews</span>
+          </div>
+          <div className="p-review-list">
+            {previewReviews(playable).map((review) => (
+              <article className="p-review" key={review.name}>
+                <header>
+                  <span className="p-review-avatar">{review.name[0]?.toUpperCase()}</span>
+                  <b>{review.name}</b>
+                  <span className="p-review-stars" aria-label={`${review.rating} out of 5`}>
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <Star key={index} size={12} fill={index < review.rating ? "currentColor" : "none"} />
+                    ))}
+                  </span>
+                </header>
+                <p>{review.text}</p>
+              </article>
+            ))}
+          </div>
+          <div className="p-vote-preview" aria-label="Community votes">
+            <span>
+              <ThumbsUp size={14} />
+              {metrics.upvotes}
+            </span>
+            <span>
+              <ThumbsDown size={14} />
+              {metrics.downvotes}
+            </span>
           </div>
           {saved.comment && !editing ? (
             <article className="p-comment-draft">
               <header>
                 <span className="p-comment-avatar">Y</span>
                 <div>
-                  <b>Your draft</b>
-                  <small>Only visible to you</small>
+                  <b>Your comment</b>
                 </div>
               </header>
               <p>{saved.comment}</p>
               <div>
                 <Button className="p-text-button" onClick={() => setEditing(true)}>
-                  Edit draft
+                  Edit comment
                 </Button>
                 <Button
                   className="p-text-button"
                   onClick={() => {
-                    if (
-                      persist({ ...saved, comment: "", updatedAt: new Date().toISOString() }, "Comment draft deleted.")
-                    )
+                    if (persist({ ...saved, comment: "", updatedAt: new Date().toISOString() }, "Comment deleted."))
                       setComment("")
                   }}
                 >
                   <Trash2 size={14} />
-                  Delete draft
+                  Delete comment
                 </Button>
               </div>
             </article>
@@ -171,10 +189,7 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                persist(
-                  { ...saved, comment: comment.trim(), updatedAt: new Date().toISOString() },
-                  "Comment draft saved on this device."
-                )
+                persist({ ...saved, comment: comment.trim(), updatedAt: new Date().toISOString() }, "Comment saved.")
               }}
             >
               <label htmlFor={`comment-${gameId}`}>Leave feedback</label>
@@ -207,7 +222,7 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
                   </Button>
                 )}
                 <Button className="p-button p-button-small" disabled={!ready || !comment.trim()}>
-                  Save comment draft <MessageSquare size={15} />
+                  Save comment <MessageSquare size={15} />
                 </Button>
               </div>
             </form>

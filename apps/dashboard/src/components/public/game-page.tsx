@@ -5,6 +5,7 @@ import { publicGames, type PublicGame } from "@/lib/game-discovery"
 import { CopyButton } from "../copy-button"
 import { Arcade } from "./arcade"
 import { GameCommunity } from "./game-community"
+import { GameSignals } from "./game-signals"
 import { GameCard } from "./games-page"
 import { PublicShell } from "./shell"
 
@@ -26,9 +27,11 @@ export function GamePage({ game }: { game: PublicGame }) {
         <div className="p-game-title">
           <div>
             <span className="p-eyebrow">
-              {game.genre.toUpperCase()} · {game.playable ? "FREE BROWSER DEMO" : "GAME CONCEPT"}
+              <span>{game.genre}</span>
+              <span>{game.dimension}</span>
             </span>
             <h1>{game.name}</h1>
+            <GameSignals gameId={game.id} playable={game.playable} />
           </div>
           <div className="p-game-actions">
             <a href="#community" className="p-text-link">
@@ -50,11 +53,11 @@ export function GamePage({ game }: { game: PublicGame }) {
               <Arcade game={game.id} />
             ) : (
               <div className="p-game-cover">
-                <img src={`/examples/${game.id}.webp`} alt={`${game.name} concept artwork`} width="960" height="540" />
+                <img src={`/examples/${game.id}.webp`} alt={`${game.name} cover artwork`} width="960" height="540" />
                 <div className="p-cover-overlay">
                   {game.playable ? (
                     <Button className="p-button" onClick={() => setPlaying(true)}>
-                      <Play size={18} fill="currentColor" /> Play demo
+                      <Play size={18} fill="currentColor" /> Play now
                     </Button>
                   ) : (
                     <Button asChild>
@@ -75,13 +78,8 @@ export function GamePage({ game }: { game: PublicGame }) {
               </div>
             )}
             <div className="p-game-description">
-              <h2>{game.playable ? "About this game" : "About this concept"}</h2>
+              <h2>About this game</h2>
               <p>{game.description}</p>
-              <p className="p-collection-note">
-                {game.playable
-                  ? "Free browser demo. Cover artwork is illustrative. The starter kit includes a separate minimal scene for building your own game."
-                  : "This is an illustrated game concept, not a playable release. The linked starter kit is a minimal engine project; it does not include this game or its artwork."}
-              </p>
               {game.playable && (
                 <div className="p-instructions">
                   <b>How to play</b>

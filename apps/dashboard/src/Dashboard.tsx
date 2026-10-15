@@ -8,7 +8,7 @@ import { useCloudProjects } from "./lib/cloud-projects"
 import { projectRecordModel } from "./lib/project-records"
 
 export function Dashboard(props: Omit<ComponentProps<typeof DashboardView>, "saved" | "cloudEnabled">) {
-  const saved = useCloudProjects(props.session.user.id)
+  const saved = useCloudProjects(props.session.user.id, props.location?.projectId)
   return <DashboardView {...props} saved={saved} cloudEnabled />
 }
 
@@ -47,6 +47,7 @@ export function DashboardView({
   return (
     <ProjectStudio
       key={session.user.id}
+      deploymentMapEnabled
       telemetryEnabled
       project={projects[0] ?? placeholder}
       projects={projects}

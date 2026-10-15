@@ -29,6 +29,7 @@ import {
 } from "../ui/dropdown-menu"
 import { Input } from "../ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
+import { CommitLink } from "./commit-link"
 import { EnvironmentBadge } from "./environment-badge"
 import type { OperationPanel, ProjectModel, PullRequestPreview, Release } from "./model"
 import { EmptyState, Notice, StatusBadge } from "./primitives"
@@ -95,7 +96,7 @@ function EnvironmentPointer({
               >
                 {releaseLabel(version)}
               </button>
-              <code className="text-[11px] text-muted-foreground">{version.commit}</code>
+              <CommitLink repository={project.repository} sha={version.commit} />
               <span className="ml-auto text-[11px] text-muted-foreground">{version.time}</span>
             </div>
             <p className="mt-2 truncate text-sm">{version.title}</p>
@@ -151,6 +152,7 @@ export function VersionConsole({
   onAction,
   initialSection = "versions",
   selectedEnvironment,
+  scoped = false,
   onConfigureHosting
 }: {
   project: ProjectModel
@@ -159,6 +161,7 @@ export function VersionConsole({
   onAction: OpenVersionAction
   initialSection?: VersionSection
   selectedEnvironment?: string | undefined
+  scoped?: boolean
   onConfigureHosting?: ((target: "repository" | "sandbox") => void) | undefined
 }) {
   const [section, setSection] = useState(initialSection)
@@ -183,6 +186,28 @@ export function VersionConsole({
         .includes(query.toLowerCase())
   )
   const activePreviews = project.previews.filter((preview) => preview.state !== "closing")
+  if (scoped && selectedEnvironment)
+    return (
+      <div ref={root} className="space-y-6">
+        {selectedEnvironment === "production" || selectedEnvironment === "sandbox" ? (
+          <EnvironmentPointer
+            project={project}
+            name={selectedEnvironment}
+            onVersion={onVersion}
+            onAction={onAction}
+            canEdit={canEdit}
+          />
+        ) : (
+          <PreviewList
+            project={{ ...project, previews: project.previews.filter((preview) => preview.id === selectedEnvironment) }}
+            onVersion={onVersion}
+            onAction={onAction}
+            canEdit={canEdit}
+            selectedEnvironment={selectedEnvironment}
+          />
+        )}
+      </div>
+    )
   return (
     <div ref={root} className="space-y-6">
       {!project.repository && onConfigureHosting && (
@@ -346,7 +371,7 @@ export function VersionConsole({
                       </span>
                       <span className="flex items-center gap-1.5 font-mono">
                         <GitCommitHorizontal className="size-3" />
-                        {version.commit}
+                        <CommitLink repository={project.repository} sha={version.commit} />
                       </span>
                       <span>{version.actor}</span>
                       <span>{version.time}</span>
@@ -482,76 +507,7 @@ export function VersionConsole({
           </div>
         </TabsContent>
         <TabsContent value="activity" className="space-y-5">
-          <div className="rounded-xl border bg-card">
-            <div className="border-b px-5 py-4 text-sm font-semibold">Deployment activity</div>
-            {project.deployments.map((event) => {
-              const version = project.releases.find((item) => item.id === event.versionId)
-              return (
-                <div key={event.id} className="flex gap-4 border-b p-5 last:border-b-0">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full border bg-muted/30">
-                    {event.kind === "rollback" ? (
-                      <RotateCcw className="size-3.5" />
-                    ) : (
-                      <PackageCheck className="size-3.5" />
-                    )}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm">
-                      <span className="font-medium">{event.actor}</span>{" "}
-                      {event.kind === "promote"
-                        ? "promoted"
-                        : event.kind === "rollback"
-                          ? "rolled back to"
-                          : "deployed"}{" "}
-                      <button
-                        className="font-mono font-semibold text-primary"
-                        onClick={() => {
-                          if (version) onVersion(version)
-                        }}
-                      >
-                        {releaseLabel(version)}
-                      </button>{" "}
-                      to <span className="capitalize">{event.environment}</span>
-                    </p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {event.time}
-                      <span className="mx-2">/</span>
-                      {event.id}
-                    </p>
-                    {event.regions.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {event.regions.map((region) => (
-                          <span
-                            key={region.name}
-                            className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px]"
-                          >
-                            {region.state === "ready" ? (
-                              <Check className="size-3 text-emerald-600 dark:text-emerald-300" />
-                            ) : (
-                              <Clock3 className="size-3 text-amber-600 dark:text-amber-300" />
-                            )}
-                            {region.name}
-                            <span className="text-muted-foreground">{region.state}</span>
-                            {region.state === "draining" && <span>{region.players} players</span>}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Badge variant="outline" className="h-fit capitalize">
-                    {event.state.replace("-", " ")}
-                  </Badge>
-                </div>
-              )
-            })}
-            {!project.deployments.length && (
-              <EmptyState
-                icon={<Clock3 />}
-                title="No deployment activity"
-                description="Environment changes will appear here, with the version and person who made them."
-              />
-            )}
-          </div>
+          <DeploymentActivity project={project} onVersion={onVersion} />
         </TabsContent>
       </Tabs>
     </div>
@@ -641,7 +597,7 @@ function PreviewList({
                   </div>
                   <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span className="font-mono">{preview.branch}</span>
-                    <span>{preview.commit}</span>
+                    <CommitLink repository={project.repository} sha={preview.commit} />
                     <span>{preview.actor}</span>
                     <span>{preview.updated}</span>
                   </p>
@@ -728,6 +684,79 @@ function PreviewList({
         Previews use isolated data and secrets. Closing or merging a pull request retires its preview; retained versions
         remain available in version history.
       </p>
+    </div>
+  )
+}
+
+export function DeploymentActivity({
+  project,
+  onVersion
+}: {
+  project: ProjectModel
+  onVersion: (version: Release) => void
+}) {
+  return (
+    <div className="rounded-xl border bg-card">
+      <div className="border-b px-5 py-4 text-sm font-semibold">Deployment activity</div>
+      {project.deployments.map((event) => {
+        const version = project.releases.find((item) => item.id === event.versionId)
+        return (
+          <div key={event.id} className="flex gap-4 border-b p-5 last:border-b-0">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full border bg-muted/30">
+              {event.kind === "rollback" ? <RotateCcw className="size-3.5" /> : <PackageCheck className="size-3.5" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm">
+                <span className="font-medium">{event.actor}</span>{" "}
+                {event.kind === "promote" ? "promoted" : event.kind === "rollback" ? "rolled back to" : "deployed"}{" "}
+                <button
+                  className="font-mono font-semibold text-primary"
+                  onClick={() => {
+                    if (version) onVersion(version)
+                  }}
+                >
+                  {releaseLabel(version)}
+                </button>{" "}
+                to <span className="capitalize">{event.environment}</span>
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {event.time}
+                <span className="mx-2">/</span>
+                {event.id}
+              </p>
+              {event.regions.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {event.regions.map((region) => (
+                    <span
+                      key={region.name}
+                      className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px]"
+                    >
+                      {region.state === "ready" ? (
+                        <Check className="size-3 text-emerald-600 dark:text-emerald-300" />
+                      ) : (
+                        <Clock3 className="size-3 text-amber-600 dark:text-amber-300" />
+                      )}
+                      {region.name}
+                      <span className="text-muted-foreground">{region.state}</span>
+                      {region.state === "draining" && <span>{region.players} players</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Badge variant="outline" className="h-fit capitalize">
+              {event.state.replace("-", " ")}
+            </Badge>
+          </div>
+        )
+      })}
+      {!project.deployments.length && (
+        <EmptyState
+          icon={<Clock3 />}
+          title="No deployment activity"
+          description="Environment changes will appear here, with the version and person who made them."
+        />
+      )}
     </div>
   )
 }

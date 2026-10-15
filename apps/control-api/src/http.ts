@@ -17,7 +17,7 @@ export function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>
 }
 
-export async function boundedBody(request: Request, limit: number): Promise<Uint8Array> {
+export async function boundedBody(request: Pick<Request, "headers" | "body">, limit: number): Promise<Uint8Array> {
   requireValue(Number(request.headers.get("content-length") ?? 0) <= limit, "Request is too large.")
   const reader = request.body?.getReader()
   if (!reader) return new Uint8Array()

@@ -123,7 +123,7 @@ async function githubJson(path: string, token: string, method = "GET", body?: un
   return record(await response.json())
 }
 
-export async function installationToken(env: Env, installationId: number, repositoryId: number) {
+export async function installationToken(env: Env, installationId: number, repositoryId: number, linkedWork = false) {
   const now = Math.floor(Date.now() / 1000)
   const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url")
   const payload = Buffer.from(JSON.stringify({ iat: now - 60, exp: now + 540, iss: env.GITHUB_APP_ID })).toString(
@@ -136,7 +136,10 @@ export async function installationToken(env: Env, installationId: number, reposi
     `/app/installations/${installationId}/access_tokens`,
     `${header}.${payload}.${signature}`,
     "POST",
-    { repository_ids: [repositoryId], permissions: { contents: "read" } }
+    {
+      repository_ids: [repositoryId],
+      permissions: { contents: "read", ...(linkedWork ? { pull_requests: "read", issues: "read" } : {}) }
+    }
   )
   requireValue(typeof result.token === "string", "GitHub returned an invalid installation token.")
   return result.token

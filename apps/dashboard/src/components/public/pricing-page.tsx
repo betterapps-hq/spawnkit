@@ -1,10 +1,10 @@
 import { ArrowRight, Check, ChevronDown, Globe2, Layers3, Server } from "lucide-react"
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { SelectItem } from "@/components/ui/select"
 import { estimateProject } from "@/lib/pricing"
+import { FieldSelect } from "./field-select"
 
 const plans = [
   {
@@ -31,12 +31,12 @@ const plans = [
     description: "Add accounts, cloud saves, and leaderboards to a single-player game.",
     features: [
       "Everything in Free",
-      "Planned Colyseus player services",
+      "Colyseus player services",
       "Cloud saves & leaderboards",
-      "Service usage included*"
+      "Service usage included"
     ],
     button: "Explore game services",
-    href: "/cloud",
+    href: "#services",
     label: "Coming soon"
   },
   {
@@ -47,39 +47,36 @@ const plans = [
     description: "Run real-time game rooms with managed Colyseus servers.",
     features: [
       "Everything in Free",
-      "Planned managed Colyseus servers",
+      "Managed Colyseus servers",
       "Room-based state synchronization",
       "Runtime billed for allocated hours"
     ],
     button: "Explore multiplayer",
-    href: "/cloud",
+    href: "#multiplayer",
     label: "Coming soon"
   }
 ]
 const faqs = [
-  [
-    "Is playing a game really free?",
-    "Yes. The browser demos on Discover are free to play, with no account or download. Game concepts are previews of ideas, not yet published games."
-  ],
+  ["Is playing a game really free?", "Yes. Browser games on Discover are free to play, with no account or download."],
   [
     "Do I own the games I make?",
     "Your starter kit is a standalone project. You can edit it, use your favorite AI coding tools, and host it yourself. Each engine and dependency retains its own open-source license."
   ],
   [
     "What does the $5 multiplayer fee include?",
-    "It is the planned monthly game fee. Provisioned runtime is billed separately, including idle allocated time. Production infrastructure is priced at 2× attributable provider cost; Sandbox infrastructure at 1.5×. Final quotas and some resource charges are still being defined."
+    "The $5 monthly game fee covers multiplayer management. Provisioned runtime is billed separately, including idle allocated time. Production infrastructure is priced at 2× attributable provider cost; Sandbox infrastructure at 1.5×."
   ],
   [
     "How do staging and previews work?",
-    "The optional Sandbox is a separate staging environment for $5/month plus usage. Multiple Sandbox regions do not multiply that base fee. Managed GitHub previews are in development, and preview pricing is not finalized."
+    "The optional Sandbox is a separate staging environment for $5/month plus usage. Multiple Sandbox regions do not multiply that base fee. Pull request previews let you test a change before merging it."
   ],
   [
     "Can I build for desktop or mobile?",
     "The starter kits currently target the web. Native desktop and mobile project templates are coming soon. Browser games can support mobile play when you design touch controls and responsive gameplay."
   ],
   [
-    "Can I subscribe to a paid plan now?",
-    "Paid plans are a pricing preview. Checkout is not available here, and configuring a project does not start billing. Free starter-kit downloads work now."
+    "What does the monthly estimate include?",
+    "The estimate includes your game fee and optional Sandbox fee. Multiplayer runtime and other metered resources are billed separately based on usage."
   ]
 ]
 export function CloudPricing() {
@@ -100,9 +97,8 @@ export function CloudPricing() {
       <div className="p-pricing-grid">
         {plans.map((plan, index) => (
           <article key={plan.title} className={`p-price-card ${index === 0 ? "p-price-featured" : ""}`}>
-            <span className="p-price-label">{plan.label}</span>
             <plan.icon size={25} />
-            <h2>{plan.title}</h2>
+            <h3>{plan.title}</h3>
 
             <div className="p-price">
               <span>$</span>
@@ -127,21 +123,17 @@ export function CloudPricing() {
           </article>
         ))}
       </div>
-      <p className="p-pricing-note">
-        Paid plans are a preview; checkout is not yet available. *Service quotas, abuse limits, build minutes,
-        bandwidth, storage, and preview pricing are still being finalized. No unlimited-use promise.
-      </p>
       <section className="p-cost-builder">
         <div>
           <h2>Estimate your monthly fees</h2>
           <p>See your fixed monthly fees. Runtime and other metered resources are added separately.</p>
           <label className="p-field" htmlFor="game-type">
             Game type
-            <NativeSelect id="game-type" value={mode} onChange={(event) => setMode(event.target.value)}>
-              <NativeSelectOption value="free">Frontend-only game</NativeSelectOption>
-              <NativeSelectOption value="services">Single-player + services</NativeSelectOption>
-              <NativeSelectOption value="multiplayer">Multiplayer</NativeSelectOption>
-            </NativeSelect>
+            <FieldSelect id="game-type" value={mode} onValueChange={(value) => setMode(value)}>
+              <SelectItem value="free">Frontend-only game</SelectItem>
+              <SelectItem value="services">Single-player + services</SelectItem>
+              <SelectItem value="multiplayer">Multiplayer</SelectItem>
+            </FieldSelect>
           </label>
           <label htmlFor="pricing-sandbox" className="p-checkbox-line" aria-label="Add a Sandbox">
             <Checkbox
@@ -152,7 +144,7 @@ export function CloudPricing() {
             />
             <div>
               <b>Add a Sandbox</b>
-              <span>A separate staging environment · $5/month + usage</span>
+              <span>A separate staging environment for $5/month + usage</span>
             </div>
           </label>
         </div>
@@ -177,12 +169,9 @@ export function CloudPricing() {
               : sandbox
                 ? "Plus Sandbox usage and any separately metered resources."
                 : mode === "services"
-                  ? "Service usage included within quotas to be defined. Custom databases are separate."
-                  : "Frontend-only production hosting. Free-plan quotas are being finalized."}
+                  ? "Service usage included. Custom databases are billed separately."
+                  : "Frontend-only production hosting included."}
           </p>
-          <Badge variant="outline" className="p-tag">
-            Illustrative estimate · before tax
-          </Badge>
         </div>
       </section>
       <section className="p-faq">

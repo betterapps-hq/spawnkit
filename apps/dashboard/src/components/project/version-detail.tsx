@@ -24,6 +24,7 @@ import { SelectField } from "../select-field"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
+import { CommitLink } from "./commit-link"
 import type { ProjectModel, Release } from "./model"
 import { Notice, StatusBadge } from "./primitives"
 import { releaseLabel } from "./release-label"
@@ -77,7 +78,7 @@ export function VersionDetail({
             </span>
             <span className="flex items-center gap-1.5 font-mono">
               <GitCommitHorizontal className="size-3.5" />
-              {version.commit}
+              <CommitLink repository={project.repository} sha={version.commit} />
             </span>
             <span>{version.actor}</span>
             <span>{version.time}</span>
@@ -345,7 +346,9 @@ export function VersionDetail({
         <TabsContent value="changes" className="space-y-5">
           <div className="rounded-xl border bg-card">
             <div className="flex items-center justify-between border-b p-5">
-              <h2 className="text-sm font-semibold">Changes in {version.commit}</h2>
+              <h2 className="text-sm font-semibold">
+                Changes in <CommitLink repository={project.repository} sha={version.commit} />
+              </h2>
               <span className="text-xs text-muted-foreground">{version.build.changes.length} files changed</span>
             </div>
             {version.build.changes.map((file) => (
@@ -374,7 +377,7 @@ export function VersionDetail({
               </div>
               <ArrowRight className="size-4 text-muted-foreground" />
               <span className="rounded-md border bg-card px-4 py-2 font-mono text-sm">
-                {releaseLabel(version)} / {version.commit}
+                {releaseLabel(version)} / <CommitLink repository={project.repository} sha={version.commit} />
               </span>
             </div>
             <div className="overflow-x-auto rounded-xl border bg-card">
@@ -406,14 +409,16 @@ export function VersionDetail({
                   ].map(([label, from, to]) => (
                     <tr key={label} className="border-b last:border-b-0">
                       <th className="p-4 font-normal text-muted-foreground">{label}</th>
-                      <td className="p-4 font-mono">{from}</td>
+                      <td className="p-4 font-mono">
+                        {label === "Commit" && from ? <CommitLink repository={project.repository} sha={from} /> : from}
+                      </td>
                       <td
                         className={cn(
                           "p-4 font-mono",
                           from !== to && "bg-violet-50 dark:bg-violet-500/10 text-primary"
                         )}
                       >
-                        {to}
+                        {label === "Commit" && to ? <CommitLink repository={project.repository} sha={to} /> : to}
                       </td>
                     </tr>
                   ))}

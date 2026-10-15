@@ -24,7 +24,7 @@ pnpm dev
 
 Choose `pixi`, `phaser`, `babylon`, or `three`. Optional add-ons are bitECS, Vitest, Playwright, and Storybook. Run `pnpm cli init` for guided setup, including a Storybook question. Use `pnpm cli templates --json` to inspect choices and `--dry-run --json` on `init` to preview generated files. Existing directories are never overwritten.
 
-The dashboard and CLI share the template catalog. Clerk sign-in connects the dashboard to authenticated project, deployment and telemetry APIs. Production and internal staging use separate credentials and data. Hosted builds still require Workers Paid; GitHub integration requires its App credentials. Multiplayer orchestration and billing remain planned work.
+The dashboard and CLI share the template catalog. Clerk sign-in connects the dashboard to authenticated project, deployment and telemetry APIs. Production and internal staging use separate credentials and data. Hosted builds still require Workers Paid. The production GitHub App is configured and its signed webhook ping is verified; repository-driven deployments remain unverified. Multiplayer orchestration and billing remain planned work.
 
 Run `pnpm storybook` for the dashboard component workshop (Agency-derived config). Game scaffolds can select `--with storybook` for a standalone HTML/Vite workshop. Physics/UI and telemetry options are available through CLI flags and the dashboard.
 

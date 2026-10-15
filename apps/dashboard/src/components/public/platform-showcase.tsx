@@ -38,7 +38,7 @@ export function PlatformShowcase() {
                 <i className="p-camera" />
                 <div className="p-desktop-toolbar">
                   <span>Alpine Rally</span>
-                  <span>− · ×</span>
+                  <span>− □ ×</span>
                 </div>
                 <img src="/examples/racing.webp" alt="" loading="lazy" />
               </div>
@@ -81,9 +81,6 @@ export function PlatformShowcase() {
           </div>
         </article>
       </div>
-      <p className="p-collection-note">
-        Device previews use concept artwork. Native desktop and mobile templates are in development.
-      </p>
     </section>
   )
 }

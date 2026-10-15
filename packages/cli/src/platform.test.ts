@@ -323,7 +323,8 @@ it("preserves successful deployment URLs in status and activation output", async
     status: "succeeded",
     environment: "production" as const,
     releaseId: "release_s",
-    url: "https://game.example"
+    url: "https://game.example",
+    deploymentUrl: "https://d-1234.game.example"
   }
   api.status.mockResolvedValue(result)
   api.promote.mockResolvedValue(result)
@@ -334,6 +335,7 @@ it("preserves successful deployment URLs in status and activation output", async
     output = ""
     await runCli([...args, "--project", "game_1"], root, write, { platform: { api } })
     expect(output).toContain("URL: https://game.example")
+    expect(output).toContain("Deployment URL: https://d-1234.game.example")
     output = ""
     await runCli([...args, "--project", "game_1", "--json"], root, write, { platform: { api } })
     expect(JSON.parse(output)).toMatchObject(result)
@@ -382,4 +384,16 @@ it.each([
     .mockResolvedValue(Response.json({ error: "private-backend-detail" }, { status }))
   const api = createPlatformApi({ site: "https://spawn.example", accessToken: "fixture-token" }, transport)
   await expect(api.project("game_1")).rejects.toThrow(expected)
+})
+
+it("distinguishes an exhausted log cursor from a build with no logs yet", async () => {
+  const api = fixture()
+  api.logs.mockResolvedValue({ entries: [] })
+  await runCli(["logs", "deployment_1", "--project", "game_1", "--cursor", "100"], root, write, { platform: { api } })
+  expect(output).toContain("No additional logs.")
+  expect(output).not.toContain("No logs yet.")
+  expect(output).not.toContain("Continue:")
+  output = ""
+  await runCli(["logs", "deployment_1", "--project", "game_1"], root, write, { platform: { api } })
+  expect(output).toContain("No logs yet.")
 })

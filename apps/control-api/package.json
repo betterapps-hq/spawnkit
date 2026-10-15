@@ -16,7 +16,8 @@
     "@clerk/backend": "3.23.2",
     "@cloudflare/sandbox": "0.13.0-next.776.1",
     "drizzle-orm": "0.45.4",
-    "tar-stream": "3.2.2"
+    "tar-stream": "3.2.2",
+    "@spawn/platform": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-52b0dc0e9",

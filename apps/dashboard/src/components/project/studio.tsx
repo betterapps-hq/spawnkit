@@ -1,8 +1,10 @@
 import type { templates, TemplateId } from "@spawn/templates/catalog"
-import { Gauge, LoaderCircle, Plus, RefreshCw, RotateCcw, Save, Settings2, Terminal, Zap } from "lucide-react"
+import { Gauge, LoaderCircle, Plus, RefreshCw, RotateCcw, Save, Settings2, Terminal } from "lucide-react"
 import { useState, type ReactNode, type ComponentProps } from "react"
 import { match } from "ts-pattern"
 import { createDashboardStore } from "@/lib/dashboard-store"
+import type { LoadReleaseChanges } from "@/lib/release-changes"
+import { BrandSymbol, BrandWordmark } from "../brand"
 import { CopyButton } from "../copy-button"
 import type { StudioNotification } from "../notifications"
 import { PageHeader } from "../page-header"
@@ -29,6 +31,8 @@ import { ProjectUsers } from "./activity"
 import { Backend, ProjectSettings } from "./configuration"
 import { ProjectCreation } from "./creation"
 import type { ProjectDraft } from "./creation-model"
+import { ProjectDeployments } from "./deployment-map/project-deployments"
+import { ReleaseReview } from "./deployment-map/release-review"
 import { Domains } from "./domains"
 import { Logs } from "./logs"
 import type {
@@ -99,6 +103,8 @@ function StudioContent({
   telemetryEnabled = false,
   analyticsPreview,
   deploymentsPreview,
+  deploymentMapEnabled = false,
+  loadReleaseChanges,
   storageReady = true,
   templateCatalog
 }: {
@@ -126,6 +132,8 @@ function StudioContent({
   /** Storybook-only design content. Live projects use the tenant telemetry connection. */
   analyticsPreview?: ReactNode
   deploymentsPreview?: ReactNode
+  deploymentMapEnabled?: boolean
+  loadReleaseChanges?: LoadReleaseChanges | undefined
   storageReady?: boolean
   templateCatalog?: typeof templates | undefined
 }) {
@@ -202,12 +210,8 @@ function StudioContent({
               tooltip="SpawnKit dashboard"
               className="h-10 gap-2.5 hover:bg-transparent"
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <Zap className="size-[18px] fill-current" />
-              </span>
-              <span className="text-xl font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-                SpawnKit<span className="text-primary">.</span>
-              </span>
+              <BrandSymbol />
+              <BrandWordmark className="group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -359,21 +363,22 @@ function StudioContent({
         />
         <main id="main" className="mx-auto w-full max-w-[1500px] px-5 py-7 md:px-8 md:py-9">
           {banner && <div className="mb-5">{banner}</div>}
-          {!release && !(page === "deployments" && deploymentsPreview) && (
-            <PageHeader
-              title={title}
-              description={descriptions[page]}
-              actions={actions}
-              eyebrow={
-                !isHome && page === "overview" ? (
-                  <>
-                    <span>{active.mode === "multiplayer" ? "Multiplayer" : "Single-player"}</span>
-                    {active.services.length > 0 && <span className="border-l pl-2">Game services</span>}
-                  </>
-                ) : undefined
-              }
-            />
-          )}
+          {!release &&
+            !(page === "deployments" && (deploymentsPreview || (deploymentMapEnabled && !current.environmentId))) && (
+              <PageHeader
+                title={title}
+                description={descriptions[page]}
+                actions={actions}
+                eyebrow={
+                  !isHome && page === "overview" ? (
+                    <>
+                      <span>{active.mode === "multiplayer" ? "Multiplayer" : "Single-player"}</span>
+                      {active.services.length > 0 && <span className="border-l pl-2">Game services</span>}
+                    </>
+                  ) : undefined
+                }
+              />
+            )}
           {!canEdit && (
             <div className="mb-5">
               <Notice tone="info">You have view access. Changes require a project owner.</Notice>
@@ -414,7 +419,11 @@ function StudioContent({
                   project={active}
                   version={release}
                   canEdit={operable}
-                  onBack={() => navigate("deployments")}
+                  onBack={() =>
+                    deploymentMapEnabled
+                      ? go({ page: "deployments", projectId: active.id, deploymentView: "releases" })
+                      : navigate("deployments")
+                  }
                   onAction={setPanel}
                 />
               ) : isCreating ? (
@@ -466,12 +475,29 @@ function StudioContent({
                   onRelease={inspectVersion}
                   onDeployments={(next) => {
                     setSection(next)
-                    navigate("deployments")
+                    if (deploymentMapEnabled)
+                      go({
+                        page: "deployments",
+                        projectId: active.id,
+                        deploymentView:
+                          next === "versions" ? "releases" : next === "activity" ? "activity" : "environments"
+                      })
+                    else navigate("deployments")
                   }}
                   onConfigureSandbox={!cloudEnabled && editable ? () => configureHosting("sandbox") : undefined}
                 />
               ) : page === "deployments" ? (
-                (deploymentsPreview ?? (
+                (deploymentsPreview ??
+                (deploymentMapEnabled ? (
+                  <ProjectDeployments
+                    project={active}
+                    canEdit={operable}
+                    environmentId={current.environmentId}
+                    view={current.deploymentView}
+                    onNavigate={go}
+                    onAction={setPanel}
+                  />
+                ) : (
                   <VersionConsole
                     project={active}
                     canEdit={operable}
@@ -480,7 +506,7 @@ function StudioContent({
                     initialSection={section}
                     onConfigureHosting={!cloudEnabled && editable ? configureHosting : undefined}
                   />
-                ))
+                )))
               ) : page === "domains" ? (
                 <Domains
                   project={active}
@@ -524,19 +550,32 @@ function StudioContent({
           )}
         </main>
       </SidebarInset>
-      {operation && (
-        <VersionActionSheet
-          key={`${active.id}-${operation.kind}-${operation.version?.id ?? ""}`}
-          project={active}
-          panel={operation.kind}
-          version={operation.version}
-          preview={operation.preview}
-          onClose={() => setOperation(null)}
-          onAction={onAction}
-          canEdit={operable}
-          initialState={operationState}
-        />
-      )}
+      {operation &&
+        (deploymentMapEnabled && (operation.kind === "promote" || operation.kind === "rollback") ? (
+          <ReleaseReview
+            key={`${active.id}-${operation.kind}-${operation.version?.id ?? ""}`}
+            project={active}
+            kind={operation.kind}
+            version={operation.version}
+            onClose={() => setOperation(null)}
+            onAction={onAction}
+            canEdit={operable}
+            onVersion={inspectVersion}
+            loadChanges={loadReleaseChanges}
+          />
+        ) : (
+          <VersionActionSheet
+            key={`${active.id}-${operation.kind}-${operation.version?.id ?? ""}`}
+            project={active}
+            panel={operation.kind}
+            version={operation.version}
+            preview={operation.preview}
+            onClose={() => setOperation(null)}
+            onAction={onAction}
+            canEdit={operable}
+            initialState={operationState}
+          />
+        ))}
     </>
   )
 }

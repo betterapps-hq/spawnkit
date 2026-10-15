@@ -33,8 +33,9 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { SelectItem } from "@/components/ui/select"
 import { CopyButton } from "../copy-button"
+import { FieldSelect } from "./field-select"
 import { PublicShell } from "./shell"
 
 const recommendations: Record<TemplateId, string> = {
@@ -222,32 +223,28 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                 )}
                 <label className="p-field" htmlFor="physics">
                   Physics
-                  <NativeSelect
-                    id="physics"
-                    value={physics}
-                    onChange={(event) => setPhysics(event.target.value as PhysicsId)}
-                  >
+                  <FieldSelect id="physics" value={physics} onValueChange={(value) => setPhysics(value as PhysicsId)}>
                     {physicsOptions
                       .filter((option) => (option.renderers as readonly string[]).includes(engine))
                       .map((option) => (
-                        <NativeSelectOption key={option.id} value={option.id}>
+                        <SelectItem key={option.id} value={option.id}>
                           {option.id === "none" ? "No physics" : option.name}
-                        </NativeSelectOption>
+                        </SelectItem>
                       ))}
-                  </NativeSelect>
+                  </FieldSelect>
                   <small>Only options compatible with {engineInfo.name} are shown.</small>
                 </label>
                 <label className="p-field" htmlFor="game-interface">
                   Game interface
-                  <NativeSelect id="game-interface" value={ui} onChange={(event) => setUi(event.target.value as UiId)}>
+                  <FieldSelect id="game-interface" value={ui} onValueChange={(value) => setUi(value as UiId)}>
                     {uiOptions
                       .filter((option) => (option.renderers as readonly string[]).includes(engine))
                       .map((option) => (
-                        <NativeSelectOption key={option.id} value={option.id}>
+                        <SelectItem key={option.id} value={option.id}>
                           {option.name}
-                        </NativeSelectOption>
+                        </SelectItem>
                       ))}
-                  </NativeSelect>
+                  </FieldSelect>
                 </label>
               </div>
               <details className="p-advanced">
@@ -257,25 +254,25 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                 <div className="p-builder-fields">
                   <label className="p-field" htmlFor="entity-system">
                     Entity system
-                    <NativeSelect id="entity-system" value={ecs} onChange={(event) => setEcs(event.target.value)}>
-                      <NativeSelectOption value="none">Plain TypeScript</NativeSelectOption>
-                      <NativeSelectOption value="koota">Koota</NativeSelectOption>
-                      <NativeSelectOption value="bitecs">bitECS</NativeSelectOption>
-                    </NativeSelect>
+                    <FieldSelect id="entity-system" value={ecs} onValueChange={(value) => setEcs(value)}>
+                      <SelectItem value="none">Plain TypeScript</SelectItem>
+                      <SelectItem value="koota">Koota</SelectItem>
+                      <SelectItem value="bitecs">bitECS</SelectItem>
+                    </FieldSelect>
                   </label>
                   <label className="p-field" htmlFor="telemetry">
                     Telemetry
-                    <NativeSelect
+                    <FieldSelect
                       id="telemetry"
                       value={telemetry}
-                      onChange={(event) => setTelemetry(event.target.value as TelemetryId)}
+                      onValueChange={(value) => setTelemetry(value as TelemetryId)}
                     >
                       {telemetryOptions.map((option) => (
-                        <NativeSelectOption key={option.id} value={option.id}>
+                        <SelectItem key={option.id} value={option.id}>
                           {option.name}
-                        </NativeSelectOption>
+                        </SelectItem>
                       ))}
-                    </NativeSelect>
+                    </FieldSelect>
                     <small>
                       {telemetry === "platform"
                         ? "Requires project credentials and player consent before sending events."
@@ -321,7 +318,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
               </div>
               <h2>{name || "Your next game"}</h2>
               <p>
-                {engineInfo.name} · {engineInfo.dimension.toUpperCase()} web game
+                {engineInfo.name} / {engineInfo.dimension.toUpperCase()} web game
               </p>
               <div className="p-summary-stack">
                 <span>
@@ -346,7 +343,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                 <ArrowDownToLine size={18} />
                 {busy ? "Preparing your kit…" : "Download starter kit"}
               </Button>
-              <p className="p-summary-free">100% free · No account needed</p>
+              <p className="p-summary-free">Free, no account needed</p>
               {notice && <output className="p-download-notice">{notice}</output>}
               {result.error && (
                 <p role="alert" className="p-field-error">
@@ -387,7 +384,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
           <div>
             <Terminal size={24} />
             <h2>Create with the CLI</h2>
-            <p>The same setup, from the SpawnKit repository. Public CLI package coming soon.</p>
+            <p>Run the same setup from the SpawnKit repository.</p>
           </div>
           <div>
             <code>{nameError ? "Choose a valid project name above." : command}</code>

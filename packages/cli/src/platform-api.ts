@@ -7,7 +7,14 @@ export type Project = {
   name: string
   environments: Record<Environment, { enabled: boolean; currentReleaseId: string | null }>
 }
-export type Deployment = { id: string; status: string; environment: Environment; releaseId?: string; url?: string }
+export type Deployment = {
+  id: string
+  status: string
+  environment: Environment
+  releaseId?: string
+  url?: string
+  deploymentUrl?: string
+}
 type Release = {
   id: string
   buildId: string

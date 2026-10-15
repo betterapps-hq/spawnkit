@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { defaultProjectDraft } from "@/components/project/creation-model"
 import type { ActionHandler } from "@/components/project/model"
 import type { ProjectState } from "./cloud-project-model"
@@ -9,6 +10,7 @@ import {
   saveProjectRecord,
   type LocalProject
 } from "./project-records"
+import { PROJECT_STALE_MS, projectRefreshInterval } from "./project-refresh"
 
 interface CloudProject {
   id: string
@@ -59,13 +61,16 @@ function local(project: CloudProject): LocalProject {
   )[0]!
 }
 
-export function useCloudProjects(userId: string) {
+export function useCloudProjects(userId: string, selectedProjectId?: string) {
   const client = useQueryClient()
+  const [pendingSubmission, setPendingSubmission] = useState<{ projectId: string; until: number } | null>(null)
   const queryKey = ["projects", userId]
+  type Summary = ProjectState["environments"][number] & ProjectState["releases"][number] & { projectId: string }
+  type Listing = { projects: CloudProject[]; summaries?: Summary[] }
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      let result = await api<{ projects: CloudProject[] }>("/projects")
+      let result = await api<Listing>("/projects?summary=true")
       const key = `spawn:workspaces:v1:${userId}`
       // The browser copy is a migration backup. Never remove it or overwrite cloud records.
       let old: LocalProject[] = []
@@ -76,19 +81,53 @@ export function useCloudProjects(userId: string) {
       }
       const missing = old.filter((project) => !result.projects.some((row) => row.id === project.id))
       for (const project of missing) await api("/projects", "POST", payload(project))
-      if (missing.length) result = await api<{ projects: CloudProject[] }>("/projects")
-      return Promise.all(
-        result.projects.map(async (project) => ({
+      if (missing.length) result = await api<Listing>("/projects?summary=true")
+      return result.projects.map((project) => {
+        const rows = (result.summaries ?? []).filter((row) => row.projectId === project.id)
+        return {
           ...project,
-          state: await api<ProjectState>(`/projects/${project.id}/state`)
-        }))
-      )
+          state: {
+            environments: rows,
+            releases: rows
+              .filter((row) => row.id)
+              .map((row) => ({ ...row, commitSha: null, branch: null, sourceTitle: null })),
+            deployments: [],
+            logs: [],
+            domains: [],
+            previews: [],
+            repository: null,
+            capabilities: { builds: false, domains: false, github: false }
+          } satisfies ProjectState
+        }
+      })
     },
-    staleTime: 15_000,
-    refetchInterval: 15_000,
-    retry: 1
+    staleTime: PROJECT_STALE_MS,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    retry: (count, error) => !(error instanceof ProjectInputError) && count < 1
+  })
+  const detail = useQuery({
+    queryKey: [...queryKey, "state", selectedProjectId],
+    enabled: Boolean(selectedProjectId && query.data?.some((project) => project.id === selectedProjectId)),
+    queryFn: () => api<ProjectState>(`/projects/${selectedProjectId}/state`),
+    staleTime: PROJECT_STALE_MS,
+    refetchInterval: (query) =>
+      query.state.status === "error"
+        ? false
+        : projectRefreshInterval(query.state.data) ||
+          (pendingSubmission &&
+          pendingSubmission.projectId === selectedProjectId &&
+          pendingSubmission.until > Date.now()
+            ? 5_000
+            : false),
+    refetchIntervalInBackground: false,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+    retry: (count, error) => !(error instanceof ProjectInputError) && count < 1
   })
   const onAction: ActionHandler = async (action) => {
+    if (["deploy", "retry-preview"].includes(action.kind))
+      setPendingSubmission({ projectId: action.projectId, until: Date.now() + 120_000 })
     if (action.kind === "retry-preview") {
       await api(
         `/projects/${action.projectId}/previews/${encodeURIComponent(String(action.values.previewId))}/retry`,
@@ -179,9 +218,12 @@ export function useCloudProjects(userId: string) {
   }
   return {
     projects: (query.data ?? []).map(local),
-    states: Object.fromEntries((query.data ?? []).map((project) => [project.id, project.state])),
-    ready: !query.isPending,
-    error: query.error?.message ?? "",
+    states: {
+      ...Object.fromEntries((query.data ?? []).map((project) => [project.id, project.state])),
+      ...(selectedProjectId && detail.data ? { [selectedProjectId]: detail.data } : {})
+    },
+    ready: !query.isPending && !(selectedProjectId && detail.isLoading),
+    error: query.error?.message ?? detail.error?.message ?? "",
     onAction
   }
 }

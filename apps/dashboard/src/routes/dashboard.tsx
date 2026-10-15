@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router"
-import type { ProjectPage } from "@/components/project/model"
+import type { DeploymentView, ProjectPage } from "@/components/project/model"
 import { getCatalog, getSession } from "@/lib/server"
 import { App } from "../App"
 const pages = new Set([
@@ -18,7 +18,13 @@ const pages = new Set([
 export const Route = createFileRoute("/dashboard")({
   validateSearch: (
     search: Record<string, unknown>
-  ): { page?: ProjectPage; project?: string | undefined; version?: string | undefined } => {
+  ): {
+    page?: ProjectPage
+    project?: string | undefined
+    version?: string | undefined
+    environment?: string | undefined
+    tab?: DeploymentView | undefined
+  } => {
     const page =
       search.view === "templates"
         ? "create"
@@ -29,6 +35,15 @@ export const Route = createFileRoute("/dashboard")({
     return {
       page: !project && page !== "create" ? "projects" : page,
       project,
+      tab:
+        page === "deployments" &&
+        (search.tab === "environments" || search.tab === "releases" || search.tab === "activity")
+          ? search.tab
+          : undefined,
+      environment:
+        page === "deployments" && typeof search.environment === "string" && search.environment.length <= 256
+          ? search.environment
+          : undefined,
       version: page === "deployments" && typeof search.version === "string" ? search.version : undefined
     }
   },

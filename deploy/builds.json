@@ -1,0 +1,5 @@
+{
+  "production": { "enabled": true },
+  "staging": { "enabled": true },
+  "local": { "enabled": false }
+}

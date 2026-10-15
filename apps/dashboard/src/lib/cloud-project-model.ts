@@ -1,12 +1,14 @@
 import type { EnvironmentName, ProjectModel, Release } from "@/components/project/model"
 
+type CloudEnvironment = EnvironmentName | `preview-${number}`
+
 export interface ProjectState {
-  environments: { name: EnvironmentName; enabled: number; currentReleaseId: string | null; hostname: string | null }[]
+  environments: { name: CloudEnvironment; enabled: number; currentReleaseId: string | null; hostname: string | null }[]
   releases: {
     id: string
     buildId: string
     status: Release["status"]
-    environment: EnvironmentName
+    environment: CloudEnvironment
     createdAt: string
     artifactDigest: string | null
     url: string | null
@@ -18,7 +20,7 @@ export interface ProjectState {
   deployments: {
     id: string
     releaseId: string
-    environment: EnvironmentName
+    environment: CloudEnvironment
     status: string
     operation: string
     previousReleaseId: string | null
@@ -35,6 +37,7 @@ export interface ProjectState {
     branch: string
     commitSha: string
     updated: string
+    currentVersionId?: string | null
     versionId: string | null
     status: string | null
     hostname: string | null
@@ -52,7 +55,7 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
     actor: "",
     time: release.createdAt,
     duration: "",
-    environment: release.environment,
+    environment: release.environment.startsWith("preview-") ? "preview" : (release.environment as EnvironmentName),
     status: release.status,
     compatible: release.status === "ready",
     retained: Boolean(release.artifactDigest),
@@ -84,9 +87,12 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
   return {
     ...project,
     connected: true,
+    capabilities: state.capabilities,
     repository: state.repository,
     previews: (state.previews ?? []).map((preview) => ({
       id: preview.id,
+      environmentId: `preview-${preview.number}`,
+      currentVersionId: preview.currentVersionId ?? null,
       number: preview.number,
       title: preview.title,
       branch: preview.branch,
@@ -112,7 +118,7 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
       id: row.id,
       versionId: row.releaseId,
       previousVersionId: row.previousReleaseId,
-      environment: row.environment,
+      environment: row.environment.startsWith("preview-") ? "preview" : (row.environment as EnvironmentName),
       kind: row.operation === "promotions" ? "promote" : row.operation === "rollbacks" ? "rollback" : "deploy",
       state:
         row.status === "succeeded"

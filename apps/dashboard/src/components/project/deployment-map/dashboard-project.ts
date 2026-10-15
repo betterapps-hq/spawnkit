@@ -10,7 +10,7 @@ type MapEnvironment = {
   release: string
   candidate?: string
   kind: "preview" | "staging" | "production"
-  status: "Ready" | "Building" | "Failed"
+  status: "Ready" | "Building" | "Failed" | "Empty"
 }
 
 /** Adapt canvas fixtures to existing dashboard pages without a second set of release identities. */

@@ -1,0 +1,17 @@
+{
+  "name": "@spawn/platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./releases": "./src/releases.ts"
+  },
+  "scripts": {
+    "check:types": "tsc --noEmit",
+    "lint": "oxlint --max-warnings=0 src"
+  },
+  "devDependencies": {
+    "@spawn/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

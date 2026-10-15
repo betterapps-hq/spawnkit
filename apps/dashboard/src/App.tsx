@@ -15,9 +15,23 @@ export function App() {
       key={data.user.id}
       catalog={catalog}
       session={{ user: data.user }}
-      location={{ page: search.page ?? "projects", projectId: search.project, versionId: search.version }}
+      location={{
+        page: search.page ?? "projects",
+        projectId: search.project,
+        versionId: search.version,
+        environmentId: search.environment,
+        deploymentView: search.tab
+      }}
       onNavigate={(next) =>
-        void navigate({ search: { page: next.page, project: next.projectId, version: next.versionId } })
+        void navigate({
+          search: {
+            page: next.page,
+            project: next.projectId,
+            version: next.versionId,
+            environment: next.environmentId,
+            tab: next.deploymentView
+          }
+        })
       }
       onSignOut={() => void signOut({ redirectUrl: "/sign-in" })}
       onManageAccount={() => openUserProfile()}

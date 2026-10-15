@@ -40,6 +40,9 @@ export interface Release {
   }
 }
 export interface PullRequestPreview {
+  /** Stable environment identity; id identifies the latest build event for mutations. */
+  environmentId?: string
+  currentVersionId?: string | null
   id: string
   number: number
   title: string
@@ -110,6 +113,7 @@ interface LogEntry {
   release: string
 }
 export interface ProjectModel {
+  capabilities?: { builds: boolean; domains: boolean; github: boolean }
   connected?: boolean
   productionBranch?: string
   id: string
@@ -160,10 +164,13 @@ type ProjectAction = {
   values: Record<string, unknown>
 }
 export type ActionHandler = (action: ProjectAction) => Promise<void | { projectId: string }>
+export type DeploymentView = "environments" | "releases" | "activity"
 export interface StudioLocation {
   page: ProjectPage
   projectId?: string | undefined
   versionId?: string | undefined
+  environmentId?: string | undefined
+  deploymentView?: DeploymentView | undefined
 }
 export type OperationPanel =
   | "deploy"

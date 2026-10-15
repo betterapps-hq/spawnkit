@@ -1,12 +1,21 @@
 import { readFile } from "node:fs/promises"
 import { createRequire } from "node:module"
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 
 const { unzipSync, strFromU8 } = createRequire(new URL("../apps/dashboard/package.json", import.meta.url))(
   "fflate"
 ) as {
   unzipSync: (data: Uint8Array) => Record<string, Uint8Array>
   strFromU8: (data: Uint8Array) => string
+}
+
+async function selectMenu(page: Page, label: string, option: string) {
+  await page.getByRole("combobox", { name: new RegExp(label) }).click()
+  await page.getByRole("option", { name: option, exact: true }).click()
+}
+async function selectTheme(page: Page, theme: string) {
+  await page.getByRole("button", { name: "Change theme", exact: true }).click()
+  await page.getByRole("menuitemradio", { name: theme, exact: true }).click()
 }
 
 test("discovery is public and search, filters, sorting and deep links work", async ({ page }, info) => {
@@ -16,6 +25,20 @@ test("discovery is public and search, filters, sorting and deep links work", asy
   await expect(page.locator(".p-games-grid .p-game-card")).toHaveCount(14)
   await expect(page.getByRole("link", { name: "Play Orchard Trail", exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await expect(page.locator(".p-podium-game")).toHaveCount(3)
+  if (info.project.name === "desktop") {
+    const bounds = await page.locator(".p-podium-game").evaluateAll((cards) =>
+      cards.map((card) => {
+        const { x, y, width, height, bottom } = card.getBoundingClientRect()
+        return { x, y, width, height, bottom }
+      })
+    )
+    expect(bounds[0]!.x).toBeLessThan(bounds[1]!.x)
+    expect(bounds[1]!.x).toBe(bounds[2]!.x)
+    expect(Math.abs(bounds[0]!.bottom - bounds[2]!.bottom)).toBeLessThan(2)
+    expect(bounds[0]!.height).toBeGreaterThan(bounds[1]!.height * 2)
+  }
+  await expect(page.locator("main")).not.toContainText(/Sample rankings|Playable demo|Cover artwork is illustrative/)
   await page.screenshot({ path: `work/public-home-${info.project.name}.png`, fullPage: true })
   await page.screenshot({ path: `work/public-home-viewport-${info.project.name}.png` })
   await page.getByLabel("Search games").fill("alpine")
@@ -24,11 +47,16 @@ test("discovery is public and search, filters, sorting and deep links work", asy
   await page.reload()
   await expect(page.getByLabel("Search games")).toHaveValue("alpine")
   await page.getByRole("button", { name: "Clear filters" }).click()
-  await page.getByLabel("Game availability").selectOption("playable")
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
+  await page.getByRole("checkbox", { name: "Ready to play", exact: true }).check()
+  await page.screenshot({ path: `work/public-filters-${info.project.name}.png` })
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
   await expect(page.locator(".p-games-grid .p-game-card")).toHaveCount(3)
-  await page.getByLabel("Sort games").selectOption("az")
+  await selectMenu(page, "Sort games", "Name: A–Z")
   await expect(page.locator(".p-games-grid h3")).toHaveText(["Orchard Trail", "Prism Break", "Starfall Squadron"])
-  await page.getByLabel("Game dimension").selectOption("3D")
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
+  await selectMenu(page, "Game dimension", "3D")
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
   await expect(page.getByRole("heading", { name: "No games found" })).toBeVisible()
   await page.getByRole("button", { name: "Reset filters" }).click()
   await expect(page.locator(".p-games-grid .p-game-card")).toHaveCount(14)
@@ -43,14 +71,86 @@ test("discovery is public and search, filters, sorting and deep links work", asy
   await expect(page.locator(".p-games-grid h3")).toHaveText(["Prism Break"])
 })
 
+test("game collections, illustrated categories and random play connect discovery", async ({ page }, info) => {
+  await page.goto("/?q=snake&rating=4.8")
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
+  const collections = page.getByRole("navigation", { name: "Discover collections" })
+  await collections.getByRole("button", { name: "Top rated", exact: true }).click()
+  await expect(page.locator(".p-games-grid .p-game-card")).toHaveCount(14)
+  await expect(page.locator(".p-games-grid h3").first()).toHaveText("Starfall Squadron")
+  await expect(page.locator(".p-games-grid h3").nth(1)).toHaveText("Tiny Treasures")
+  await expect(page).toHaveURL(
+    (url) => url.searchParams.get("sort") === "rating" && !url.searchParams.has("q") && !url.searchParams.has("rating")
+  )
+  await expect(collections.getByRole("button", { name: "Top rated", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  )
+  await page.getByRole("button", { name: "Explore Racing games", exact: true }).click()
+  await expect(page.locator(".p-games-grid h3")).toHaveText(["Alpine Rally"])
+  await expect(page).toHaveURL((url) => url.searchParams.get("genre") === "Racing")
+  await collections.getByRole("button", { name: "Popular", exact: true }).click()
+  await expect(page.locator(".p-games-grid .p-game-card")).toHaveCount(14)
+  await expect(page.locator(".p-games-grid h3").nth(1)).toHaveText("Orchard Trail")
+  await collections.getByRole("button", { name: "New arrivals", exact: true }).click()
+  await expect(page.getByRole("combobox", { name: /Sort games/ })).toContainText("Recently added")
+  await collections.getByRole("button", { name: "Discover", exact: true }).click()
+  await selectTheme(page, "Dark")
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }))
+  await page.screenshot({ path: `work/public-discovery-dark-${info.project.name}.png`, fullPage: true })
+  if (info.project.name === "desktop") {
+    await page.setViewportSize({ width: 680, height: 900 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    const winner = await page.locator(".podium-0").boundingBox()
+    const runner = await page.locator(".podium-1").boundingBox()
+    expect(winner!.height).toBeGreaterThan(runner!.height * 2)
+    await page.screenshot({ path: "work/public-discovery-tablet.png", fullPage: true })
+  }
+  await page.getByRole("button", { name: "Play a random game", exact: true }).click()
+  await expect(page).toHaveURL(/\/games\/(snake|breakout|space-shooter)$/)
+  await expect(page.getByRole("button", { name: "Play now", exact: true })).toBeVisible()
+})
+
+test("community filters combine, persist and clear independently", async ({ page }, info) => {
+  await page.goto("/#games")
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
+  await page.getByRole("radio", { name: "4.8+ stars", exact: true }).check()
+  await selectMenu(page, "Minimum reviews", "100+ reviews")
+  await expect(page.locator(".p-games-grid h3")).toHaveText(["Starfall Squadron", "Orchard Trail"])
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
+  await expect(page).toHaveURL((url) => Number(JSON.parse(url.searchParams.get("rating") ?? "0")) === 4.8)
+  await page.reload()
+  await expect(page.locator(".p-games-grid h3")).toHaveText(["Starfall Squadron", "Orchard Trail"])
+  await page.getByRole("button", { name: "Remove 100+ reviews filter", exact: true }).click()
+  await selectMenu(page, "Sort games", "Highest rated")
+  await expect(page.locator(".p-games-grid h3")).toHaveText([
+    "Starfall Squadron",
+    "Tiny Treasures",
+    "Orchard Trail",
+    "Alpine Rally",
+    "Thornwatch"
+  ])
+  await page.getByRole("button", { name: "Remove 4.8+ stars filter", exact: true }).click()
+  await selectMenu(page, "Sort games", "Most reviewed")
+  await expect(page.locator(".p-games-grid h3").nth(2)).toHaveText("Prism Break")
+  await selectTheme(page, "Dark")
+  await page.getByRole("button", { name: "Filter games", exact: true }).click()
+  await expect(page.locator(".p-filter-popover")).toHaveCSS("opacity", "1")
+  await page.screenshot({ path: `work/public-filters-dark-${info.project.name}.png` })
+  await page.getByRole("radio", { name: "4.5+ stars", exact: true }).check()
+  await page.getByRole("radio", { name: "4.5+ stars", exact: true }).press("Escape")
+  await expect(page.getByRole("button", { name: "Filter games", exact: true })).toBeFocused()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
 test("starter kit download contains the selected compatible standalone project", async ({ page }, info) => {
   await page.goto("/templates?engine=phaser")
   await expect(page.getByRole("radio", { name: "Phaser", exact: true })).toBeChecked()
-  await page.getByLabel("Physics", { exact: false }).selectOption("matter")
+  await selectMenu(page, "Physics", "Matter.js")
   await page.getByLabel("Project name", { exact: true }).fill("moon-jump")
   await page.getByText("Architecture & telemetry", { exact: true }).click()
-  await page.getByLabel("Entity system").selectOption("koota")
-  await page.getByLabel("Telemetry", { exact: false }).selectOption("platform")
+  await selectMenu(page, "Entity system", "Koota")
+  await selectMenu(page, "Telemetry", "SpawnKit telemetry")
   await page.getByRole("checkbox", { name: "Playwright", exact: true }).check()
   await page.getByRole("checkbox", { name: "Storybook", exact: true }).check()
   await expect(page.getByRole("button", { name: "Download starter kit" })).toBeEnabled()
@@ -77,8 +177,10 @@ test("starter kit download contains the selected compatible standalone project",
     .locator(".p-engine-grid label")
     .filter({ has: page.getByRole("radio", { name: "Three.js", exact: true }) })
     .click()
-  await expect(page.getByLabel("Physics", { exact: false })).toHaveValue("none")
-  await expect(page.getByLabel("Physics", { exact: false }).locator("option")).toHaveText(["No physics", "Rapier 3D"])
+  await expect(page.getByRole("combobox", { name: /Physics/ })).toContainText("No physics")
+  await page.getByRole("combobox", { name: /Physics/ }).click()
+  await expect(page.getByRole("option")).toHaveText(["No physics", "Rapier 3D"])
+  await page.getByRole("option", { name: "No physics", exact: true }).click()
   await page.getByLabel("Project name", { exact: true }).fill("../existing-folder")
   await expect(page.getByRole("button", { name: "Download starter kit" })).toBeDisabled()
 })
@@ -88,7 +190,7 @@ for (const slug of ["snake", "breakout", "space-shooter"]) {
     const errors: string[] = []
     page.on("pageerror", (error) => errors.push(error.message))
     await page.goto(`/games/${slug}`)
-    await page.getByRole("button", { name: "Play demo", exact: true }).click()
+    await page.getByRole("button", { name: "Play now", exact: true }).click()
     await expect(page.locator("canvas")).toBeVisible()
     await page.getByRole("button", { name: "Pause game", exact: true }).click()
     await expect(page.getByText("Your game is paused.")).toBeVisible()
@@ -103,10 +205,10 @@ for (const slug of ["snake", "breakout", "space-shooter"]) {
   })
 }
 
-test("concepts are honest and lead to the correct engine", async ({ page }) => {
+test("unreleased games lead to the correct starter engine", async ({ page }) => {
   await page.goto("/games/racing")
-  await expect(page.getByText("This is an illustrated game concept", { exact: false })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Play demo" })).toHaveCount(0)
+  await expect(page.getByRole("heading", { name: "Alpine Rally", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Play now" })).toHaveCount(0)
   await page.getByRole("link", { name: "Get the starter kit", exact: false }).click()
   await expect(page).toHaveURL(/\/templates\?engine=three/)
   await expect(page.getByRole("radio", { name: "Three.js", exact: true })).toBeChecked()
@@ -114,25 +216,29 @@ test("concepts are honest and lead to the correct engine", async ({ page }) => {
 
 test("cloud illustration, pipeline and pricing calculator are interactive", async ({ page }, info) => {
   await page.goto("/cloud")
+  await expect(page.locator(".env-scene")).toHaveAttribute("data-ready", "true", { timeout: 30000 })
+  await page.locator(".env-scene").screenshot({ path: `work/public-environments-${info.project.name}.png` })
   await page.getByRole("button", { name: "Staging", exact: true }).click()
   await expect(page.getByText("Staging tests changes separately from production.")).toBeVisible()
   await page.getByRole("tab", { name: /Preview/ }).click()
-  await expect(page.getByRole("tabpanel")).toContainText("Managed GitHub previews are in development.")
+  await expect(page.getByRole("tabpanel")).toContainText("Try a change in its own preview.")
   await page.getByRole("tab", { name: /Preview/ }).press("ArrowRight")
   await expect(page.getByRole("tab", { name: /Stage/ })).toHaveAttribute("aria-selected", "true")
-  await expect(page.getByRole("tabpanel")).toContainText("Sandbox adds $5/month")
+  await expect(page.getByRole("tabpanel")).toContainText("An optional Sandbox separates staging from production.")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: `work/public-cloud-${info.project.name}.png`, fullPage: true })
   await page.goto("/pricing")
-  await page.getByLabel("Game type").selectOption("multiplayer")
+  await expect(page).toHaveURL(/\/cloud#pricing/)
+  await expect(page.getByRole("heading", { name: "Cloud pricing", exact: true })).toBeVisible()
+  await selectMenu(page, "Game type", "Multiplayer")
   await page.getByRole("checkbox", { name: "Add a Sandbox", exact: true }).check()
   await expect(page.locator(".p-estimate-total")).toContainText("$10")
   await expect(page.locator(".p-cost-result")).toContainText("including idle hours")
   await page.getByRole("checkbox", { name: "Add a Sandbox", exact: true }).uncheck()
-  await page.getByLabel("Game type").selectOption("free")
+  await selectMenu(page, "Game type", "Frontend-only game")
   await expect(page.locator(".p-estimate-total")).toContainText("$0")
-  await page.getByText("Can I subscribe to a paid plan now?", { exact: true }).click()
-  await expect(page.getByText("Paid plans are a pricing preview.", { exact: false })).toBeVisible()
+  await page.getByText("What does the monthly estimate include?", { exact: true }).click()
+  await expect(page.getByText("The estimate includes your game fee", { exact: false })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: `work/public-pricing-${info.project.name}.png`, fullPage: true })
 })
@@ -145,6 +251,34 @@ test("creator page and responsive navigation connect the public experience", asy
   await expect(page.getByText("Coming soon", { exact: true })).toHaveCount(2)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: `work/public-create-${info.project.name}.png`, fullPage: true })
+  await page.screenshot({ path: `work/public-create-viewport-${info.project.name}.png` })
+  for (const [name, title] of [
+    ["Phaser", "Clockwork Courier"],
+    ["Three.js", "Alpine Rally"]
+  ]) {
+    await page.getByRole("tab", { name: new RegExp(name!) }).click()
+    const artwork = page.getByRole("img", { name: `${title} concept artwork` })
+    await expect(artwork).toBeVisible()
+    await expect.poll(() => artwork.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  }
+  await expect(page.getByRole("link", { name: "Build your starter kit", exact: true })).toHaveAttribute(
+    "href",
+    "/templates?engine=three"
+  )
+  await expect(page.locator(".c-command-line")).toContainText("--add three,vitest")
+  await page.getByRole("tab", { name: "Browser tests", exact: true }).click()
+  await expect(page.getByRole("tabpanel").filter({ hasText: "Player interactions" })).toContainText(
+    "Verify the player collects an item"
+  )
+  await page.getByRole("button", { name: "Drop objects", exact: true }).scrollIntoViewIfNeeded()
+  await expect(page.getByRole("button", { name: "Drop objects", exact: true })).toBeEnabled({ timeout: 30000 })
+  await page.getByRole("button", { name: "Drop objects", exact: true }).click()
+  await expect(page.locator(".physics-demo")).toHaveAttribute("data-state", "falling")
+  await expect(page.locator(".physics-demo")).toHaveAttribute("data-state", "settled", { timeout: 18000 })
+  await page.locator(".c-physics-card").screenshot({ path: `work/public-physics-${info.project.name}.png` })
+  await selectTheme(page, "Dark")
+  await page.screenshot({ path: `work/public-create-dark-${info.project.name}.png`, fullPage: true })
+  await selectTheme(page, "Light")
   if (info.project.name === "mobile") {
     await page.getByRole("button", { name: "Open menu", exact: true }).click()
     await page
@@ -160,6 +294,32 @@ test("creator page and responsive navigation connect the public experience", asy
   await expect(page.getByRole("heading", { name: "Cloud pricing", exact: true })).toBeVisible()
 })
 
+test("creator scene layers move at different depths and respect reduced motion", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "Pointer parallax is a desktop interaction")
+  await page.goto("/create")
+  await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
+  const scene = page.locator(".c-scene")
+  await scene.scrollIntoViewIfNeeded()
+  const bounds = (await scene.boundingBox())!
+  const separation = () =>
+    page.evaluate(() => {
+      const front = document.querySelector(".c-depth-source")!.getBoundingClientRect()
+      const back = document.querySelector(".c-depth-game")!.getBoundingClientRect()
+      return front.x - back.x
+    })
+  await page.mouse.move(bounds.x + bounds.width * 0.2, bounds.y + bounds.height * 0.45)
+  const left = await separation()
+  await page.mouse.move(bounds.x + bounds.width * 0.8, bounds.y + bounds.height * 0.45)
+  await expect.poll(async () => Math.abs((await separation()) - left)).toBeGreaterThan(12)
+  expect(await scene.locator(".c-scene-inner").evaluate((element) => getComputedStyle(element).transformStyle)).toBe(
+    "preserve-3d"
+  )
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  const before = await scene.evaluate((element) => element.getAttribute("style"))
+  await page.mouse.move(bounds.x + bounds.width * 0.3, bounds.y + bounds.height * 0.6)
+  expect(await scene.evaluate((element) => element.getAttribute("style"))).toBe(before)
+})
+
 test("dashboard remains protected and legacy dashboard links redirect", async ({ page }) => {
   await page.goto("/dashboard")
   await expect(page).toHaveURL(/\/sign-in/)
@@ -169,9 +329,8 @@ test("dashboard remains protected and legacy dashboard links redirect", async ({
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
 })
 
-test("game feedback is editable, persistent, scoped to the game and clearly local", async ({ page }, info) => {
+test("game feedback is editable, persistent and scoped to the game", async ({ page }, info) => {
   await page.goto("/games/snake")
-  await expect(page.getByText("Public posting is coming soon.", { exact: false })).toBeVisible()
   await page
     .locator(".p-rating-stars label")
     .filter({ has: page.getByRole("radio", { name: "4 stars", exact: true }) })
@@ -179,26 +338,25 @@ test("game feedback is editable, persistent, scoped to the game and clearly loca
   await page.getByRole("radio", { name: "4 stars", exact: true }).press("ArrowLeft")
   await expect(page.getByRole("radio", { name: "3 stars", exact: true })).toBeChecked()
   await page.getByRole("radio", { name: "3 stars", exact: true }).press("ArrowRight")
-  await page.getByRole("button", { name: "Save rating locally", exact: true }).click()
-  await expect(page.locator(".p-community").getByRole("status")).toContainText("Rating saved on this device")
+  await page.getByRole("button", { name: "Save rating", exact: true }).click()
+  await expect(page.locator(".p-community").getByRole("status")).toContainText("Rating saved")
   await page.getByLabel("Leave feedback").fill("The touch controls are easy to use.")
-  await page.getByRole("button", { name: "Save comment draft", exact: false }).click()
+  await page.getByRole("button", { name: "Save comment", exact: false }).click()
   await expect(page.locator(".p-comment-draft")).toContainText("The touch controls are easy to use.")
   await page.reload()
   await expect(page.getByRole("radio", { name: "4 stars", exact: true })).toBeChecked()
   await expect(page.locator(".p-comment-draft")).toContainText("The touch controls are easy to use.")
-  await expect(page.getByText("No public ratings yet")).toBeVisible()
-  await expect(page.getByText("0 public comments")).toBeVisible()
-  await page.getByRole("button", { name: "Edit draft", exact: true }).click()
+  await expect(page.getByText("124 reviews").first()).toBeVisible()
+  await page.getByRole("button", { name: "Edit comment", exact: true }).click()
   await page.getByLabel("Leave feedback").fill("Add a clearer game-over screen.")
-  await page.getByRole("button", { name: "Save comment draft", exact: false }).click()
+  await page.getByRole("button", { name: "Save comment", exact: false }).click()
   await expect(page.locator(".p-comment-draft")).toContainText("Add a clearer game-over screen.")
   await page.locator(".p-community").screenshot({ path: `work/public-community-${info.project.name}.png` })
   await page.goto("/games/breakout")
   await expect(page.getByLabel("Leave feedback")).toHaveValue("")
   await expect(page.getByRole("radio", { name: "4 stars", exact: true })).not.toBeChecked()
   await page.goto("/games/snake")
-  await page.getByRole("button", { name: "Delete draft", exact: true }).click()
+  await page.getByRole("button", { name: "Delete comment", exact: true }).click()
   await page.getByRole("button", { name: "Remove rating", exact: true }).click()
   await page.reload()
   await expect(page.getByLabel("Leave feedback")).toHaveValue("")
@@ -219,7 +377,7 @@ test("unreadable feedback is preserved and storage failures never report success
       throw new Error("Quota exceeded")
     }
   })
-  await page.getByRole("button", { name: "Save comment draft", exact: false }).click()
+  await page.getByRole("button", { name: "Save comment", exact: false }).click()
   await expect(page.getByRole("alert")).toContainText("could not be saved")
   await expect(page.getByLabel("Leave feedback")).toHaveValue("Keep this draft if storage fails.")
   await expect(page.locator(".p-comment-draft")).toHaveCount(0)
@@ -227,21 +385,21 @@ test("unreadable feedback is preserved and storage failures never report success
 
 test("theme, shared branding, footer destinations and reduced motion work", async ({ page }, info) => {
   await page.goto("/")
-  await page.getByLabel("Appearance", { exact: true }).selectOption("dark")
+  await selectTheme(page, "Dark")
   await expect(page.locator("html")).toHaveClass(/dark/)
   await page.reload()
   await expect(page.locator("html")).toHaveClass(/dark/)
-  await expect(page.locator(".p-header").getByLabel("SpawnKit home")).toHaveText("SpawnKit")
-  await expect(page.locator(".p-header .lucide-box")).toHaveCount(1)
+  await expect(page.locator(".p-header").getByLabel("SpawnKit home")).toHaveText("SpawnKit.")
+  await expect(page.locator(".p-header .lucide-zap")).toHaveCount(1)
   await page.screenshot({ path: `work/public-home-dark-${info.project.name}.png`, fullPage: true })
-  await page.getByLabel("Appearance", { exact: true }).selectOption("light")
+  await selectTheme(page, "Light")
   await expect(page.locator("html")).not.toHaveClass(/dark/)
   await page.goto("/create")
   await expect(page.locator(".p-device-card")).toHaveCount(3)
   await page.locator(".p-platform-showcase").screenshot({ path: `work/public-devices-${info.project.name}.png` })
   await page.emulateMedia({ reducedMotion: "reduce" })
-  expect(await page.locator(".platform-top").evaluate((element) => getComputedStyle(element).animationName)).toBe(
-    "none"
+  expect(await page.locator(".c-depth-game").evaluate((element) => getComputedStyle(element).transitionDuration)).toBe(
+    "0s"
   )
   expect(
     await page
@@ -269,28 +427,44 @@ test("theme, shared branding, footer destinations and reduced motion work", asyn
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
-test("company footer previews contact, social and legal destinations", async ({ page }, info) => {
+test("company footer links contact details and the published privacy policy", async ({ page }, info) => {
   await page.goto("/")
   await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
   await page.locator(".p-company-footer").screenshot({ path: `work/public-footer-${info.project.name}.png` })
   await page
     .getByRole("navigation", { name: "Social links", exact: true })
-    .getByRole("link", { name: "GitHub preview", exact: true })
+    .getByRole("link", { name: "GitHub", exact: true })
     .click()
   await expect(page).toHaveURL(/\/contact#github/)
-  await expect(page.getByText("Contact details are placeholders", { exact: true })).toBeVisible()
   await expect(page.getByText("github.com/spawnkit", { exact: true })).toBeVisible()
   await page
     .getByRole("navigation", { name: "Legal", exact: true })
     .getByRole("link", { name: "Privacy policy", exact: true })
     .click()
   await expect(page.getByRole("heading", { name: "Privacy policy", exact: true })).toBeVisible()
-  await expect(page.getByText("Draft placeholder", { exact: true })).toBeVisible()
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex")
+  await expect(page.getByRole("heading", { name: "Retention and deletion", exact: true })).toBeVisible()
+  await expect(page.getByRole("link", { name: "hello@spawnkit.cloud", exact: true }).first()).toHaveAttribute(
+    "href",
+    "mailto:hello@spawnkit.cloud"
+  )
+  await expect(page.getByText("Draft placeholder", { exact: true })).toHaveCount(0)
+  await expect(page.locator("article")).not.toContainText("ajcraswell@gmail.com")
+  await expect(page.locator("article")).not.toContainText("Review notes")
+  await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(0)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: `work/privacy-policy-${info.project.name}.png` })
   await page
     .getByRole("navigation", { name: "Legal", exact: true })
     .getByRole("link", { name: "Terms of service", exact: true })
     .click()
   await expect(page.getByRole("heading", { name: "Terms of service", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Your games and content", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Responsibility and legal rights", exact: true })).toBeVisible()
+  await expect(page.getByText("Policy content coming soon", { exact: true })).toHaveCount(0)
+  await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(0)
+  await expect(page.locator("article").getByRole("link", { name: "privacy policy", exact: true })).toHaveAttribute(
+    "href",
+    "/privacy"
+  )
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

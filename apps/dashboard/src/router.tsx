@@ -1,9 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { createRouter } from "@tanstack/react-router"
+import { configureQueryFocus } from "./lib/query-focus"
 import { routeTree } from "./routeTree.gen"
 
 export function getRouter() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 1 } } })
+  configureQueryFocus()
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchIntervalInBackground: false } }
+  })
   return createRouter({
     routeTree,
     context: { queryClient },

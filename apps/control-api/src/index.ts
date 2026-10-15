@@ -15,6 +15,8 @@ import {
 import { reserveProjectSlug } from "./hosting"
 import { boundedBody, HttpError, jsonBody, record, requireValue } from "./http"
 import { maintainPlatform } from "./maintenance"
+import { projectSummaries } from "./project-summaries"
+import { releaseChanges } from "./release-changes"
 import { environments, projects, uploads } from "./schema"
 import { decodeSource, MAX_SOURCE_BYTES } from "./source"
 import { telemetryRoute } from "./telemetry"
@@ -36,6 +38,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   )
     throw new HttpError(404, "not_found", "Not found.")
   const ownerId = await authenticate(request, env)
+  const limiter = request.method === "GET" || request.method === "HEAD" ? env.API_READ_LIMIT : env.API_WRITE_LIMIT
+  if (limiter && !(await limiter.limit({ key: ownerId })).success)
+    throw new HttpError(429, "rate_limited", "Too many requests. Please retry in a minute.")
   if (url.pathname === "/api/platform/v1/github/callback" && request.method === "GET")
     return githubCallback(request, env, ownerId)
   const db = drizzle(env.DATABASE)
@@ -46,7 +51,10 @@ async function route(request: Request, env: Env): Promise<Response> {
   const [resource, projectId, operation, resourceId] = path
   if (resource !== "projects") throw new HttpError(404, "not_found", "Not found.")
   if (!projectId && request.method === "GET") {
-    return Response.json({ projects: await db.select().from(projects).where(eq(projects.ownerId, ownerId)) })
+    return Response.json({
+      projects: await db.select().from(projects).where(eq(projects.ownerId, ownerId)),
+      ...(url.searchParams.get("summary") === "true" ? { summaries: await projectSummaries(env, ownerId) } : {})
+    })
   }
   if (!projectId && request.method === "POST") {
     const body = await jsonBody(request)
@@ -90,6 +98,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
     .get()
   if (!project) throw new HttpError(404, "not_found", "Project not found.")
+  if (operation === "release-changes" && request.method === "GET") return releaseChanges(request, env, projectId)
   if (operation === "github" && resourceId === "connect" && request.method === "POST")
     return connectGitHub(env, ownerId, projectId, project.configuration)
   if (operation === "github" && resourceId === "deploy" && request.method === "POST") {
@@ -124,7 +133,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         "SELECT e.name,e.enabled,e.current_release_id AS currentReleaseId,h.hostname FROM environments e LEFT JOIN hosting_slots h ON h.project_id=e.project_id AND h.environment=e.name WHERE e.project_id=?"
       ).bind(projectId),
       env.DATABASE.prepare(
-        "SELECT r.id,r.build_id AS buildId,r.status,r.environment,r.created_at AS createdAt,r.artifact_digest AS artifactDigest,r.url,(SELECT COUNT(*) FROM releases older WHERE older.project_id=r.project_id AND older.rowid<=r.rowid) AS versionNumber,g.commit_sha AS commitSha,g.branch,g.title AS sourceTitle FROM releases r LEFT JOIN github_events g ON g.deployment_id=r.build_id WHERE r.project_id=? ORDER BY r.rowid DESC LIMIT 100"
+        "SELECT r.id,r.build_id AS buildId,r.status,r.environment,r.created_at AS createdAt,r.artifact_digest AS artifactDigest,r.url,(SELECT COUNT(*) FROM releases older WHERE older.project_id=r.project_id AND older.rowid<=r.rowid) AS versionNumber,g.commit_sha AS commitSha,g.branch,g.title AS sourceTitle FROM releases r LEFT JOIN github_events g ON g.deployment_id=r.build_id WHERE r.project_id=? AND (r.rowid IN (SELECT recent.rowid FROM releases recent WHERE recent.project_id=r.project_id ORDER BY recent.rowid DESC LIMIT 100) OR r.id IN (SELECT current_release_id FROM environments WHERE project_id=r.project_id AND enabled=1)) ORDER BY r.rowid DESC"
       ).bind(projectId),
       env.DATABASE.prepare(
         "SELECT id,release_id AS releaseId,environment,status,operation,expected_release_id AS previousReleaseId,created_at AS createdAt FROM deployments WHERE project_id=? ORDER BY created_at DESC LIMIT 100"
@@ -137,7 +146,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       ).bind(projectId),
       env.DATABASE.prepare("SELECT repository FROM github_connections WHERE project_id=?").bind(projectId),
       env.DATABASE.prepare(
-        "SELECT g.id,g.pull_request AS number,g.title,g.branch,g.commit_sha AS commitSha,g.created_at AS updated,d.release_id AS versionId,d.status,h.hostname FROM github_events g LEFT JOIN deployments d ON d.id=g.deployment_id LEFT JOIN hosting_slots h ON h.project_id=g.project_id AND h.environment=g.environment WHERE g.project_id=? AND g.pull_request IS NOT NULL AND g.status!='closed' AND g.rowid=(SELECT MAX(latest.rowid) FROM github_events latest WHERE latest.project_id=g.project_id AND latest.environment=g.environment) ORDER BY g.rowid DESC LIMIT 100"
+        "SELECT g.id,g.pull_request AS number,g.title,g.branch,g.commit_sha AS commitSha,g.created_at AS updated,d.release_id AS versionId,e.current_release_id AS currentVersionId,COALESCE(d.status,g.status) AS status,h.hostname FROM github_events g LEFT JOIN deployments d ON d.id=g.deployment_id LEFT JOIN hosting_slots h ON h.project_id=g.project_id AND h.environment=g.environment LEFT JOIN environments e ON e.project_id=g.project_id AND e.name=g.environment WHERE g.project_id=? AND g.pull_request IS NOT NULL AND g.status!='closed' AND g.rowid=(SELECT MAX(latest.rowid) FROM github_events latest WHERE latest.project_id=g.project_id AND latest.environment=g.environment) ORDER BY g.rowid DESC LIMIT 100"
       ).bind(projectId)
     ])
     return Response.json({
@@ -284,7 +293,13 @@ export default {
       return response
     } catch (error) {
       if (error instanceof HttpError)
-        return Response.json({ error: { code: error.code, message: error.message } }, { status: error.status })
+        return Response.json(
+          { error: { code: error.code, message: error.message } },
+          {
+            status: error.status,
+            headers: { "cache-control": "no-store", ...(error.status === 429 ? { "retry-after": "60" } : {}) }
+          }
+        )
       console.error(
         JSON.stringify({
           event: "request_failed",
@@ -294,7 +309,7 @@ export default {
       )
       return Response.json(
         { error: { code: "internal_error", message: "The request could not be completed." } },
-        { status: 500 }
+        { status: 500, headers: { "cache-control": "no-store" } }
       )
     }
   }

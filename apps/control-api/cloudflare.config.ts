@@ -1,17 +1,21 @@
 import { bindings, defineConfig, defineContainer, defineWorker, exports, triggers } from "cf/config"
+import buildEnvironments from "../../deploy/builds.json" with { type: "json" }
 import githubEnvironments from "../../deploy/github.json" with { type: "json" }
 import localOrigins from "../../deploy/local-origins.json" with { type: "json" }
 import previews from "../../deploy/previews.json" with { type: "json" }
 import * as entrypoint from "./src/index.ts" with { type: "cf-worker" }
 
+const production = process.env.SPAWN_CONTROL_ENVIRONMENT === "production"
+const environment = process.env.SPAWN_LOCAL_WORKER === "true" ? "local" : production ? "production" : "staging"
 const builder = defineContainer({
-  name: "spawn-build",
+  name: production ? "spawnkit-build" : "spawn-build",
   image: { dockerfile: "./Dockerfile" },
   instanceType: "basic",
   maxInstances: 3
 })
-const buildsEnabled = process.env.SPAWN_ENABLE_BUILD_CONTAINERS === "true"
-const production = process.env.SPAWN_CONTROL_ENVIRONMENT === "production"
+const buildsEnabled = process.env.SPAWN_ENABLE_BUILD_CONTAINERS
+  ? process.env.SPAWN_ENABLE_BUILD_CONTAINERS === "true"
+  : buildEnvironments[environment].enabled
 const githubEnvironment = process.env.SPAWN_LOCAL_WORKER === "true" ? "local" : production ? "production" : "staging"
 const githubEnabled = process.env.SPAWN_ENABLE_GITHUB
   ? process.env.SPAWN_ENABLE_GITHUB === "true"
@@ -34,6 +38,7 @@ export default defineConfig({
   worker: {
     ...worker,
     compatibilityFlags: ["nodejs_compat"],
+    limits: { cpuMs: 1000 },
     domains:
       process.env.SPAWN_CUSTOM_DOMAINS === "false"
         ? []
@@ -48,6 +53,16 @@ export default defineConfig({
     triggers: [triggers.scheduled({ schedule: "* * * * *" })],
     observability: { enabled: true, traces: { enabled: true, headSamplingRate: 0.1 } },
     env: {
+      API_READ_LIMIT: bindings.rateLimit({
+        namespace: production ? "1101" : "1102",
+        simple: { limit: 120, period: 60 }
+      }),
+      API_WRITE_LIMIT: bindings.rateLimit({
+        namespace: production ? "1103" : "1104",
+        simple: { limit: 20, period: 60 }
+      }),
+      BUILD_DAILY_OWNER_LIMIT: bindings.text("50"),
+      BUILD_DAILY_PLATFORM_LIMIT: bindings.text("200"),
       SANDBOX: bindings.durableObject<typeof worker, "Sandbox">({ worker, exportName: "Sandbox" }),
       BUILD_JOBS: bindings.durableObject<typeof worker, "BuildJob">({ worker, exportName: "BuildJob" }),
       DATABASE: bindings.d1({

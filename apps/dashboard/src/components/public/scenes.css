@@ -1,0 +1,111 @@
+.p-cloud-scene.env-scene {
+  position: relative;
+  height: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--primary) 13%, transparent), transparent 67%);
+}
+.env-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.env-scene-host {
+  width: 100%;
+  height: 360px;
+  position: relative;
+}
+.env-scene-host canvas,
+.physics-host canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.env-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.env-controls {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--border);
+  padding: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin: auto;
+  border-radius: 12px;
+  background: var(--card);
+}
+.env-controls [data-slot="button"] {
+  font-size: 11px;
+  padding: 9px 13px;
+  gap: 7px;
+  height: 36px;
+  border-radius: 8px;
+}
+.env-controls [aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.env-scene-status {
+  text-align: center;
+  font-size: 11px;
+  min-height: 38px;
+  margin: 16px auto 0 !important;
+  max-width: 350px;
+}
+.physics-demo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 280px;
+}
+.physics-host {
+  position: absolute;
+  inset: -30px 0 0;
+}
+.physics-toolbar {
+  position: absolute;
+  bottom: 22px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: space-between;
+}
+.physics-toolbar [data-slot="button"] {
+  height: 32px;
+  font-size: 11px;
+  background: var(--card);
+}
+.physics-toolbar > span {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 600px) {
+  .env-scene-host {
+    height: 280px;
+  }
+  .env-controls [data-slot="button"] {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+  .physics-demo {
+    height: 260px;
+  }
+  .physics-toolbar {
+    left: 20px;
+    right: 20px;
+  }
+}
