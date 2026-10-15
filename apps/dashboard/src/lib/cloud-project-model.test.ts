@@ -2,6 +2,30 @@ import { expect, it } from "vitest"
 import type { ProjectModel } from "@/components/project/model"
 import { applyCloudState, type ProjectState } from "./cloud-project-model"
 
+it("keeps configured previews enabled after the last PR closes, only with a connected repository", () => {
+  const base = {
+    production: { regions: [] },
+    sandbox: null,
+    configuration: { previews: true },
+    previewsEnabled: false
+  } as unknown as ProjectModel
+  const state: ProjectState = {
+    environments: [],
+    releases: [],
+    deployments: [],
+    logs: [],
+    domains: [],
+    previews: [],
+    repository: "studio/game",
+    capabilities: { builds: true, domains: false, github: true }
+  }
+  expect(applyCloudState(base, state).previewsEnabled).toBe(true)
+  expect(applyCloudState(base, { ...state, repository: null }).previewsEnabled).toBe(false)
+  expect(
+    applyCloudState({ ...base, configuration: { ...base.configuration!, previews: false } }, state).previewsEnabled
+  ).toBe(false)
+})
+
 it("keeps hosting names scheme-free for dashboard links and copy controls", () => {
   const base = { production: { regions: [] }, sandbox: null } as unknown as ProjectModel
   const state: ProjectState = {

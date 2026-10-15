@@ -89,6 +89,7 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
     connected: true,
     capabilities: state.capabilities,
     repository: state.repository,
+    previewsEnabled: Boolean(state.repository && project.configuration?.previews),
     previews: (state.previews ?? []).map((preview) => ({
       id: preview.id,
       environmentId: `preview-${preview.number}`,
