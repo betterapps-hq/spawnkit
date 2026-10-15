@@ -16,7 +16,7 @@ const stories =
     : environment === "staging"
       ? "https://stories.staging.spawnkit.cloud"
       : `https://stories-preview-pr-${pr}.spawnkit.cloud`
-for (const url of [app, `${stories}/index.json`, `${stories}/build.json`]) {
+for (const url of [app, `${stories}/`, `${stories}/iframe.html`, `${stories}/index.json`, `${stories}/build.json`]) {
   let passed = false
   for (let attempt = 0; attempt < 12; attempt++) {
     try {

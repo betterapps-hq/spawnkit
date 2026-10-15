@@ -18,6 +18,6 @@ export default defineConfig({
     triggers: preview
       ? [triggers.fetch({ pattern: `stories-preview-${preview}.spawnkit.cloud/*`, zone: "spawnkit.cloud" })]
       : [],
-    assets: { htmlHandling: "none", notFoundHandling: "none" }
+    assets: { htmlHandling: "auto-trailing-slash", notFoundHandling: "none" }
   }
 })
