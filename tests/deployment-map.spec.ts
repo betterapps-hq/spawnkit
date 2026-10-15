@@ -456,6 +456,7 @@ test("dashboard links reuse existing environment and version pages with matching
   await page.getByRole("link", { name: "Open in dashboard" }).click()
   await expect(page.getByRole("heading", { name: "v1.8.0", exact: true })).toBeVisible()
   await expect(page.getByRole("main")).toContainText("8e3a9c2")
+  await expect(page.getByRole("dialog")).toHaveCount(0)
   await page.getByRole("button", { name: "Promote version", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Review release", exact: true })).toBeVisible()
   await page.getByRole("link", { name: "Open in dashboard" }).click()

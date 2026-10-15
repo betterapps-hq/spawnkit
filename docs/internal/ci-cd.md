@@ -8,6 +8,8 @@ The private repository is [AndrewCraswell/spawnkit](https://github.com/AndrewCra
 configuration tests, coverage, production builds (including Storybook), generated-project
 smoke checks, telemetry-package checks, and Playwright desktop/mobile acceptance.
 Tests use loopback fixture servers without deployment credentials.
+Browser jobs build the CLI and Storybook first, then exercise the packaged stories
+instead of waiting for development-time compilation on shared runners.
 
 A passing push to `main` deploys services, app and Storybook to staging, applies pending
 D1 migrations, and checks the published app, story index and commit metadata:

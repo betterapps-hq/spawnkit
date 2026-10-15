@@ -48,7 +48,10 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec turbo run build --filter=@spawn/cli --filter=@spawn/stories
       - run: pnpm test:e2e --project=${{ matrix.project }} --workers=2 --reporter=line,html
+        env:
+          SPAWN_E2E_STATIC_STORIES: "1"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
