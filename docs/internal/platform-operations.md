@@ -139,3 +139,23 @@ Decisions: maximum three simultaneous builders per environment; separate contain
 CI's repository secret was replaced with a dedicated token that adds account-scoped Workers Containers Write while retaining the existing account/zone restrictions. Container access with the new token was verified. Rotation metadata and the superseded token cleanup note are in `ci-cd.md`.
 
 Validation: control API types/lint and 52 tests passed; all workspace coverage tasks passed (58 dashboard, 17 telemetry-worker, 13 telemetry SDK, 87 templates, 52 control API, 96 CLI tests). Workspace lint and types passed. Full `pnpm verify` is not claimed: concurrent dashboard edits produced formatting/unused-export failures, and the aggregate build encountered the in-progress Discover page's missing `discovery.css`. The control API production deployment build succeeded. Logs are retained under ignored `work/hosted-*` files. Managed game hosting and build execution are verified; a production-authenticated customer build and live GitHub webhook-driven game preview remain separate acceptance work.
+
+## Customer GitHub acceptance — October 14, 2026
+
+The owner authorized a real customer repository integration test. The private `AndrewCraswell/spawnkit-verification-game` repository contains only a generated PixiJS starter, with initial commit `defdb94`. Its local checkout is in ignored `work/github-game-verification`; its own `pnpm verify` passed (7 tests, types, lint and production build).
+
+The production dashboard created project `GitHub Verification` (`bcf58b1d-7a0c-4ab8-a4ad-9d65df562eba`, slug `github-verification`) through the signed-in customer flow. Sandbox and PR previews are enabled. After the owner completed GitHub identity verification, App installation `171610977` granted read-only code, metadata and pull-request access to this repository alone. The real OAuth callback persisted the connection and returned to the project's dashboard settings.
+
+Acceptance found and fixed three integration defects: cloud projects hid repository configuration, the callback targeted the old homepage route, and GitHub requests used a redirect mode rejected by workerd. Requests now use manual redirects with status checks, preserving credential boundaries. The archive importer also omitted neither the starter's `.spawn` metadata nor `.npmrc`; these now stay out of build uploads, matching CLI behavior. Submission logs include safe validation reasons. The environment graph now shows the deployed release's actual branch instead of labeling Sandbox with the production branch.
+
+| Verified action | Evidence |
+| --- | --- |
+| Push to `main` | Commit `ce494d3`, deployment `8c9e4e56-b049-435a-9912-e0fd84a0d9ab`, live at `github-verification.spawnkit.cloud` |
+| Push to `develop` | Commit `6d3227a`, deployment `cc7c31ea-4678-4d72-9073-fd461186d6cf`, live at `staging.github-verification.spawnkit.cloud` |
+| Same-repository PR preview | PR #1, commit `2451541`, deployment `26ab3f93-f02c-4330-b968-48be3cf7d842`, served at `pr-1.github-verification.spawnkit.cloud` |
+| Preview update | Commit `29fbf7e`, deployment `ae3338aa-4fc1-44fb-a6ef-146aa21c3d3e`, same preview address served the updated heading |
+| PR close and isolation | PR #1 closed without merging; preview alias and its immutable URL returned 404. Production and Sandbox aliases and immutable URLs remained 200 with their original headings. |
+
+All three hosted PixiJS games rendered and collected an item through real browser keyboard input. GitHub reports HTTP 202 for push, PR-open/update and PR-close webhook deliveries. Production's immutable URL is `d-e55a457b.github-verification.spawnkit.cloud`; Sandbox's is `d-8baa2e89.github-verification.spawnkit.cloud`. The closed preview's first immutable URL was `d-0718042d.github-verification.spawnkit.cloud`. Earlier failed import events remain in the isolated project's history as acceptance evidence.
+
+Validation: full `pnpm verify` passed in the shared checkout and the isolated release checkout; 18 relevant desktop/mobile browser checks passed. Production API and frontend fixes were deployed from verified source. The staging GitHub App remains disabled by its existing environment configuration; the shared fixes do not authorize a second App or broaden repository access. Logs and screenshots are under ignored `work/github-game-*`. Preserve the repository and project for repeatable acceptance; do not use the platform's own repository as a customer game.
