@@ -496,6 +496,7 @@ function StudioContent({
                     view={current.deploymentView}
                     onNavigate={go}
                     onAction={setPanel}
+                    onConfigureHosting={!cloudEnabled && editable ? configureHosting : undefined}
                   />
                 ) : (
                   <VersionConsole

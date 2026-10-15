@@ -43,7 +43,8 @@ export function ProjectDeployments({
   environmentId,
   view = "environments",
   onNavigate,
-  onAction
+  onAction,
+  onConfigureHosting
 }: {
   project: ProjectModel
   canEdit: boolean
@@ -51,6 +52,7 @@ export function ProjectDeployments({
   view?: DeploymentView | undefined
   onNavigate: (location: StudioLocation) => void
   onAction: OpenVersionAction
+  onConfigureHosting?: ((target: "repository" | "sandbox") => void) | undefined
 }) {
   const [selected, setSelected] = useState<{ id: string; resource?: string | undefined } | null>(null)
   const [managing, setManaging] = useState(false)
@@ -302,8 +304,12 @@ export function ProjectDeployments({
           <Button
             variant="outline"
             size="sm"
-            disabled={!canEdit}
-            onClick={() => onNavigate({ page: "settings", projectId: project.id })}
+            disabled={!canEdit && !onConfigureHosting}
+            onClick={() =>
+              onConfigureHosting
+                ? onConfigureHosting("repository")
+                : onNavigate({ page: "settings", projectId: project.id })
+            }
           >
             Configure GitHub
             <ArrowUpRight />
@@ -315,8 +321,8 @@ export function ProjectDeployments({
           variant="ghost"
           size="sm"
           className="mb-3"
-          disabled={!canEdit}
-          onClick={() => onAction("enable-sandbox")}
+          disabled={!canEdit && !onConfigureHosting}
+          onClick={() => (onConfigureHosting ? onConfigureHosting("sandbox") : onAction("enable-sandbox"))}
         >
           <Plus />
           Enable Staging

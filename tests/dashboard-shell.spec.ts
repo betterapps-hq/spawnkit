@@ -129,6 +129,8 @@ test("empty notifications and unavailable storage remain usable", async ({ page 
   await page.getByRole("button", { name: "Notifications", exact: true }).click()
   await expect(page.getByText("You're all caught up", { exact: true })).toBeVisible()
   await page.keyboard.press("Escape")
+  await expect(page.getByRole("dialog", { name: "Notifications", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Notifications", exact: true })).toBeFocused()
   await openAccount(page)
   await page.getByRole("menuitemradio", { name: "Dark", exact: true }).click()
   await expect(page.locator("html")).toHaveClass(/dark/)
