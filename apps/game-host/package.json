@@ -9,6 +9,9 @@
     "lint": "oxlint --max-warnings=0 src",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@spawn/platform": "workspace:*"
+  },
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-52b0dc0e9",
     "@spawn/typescript-config": "workspace:*",

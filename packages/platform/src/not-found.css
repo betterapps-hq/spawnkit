@@ -1,0 +1,158 @@
+.spawn-not-found {
+  --nf-bg: var(--background, #faf9fc);
+  --nf-text: var(--foreground, #24212c);
+  --nf-muted: var(--muted-foreground, #706b7b);
+  --nf-accent: var(--primary, #7351c6);
+  --nf-on-accent: var(--primary-foreground, #fff);
+  --nf-pad: var(--accent, #efecfa);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--nf-bg);
+  color: var(--nf-text);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.spawn-not-found * {
+  box-sizing: border-box;
+}
+.spawn-not-found a {
+  text-decoration: none;
+}
+.spawn-not-found a:focus-visible {
+  outline: 3px solid var(--nf-accent);
+  outline-offset: 6px;
+}
+.spawn-not-found .nf-header {
+  display: flex;
+  align-items: center;
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 28px 40px;
+}
+.spawn-not-found .nf-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--nf-text);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.spawn-not-found .nf-brand-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--nf-accent);
+  color: var(--nf-on-accent);
+}
+.spawn-not-found .nf-brand-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.spawn-not-found .nf-brand-dot {
+  color: var(--nf-accent);
+}
+.spawn-not-found .nf-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 24px 112px;
+  text-align: center;
+}
+.spawn-not-found .nf-art {
+  width: min(560px, 100%);
+  margin: 0 0 24px;
+  color: var(--nf-accent);
+}
+.spawn-not-found .nf-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.spawn-not-found h1 {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 58px);
+  font-weight: 720;
+  line-height: 1.12;
+  letter-spacing: -2px;
+}
+.spawn-not-found .nf-description {
+  max-width: 440px;
+  margin: 22px 0 0;
+  color: var(--nf-muted);
+}
+/* Match the homepage's raised shadcn call to action, including its theme tokens. */
+.spawn-not-found .nf-discover {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  height: 42px;
+  margin-top: 30px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--nf-accent);
+  color: var(--nf-on-accent);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--nf-accent) 70%, #261648);
+  transition:
+    background 0.18s,
+    transform 0.18s;
+}
+.spawn-not-found .nf-discover:hover {
+  background: color-mix(in srgb, var(--nf-accent) 90%, var(--nf-bg));
+  transform: translateY(-2px);
+}
+.spawn-not-found .nf-discover:active {
+  transform: translateY(0) scale(0.98);
+}
+.spawn-not-found .nf-discover svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 480px) {
+  .spawn-not-found .nf-header {
+    padding: 24px;
+  }
+  .spawn-not-found .nf-main {
+    padding-bottom: 40px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spawn-not-found .nf-discover {
+    transition: none;
+  }
+  .spawn-not-found .nf-discover:hover,
+  .spawn-not-found .nf-discover:active {
+    transform: none;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .spawn-host-error .spawn-not-found {
+    --nf-bg: #131217;
+    --nf-text: #eeedf2;
+    --nf-muted: #a8a4b5;
+    --nf-accent: #a68ae8;
+    --nf-on-accent: #171022;
+    --nf-pad: #2e2541;
+    color-scheme: dark;
+  }
+}
