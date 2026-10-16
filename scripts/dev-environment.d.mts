@@ -1,8 +1,6 @@
 export const root: string
-export function checkoutName(directory?: string): string
-export function developmentEnvironment(name?: string): {
+export function developmentEnvironment(): {
   root: string
-  name: string
   app: string
   api: string
   stories: string

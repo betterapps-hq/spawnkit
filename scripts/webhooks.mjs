@@ -16,8 +16,13 @@ const { values, positionals } = parseArgs({
 })
 const action = positionals[0] || "status"
 const local = developmentEnvironment()
-const slot = values.slot || local.name
-if (!/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(slot)) throw new Error("Invalid webhook slot")
+const slot =
+  values.slot ||
+  new URL(local.app).hostname.replace(/\.local\.spawnkit\.cloud$/, "").replace(/^local\.spawnkit\.cloud$/, "primary")
+if (!/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(slot))
+  throw new Error(
+    "Choose --slot with 1–40 lowercase letters, numbers, or hyphens; start and end with a letter or number"
+  )
 const hostname = `${slot}.hooks.local.spawnkit.cloud`
 const target = new URL(values.target || local.api)
 if (

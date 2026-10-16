@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cf dev",
+    "dev": "dev-domains run api",
     "build": "cf build",
     "deploy": "cf deploy",
     "check:types": "cf workers types && tsc --noEmit",

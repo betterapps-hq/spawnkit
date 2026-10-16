@@ -8,6 +8,7 @@
   "workspaces": {
     ".": {
       "entry": [
+        "dev-domains.config.ts",
         "tests/**/*.ts",
         "scripts/dev-environment.mjs",
         "scripts/ci-*.mjs",
