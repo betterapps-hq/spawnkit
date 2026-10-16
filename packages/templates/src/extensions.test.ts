@@ -52,7 +52,7 @@ it("does not add telemetry or deferred frameworks implicitly", () => {
 it("adds standalone HTML Storybook without changing the game runtime", () => {
   const plan = createProjectPlan({ name: "story-game", template: "pixi", addons: ["storybook"] })
   const pkg = JSON.parse(plan.files["package.json"]!)
-  expect(pkg.scripts.storybook).toBe("node scripts/local.mjs stories")
+  expect(pkg.scripts.storybook).toBe("dev-domains run stories")
   expect(pkg.devDependencies["@storybook/html-vite"]).toBe("10.6.2")
   expect(pkg.dependencies.react).toBeUndefined()
   expect(plan.files[".storybook/main.ts"]).toContain("disableTelemetry: true")

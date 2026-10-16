@@ -15,7 +15,7 @@ Production is implicit. Internal testing nests below `staging.spawnkit.cloud`.
 | Public webhook receiver | `hooks.spawnkit.cloud` | `hooks.staging.spawnkit.cloud` | `<slot>.hooks.local.spawnkit.cloud` |
 | Isolated browser tests | Test the deployed app | Test the deployed app | `e2e.local.spawnkit.cloud` |
 
-Additional checkouts prefix their stable directory-derived name, for example `auth-fix-a1b2c3d4.local.spawnkit.cloud` and `auth-fix-a1b2c3d4.stories.local.spawnkit.cloud`. Changing branches does not change an origin. Browser-test Storybook uses `stories.e2e.local.spawnkit.cloud`, separately from interactive Storybook. CI can use explicit loopback origins without a trusted local CA.
+Linked Git worktrees prefix their normalized directory name, for example `auth-fix.local.spawnkit.cloud` and `auth-fix.stories.local.spawnkit.cloud`. Their API, telemetry, E2E app, and E2E Storybook names are `auth-fix.api.local.spawnkit.cloud`, `auth-fix.telemetry.local.spawnkit.cloud`, `auth-fix.e2e.local.spawnkit.cloud`, and `auth-fix.stories.e2e.local.spawnkit.cloud`. There are no automatic hashes; a complete-hostname collision is reported. Changing branches does not change an origin. Browser-test Storybook uses `stories.e2e.local.spawnkit.cloud`, separately from interactive Storybook. CI can use explicit loopback origins without a trusted local CA.
 
 Platform previews retain `preview-<name>.spawnkit.cloud`; numeric pull requests use `preview-pr-42.spawnkit.cloud`. They use staging services and test accounts. Preview origins must be registered explicitly. Staging data and credentials are separate from production.
 
@@ -47,7 +47,7 @@ Unknown game hosts, unpublished games, disabled environments, and missing artifa
 
 The current provisioner registers a Custom Domain for each project base, verifies an active certificate covering its wildcard, and creates its public and local DNS records. Cloudflare currently limits a zone to 100 Worker Custom Domains; provisioning stops before 90 to retain platform headroom. This is a bounded initial rollout, not unlimited hostname capacity. Expand certificate provisioning before reaching that guard. Ordinary router deployments preserve runtime-created domains. The provisioning credential expires on 2027-10-14 and must be renewed before then; its scope and expiry are recorded in the deployment metadata.
 
-Loopback local names resolve to `127.0.0.1` and are DNS-only. Public webhook names are explicit proxied records or tunnel routes and override loopback DNS. Portless owns the shared HTTPS proxy, assigns backend ports, and registers exact hosts. Never stop the shared proxy or replace another checkout's routes. Local certificate trust is machine setup, not a browser-test exception.
+Loopback local names resolve to `127.0.0.1` and are DNS-only. Public webhook names are explicit proxied records or tunnel routes and override loopback DNS. The root `dev-domains.config.ts` is the local naming contract. Published `@buildkitgg/dev-domains` reserves backend ports and registers exact hosts through Portless, which owns the shared HTTPS proxy and certificates. Other repositories can share the proxy with their own domain, such as `local.copacker.ai`. Never stop the shared proxy or replace another checkout's routes. Local certificate trust is machine setup, not a browser-test exception.
 
 Platform and customer authentication use host-only cookies. Never set `Domain=.spawnkit.cloud`; customer-controlled content shares this registrable domain. Customer origins are not authorized platform sign-in origins. Each customer integration has its own exact origin/callback allowlist and credentials per environment. Domain layout alone does not isolate sites for SameSite cookies; sensitive platform operations still require origin/CSRF checks.
 
@@ -74,3 +74,21 @@ Customer callback paths and credentials belong to their chosen integration. Spaw
 See [platform operations](internal/platform-operations.md) for deployment, migration, and provider configuration requirements. This document defines the domain contract; individual integrations require their own credentials and verification.
 
 References: [Portless](https://github.com/vercel-labs/portless), [Cloudflare custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/), [certificate coverage](https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/limitations/), [Google OAuth redirect rules](https://developers.google.com/identity/protocols/oauth2/web-server).
+
+## Migrating local checkouts
+
+Install dependencies and run `pnpm dev:urls` to see the resolved config. `pnpm dev:setup` reuses a compatible shared proxy;
+it does not restart it. `pnpm dev:status` lists active routes and `pnpm dev:doctor` diagnoses local setup.
+
+| Configuration | Migration action |
+| --- | --- |
+| Primary dashboard, API, telemetry, Storybook and E2E domains | Unchanged; existing DNS and exact provider entries remain valid |
+| Linked-worktree domains | Replace old hash-bearing entries with the URLs from `pnpm dev:urls`; do not change another active checkout's registrations |
+| Staging API origin allowlist | Run `pnpm dev:register` for the checkout and deploy staging services to apply the resulting exact origins |
+| Clerk and GitHub redirects | Register the exact new dashboard callback when needed; the package only reports callback URLs |
+| Public webhook tunnels | Keep existing named slots with `pnpm dev:hooks --slot <existing-slot>`; provision a new slot only deliberately. New default slots use `primary` or the normalized worktree name |
+| Generated games | New output uses the package; existing projects require an explicit dependency/config migration |
+| CI and hosted deployments | Existing loopback tests and deployment domains stay unchanged |
+
+Provider credentials, tunnel provisioning, local database setup, and deployment remain Spawn-specific. The package does
+not change DNS, provider allowlists, databases, or storage automatically.
