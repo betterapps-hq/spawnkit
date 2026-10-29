@@ -72,7 +72,11 @@ export async function startTelemetryRuntime() {
               BUILD_JOBS: { className: "BuildJob", useSQLite: true }
             },
             r2Buckets: ["ARTIFACTS"],
-            bindings: { BUILDS_ENABLED: "false", CLERK_SECRET_KEY: "test-only" }
+            bindings: {
+              BUILDS_ENABLED: "false",
+              CLERK_SECRET_KEY: "test-only",
+              DASHBOARD_URL: "https://spawnkit.cloud"
+            }
           }
         ]
       }),
