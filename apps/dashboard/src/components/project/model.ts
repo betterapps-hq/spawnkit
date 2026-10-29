@@ -1,7 +1,12 @@
 import type { TemplateId } from "@spawn/templates/catalog"
 import type { ProjectDraft } from "./creation-model"
 export type ProjectPage =
+  | "upload"
   | "projects"
+  | "submissions"
+  | "manage"
+  | "team"
+  | "reports"
   | "create"
   | "configure"
   | "overview"
@@ -36,6 +41,7 @@ export interface Release {
     checks: { name: string; status: "passed" | "failed" | "running" | "pending"; detail: string }[]
     changes: { path: string; added: number; removed: number }[]
     logs: string[]
+    mediaWarnings?: { kind: "cover" | "trailer"; message: string }[]
     configVersion: string
   }
 }
@@ -113,6 +119,7 @@ interface LogEntry {
   release: string
 }
 export interface ProjectModel {
+  lifecycle?: "active" | "deleting" | undefined
   capabilities?: { builds: boolean; domains: boolean; github: boolean }
   connected?: boolean
   productionBranch?: string
@@ -135,6 +142,7 @@ export interface ProjectModel {
   players: Player[]
   logs: LogEntry[]
   metrics: { players: number; rooms: number; errors: number; requests: string; traffic: number[] }
+  activity?: { views: number; plays: number } | undefined
   monthlyEstimate: number
   configuration?: ProjectDraft
 }

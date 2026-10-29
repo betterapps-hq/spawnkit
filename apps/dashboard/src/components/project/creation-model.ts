@@ -1,3 +1,4 @@
+import { selectedComponents } from "@spawn/templates"
 import type { TemplateId, AddonId, PhysicsId, UiId, TelemetryId, ServiceId } from "@spawn/templates/catalog"
 import type { GitHubSelection } from "@/lib/github-selection"
 import type { ComputeLocation } from "../compute-regions"
@@ -44,5 +45,5 @@ export function projectSlug(name: string) {
     .replace(/^-|-$/g, "")
 }
 export function scaffoldCommand(draft: ProjectDraft) {
-  return `npx spawn init ${projectSlug(draft.name) || "my-game"} --template ${draft.template}${draft.addons.length ? ` --with ${draft.addons.join(",")}` : ""}${draft.physics !== "none" ? ` --physics ${draft.physics}` : ""}${draft.ui !== "html" ? ` --ui ${draft.ui}` : ""}${draft.telemetry !== "none" ? ` --telemetry ${draft.telemetry}` : ""}`
+  return `npx @spawnkit/cli init ${projectSlug(draft.name) || "my-game"} --add ${selectedComponents(draft).join(",")}`
 }

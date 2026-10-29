@@ -474,7 +474,7 @@ function TelemetrySetup({
       </summary>
       <div className="mt-4 space-y-3">
         <p className="text-sm text-muted-foreground">
-          Scaffold with <code>--telemetry platform</code>. Add your game origins, then copy the public configuration
+          Scaffold with <code>--add platform-telemetry</code>. Add your game origins, then copy the public configuration
           into the game's .env file and redeploy. Capture starts only after your game calls{" "}
           <code>setTelemetryConsent(true)</code> according to its collection policy.
         </p>

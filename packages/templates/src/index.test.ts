@@ -30,9 +30,22 @@ describe("module composition", () => {
     (template) => {
       const plan = createProjectPlan({ name: "my-game", template, addons: ["vitest"] })
       const pkg = JSON.parse(plan.files["package.json"] ?? "{}")
-      expect(pkg.scripts.test).toBe("vitest run --coverage")
-      expect(pkg.scripts.verify).toContain("pnpm test:coverage")
-      expect(pkg.scripts["test:setup"]).toBe("playwright install chromium")
+      expect(pkg.scripts.dev).toBe("dev-domains run app")
+      expect(pkg.scripts["dev:doctor"]).toBeUndefined()
+      expect(pkg.devDependencies["@buildkitgg/dev-domains"]).toBe("0.1.0")
+      expect(pkg.devDependencies.portless).toBeUndefined()
+      expect(plan.files["scripts/local.mjs"]).toBeUndefined()
+      expect(plan.files["dev-domains.config.mjs"]).toContain('import { defineConfig } from "@buildkitgg/dev-domains"')
+      expect(pkg.scripts.test).toBe("node scripts/browser-tools.mjs test")
+      expect(Object.keys(pkg.scripts).sort()).toEqual([
+        "build",
+        "dev",
+        "lint",
+        "preview",
+        "setup",
+        "test",
+        "test:setup"
+      ])
       expect(pkg.devDependencies["@vitest/coverage-v8"]).toBe(pkg.devDependencies.vitest)
       expect(pkg.devDependencies["@vitest/browser-playwright"]).toBe(pkg.devDependencies.vitest)
       expect(plan.files["vitest.config.ts"]).toContain('include:["src/**/*.ts"]')

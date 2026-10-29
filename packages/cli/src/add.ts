@@ -31,10 +31,7 @@ export async function addModules(
 ) {
   root = resolve(root)
   const state = await readSafe(root, ".spawn/state.json")
-  if (!state)
-    throw new Error(
-      "No SpawnKit ownership record found. Only projects created with this CLI support add; existing projects need a migration."
-    )
+  if (!state) throw new Error("No SpawnKit ownership record found. Run add from a SpawnKit-generated project root.")
   const paths = planAddition(state, {}, modules, targetOptions).files
   const current: Record<string, string | undefined> = {}
   for (const path of paths) current[path] = await readSafe(root, path)

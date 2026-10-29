@@ -15,9 +15,10 @@
   "dependencies": {
     "@clerk/backend": "3.23.2",
     "@cloudflare/sandbox": "0.13.0-next.776.1",
+    "@spawn/platform": "workspace:*",
+    "@spawn/templates": "workspace:*",
     "drizzle-orm": "0.45.4",
-    "tar-stream": "3.2.2",
-    "@spawn/platform": "workspace:*"
+    "tar-stream": "3.2.2"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-52b0dc0e9",
@@ -27,6 +28,7 @@
     "@types/tar-stream": "3.1.5",
     "@vitest/coverage-v8": "catalog:",
     "cf": "1.0.0-beta.13",
+    "sharp": "0.35.5",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

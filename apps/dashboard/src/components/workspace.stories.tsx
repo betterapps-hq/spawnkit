@@ -1,7 +1,6 @@
 import { physicsOptions, type PhysicsId } from "@spawn/templates/catalog"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useState } from "react"
-import { ExampleGames } from "./example-games"
 import { ModuleCards } from "./module-cards"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
@@ -35,7 +34,6 @@ export const ProjectSetup: Story = {
     </Card>
   )
 }
-export const Examples: Story = { render: () => <ExampleGames /> }
 
 export const PhysicsCards: Story = {
   render: function PhysicsStory() {

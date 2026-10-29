@@ -1,5 +1,8 @@
+import { automaticSubmission } from "./automatic-submission"
 import { projectHostname, reserveDeploymentHostname, reserveProjectSlug } from "./hosting"
 import { HttpError } from "./http"
+import { requireActiveProject } from "./project-lifecycle"
+import { provisionProjectDomain } from "./provisioning"
 
 export interface DeploymentRow {
   id: string
@@ -12,58 +15,43 @@ export interface DeploymentRow {
 }
 
 export async function activate(env: Env, deployment: DeploymentRow) {
+  await requireActiveProject(env, deployment.project_id)
   const now = new Date().toISOString()
-  let deploymentHostname: string | undefined
-  let slug: string | undefined
-  if (env.HOSTING_MODE === "domains") {
-    const project = await env.DATABASE.prepare("SELECT name FROM projects WHERE id=?")
-      .bind(deployment.project_id)
-      .first<{ name: string }>()
-    if (!project) throw new Error("Project not found")
-    slug = await reserveProjectSlug(env.DATABASE, deployment.project_id, project.name)
-    const address = await env.DATABASE.prepare("SELECT ready FROM project_hostnames WHERE project_id=?")
-      .bind(deployment.project_id)
-      .first<{ ready: number }>()
-    if (!address?.ready)
-      throw new HttpError(
-        503,
-        "hosting_pending",
-        "Project HTTPS provisioning is pending. The release artifacts are retained; retry after domain provisioning completes."
-      )
-    deploymentHostname = await reserveDeploymentHostname(
-      env.DATABASE,
-      deployment,
-      projectHostname(slug, "production", env.HOSTING_TEST === "true")
-    )
-  }
-  let host = await env.DATABASE.prepare("SELECT hostname FROM hosting_slots WHERE project_id=? AND environment=?")
-    .bind(deployment.project_id, deployment.environment)
-    .first<{ hostname: string }>()
-  if (!host) {
-    if (env.HOSTING_MODE === "domains") {
-      const hostname = projectHostname(slug!, deployment.environment, env.HOSTING_TEST === "true")
-      await env.DATABASE.prepare(
-        "INSERT INTO hosting_slots(slot,hostname,project_id,environment) VALUES(?,?,?,?) ON CONFLICT(project_id,environment) DO NOTHING"
-      )
-        .bind(
-          `${deployment.project_id}:${deployment.environment}`,
-          hostname,
-          deployment.project_id,
-          deployment.environment
-        )
-        .run()
-    } else {
-      await env.DATABASE.prepare(
-        "UPDATE hosting_slots SET project_id=?, environment=? WHERE slot=(SELECT slot FROM hosting_slots WHERE project_id IS NULL ORDER BY slot LIMIT 1) AND NOT EXISTS(SELECT 1 FROM hosting_slots WHERE project_id=? AND environment=?)"
-      )
-        .bind(deployment.project_id, deployment.environment, deployment.project_id, deployment.environment)
-        .run()
+  const project = await env.DATABASE.prepare("SELECT name FROM projects WHERE id=?")
+    .bind(deployment.project_id)
+    .first<{ name: string }>()
+  if (!project) throw new Error("Project not found")
+  const slug = await reserveProjectSlug(env.DATABASE, deployment.project_id, project.name)
+  const address = await env.DATABASE.prepare("SELECT ready FROM project_hostnames WHERE project_id=?")
+    .bind(deployment.project_id)
+    .first<{ ready: number }>()
+  let ready = Boolean(address?.ready)
+  if (!ready && env.HOSTING_API_TOKEN) {
+    try {
+      ready = await provisionProjectDomain(env, deployment.project_id, slug)
+    } catch {
+      // The durable activation alarm and maintenance sweep retry provider failures.
+      console.warn("activation_domain_provisioning_pending")
     }
-    host = await env.DATABASE.prepare("SELECT hostname FROM hosting_slots WHERE project_id=? AND environment=?")
-      .bind(deployment.project_id, deployment.environment)
-      .first<{ hostname: string }>()
   }
-  if (!host) throw new Error("Hosting capacity is unavailable. The release artifacts are retained.")
+  if (!ready)
+    throw new HttpError(
+      503,
+      "hosting_pending",
+      "Project HTTPS provisioning is pending. The release artifacts are retained; retry after domain provisioning completes."
+    )
+  const deploymentHostname = await reserveDeploymentHostname(
+    env.DATABASE,
+    deployment,
+    projectHostname(slug, "production", env.HOSTING_TEST === "true")
+  )
+  const hostname = projectHostname(slug, deployment.environment, env.HOSTING_TEST === "true")
+  await env.DATABASE.prepare(
+    "INSERT INTO hosting_slots(slot,hostname,project_id,environment) VALUES(?,?,?,?) ON CONFLICT(project_id,environment) DO NOTHING"
+  )
+    .bind(`${deployment.project_id}:${deployment.environment}`, hostname, deployment.project_id, deployment.environment)
+    .run()
+  const submission = deployment.environment === "production" ? await automaticSubmission(env, deployment, now) : null
   await env.DATABASE.batch([
     env.DATABASE.prepare(
       "UPDATE environments SET current_release_id=?, generation=generation+1 WHERE project_id=? AND name=? AND enabled=1 AND current_release_id IS ? AND NOT EXISTS(SELECT 1 FROM github_events e WHERE e.deployment_id=? AND (e.status='closed' OR EXISTS(SELECT 1 FROM github_events newer WHERE newer.project_id=e.project_id AND newer.environment=e.environment AND newer.rowid>e.rowid)))"
@@ -75,7 +63,7 @@ export async function activate(env: Env, deployment: DeploymentRow) {
       deployment.id
     ),
     env.DATABASE.prepare("UPDATE releases SET url=COALESCE(url,?) WHERE id=?").bind(
-      `https://${deploymentHostname ?? host.hostname}`,
+      `https://${deploymentHostname}`,
       deployment.release_id
     ),
     env.DATABASE.prepare(
@@ -83,6 +71,7 @@ export async function activate(env: Env, deployment: DeploymentRow) {
     ).bind(deployment.project_id, deployment.environment, deployment.release_id, now, deployment.id),
     env.DATABASE.prepare(
       "INSERT OR IGNORE INTO audit_events(id,project_id,actor_id,action,detail,created_at) SELECT id,project_id,actor_id,operation,json_object('deploymentId',id,'releaseId',release_id,'status',status),? FROM deployments WHERE id=?"
-    ).bind(now, deployment.id)
+    ).bind(now, deployment.id),
+    ...(submission ?? [])
   ])
 }

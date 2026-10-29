@@ -4,7 +4,7 @@ Status: proposed messaging and design brief. Updated: 2026-10-14.
 
 The agreed creative direction is **playful and polished: game visuals, clear product explanations, restrained motion**. This brief defines the case the public site should make before further page implementation. It does not change product scope or pricing.
 
-Editorial preferences confirmed during implementation: no decorative section numbering, no text-character arrows (use icons), and no dots as separators. Use spacing, separate labels, or natural sentences instead.
+Editorial preferences confirmed during implementation: no decorative section numbering, em dashes, text-character arrows (use icons), or dots as separators. Primary CTA buttons have no arrows; secondary links may use icons. Say “Start with a kit” when inviting a creator to begin a project. Preserve the visual design while replacing vague slogans and repeated feature strips with concrete explanations of the creator's work and the platform's value.
 
 ## One platform, two useful starting points
 
@@ -12,7 +12,7 @@ SpawnKit helps developers turn a game idea into a standalone web project, then b
 
 | Entry | Visitor's question | Offer | Next step |
 | --- | --- | --- | --- |
-| [For Creators](creators-page.md) | How do I start building my game? | A playable starting point, a compatible stack, and source you can develop locally | Build a starter kit |
+| [For Creators](creators-page.md) | How do I start building my game? | A playable starting point, a compatible stack, and source you can develop locally | Start with a kit |
 | [Cloud](cloud-page.md) | How do I release and operate my game? | Source builds, hosted releases, environment controls, and operational context | Open the dashboard; use guided publishing when verified |
 | Discover | What could I make or play here? | Games and creative inspiration | Play a game or explore creation |
 
@@ -47,7 +47,7 @@ Keep the header direct: brand, Discover, For Creators, Cloud; a quiet Dashboard 
 
 Use game artwork to create desire and product demonstrations to establish trust. Each major visual should explain something: engine choice changes the starter, an item reacts to physics, a release moves into an environment. Avoid floating labels that merely repeat the adjacent heading.
 
-Use a warm light surface, purple accents, generous type, and occasional dark code or release panels. Reserve motion for a small playable interaction or a clear state change. No large cursor-following glow, constant parallax, or animation required to understand the page. Provide a static equivalent and respect reduced motion.
+Default to dark surfaces with purple accents, generous type, and distinct code or release panels. Keep the explicit Light and System choices available. Reserve motion for a small playable interaction or a clear state change. No large cursor-following glow, constant parallax, or animation required to understand the page. Provide a static equivalent and respect reduced motion.
 
 Do not invent customers, player counts, testimonials, awards, uptime, or performance numbers. Keep routine fixture documentation out of polished page copy, consistent with the existing homepage direction. Put availability labels beside genuinely unavailable offers; do not add blanket “demo” badges to every illustration.
 
@@ -58,7 +58,7 @@ This is an editorial ledger, not public page copy. Recheck it before launch beca
 | Capability | Evidence and boundary | Editorial treatment |
 | --- | --- | --- |
 | Standalone starter generation | Shared catalog, compatible selections, file preview and ZIP generation are implemented | Demonstrate the actual output; do not imply every combination supports every module |
-| Public CLI installation | Repository CLI exists; registry publication remains outstanding | Prefer the browser builder. Do not publish an unverified `npx` install command |
+| Public CLI installation | `@spawnkit/cli` on npm | Link to the CLI creation guide, verified pnpm/npm commands, and downloadable starter kits |
 | Hosted source builds | Real isolated build, playable output, promotion and rollback verified in staging on October 14 | Describe the mechanism; complete production-authenticated customer acceptance before a frictionless public publishing promise |
 | Customer GitHub previews | Integration code and App ping exist; live webhook-driven game preview remains unverified | Present as planned until the complete customer flow passes |
 | SpawnKit's own PR previews | App and Storybook previews are operational | Internal delivery evidence, not proof of customer game previews |

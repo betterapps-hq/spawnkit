@@ -7,7 +7,7 @@ Future work: [self-hosted analytics architecture and regional routing](telemetry
 ## Add to a game
 
 ```sh
-pnpm cli init ../my-game --template pixi --telemetry platform --with vitest
+pnpm cli init ../my-game --add pixi --add platform-telemetry --add vitest
 ```
 
 This creates a standalone local dependency at `vendor/spawn-telemetry`; it does not require a registry release or this monorepo at runtime. Other supported renderers use the same adapter. For an existing application, build and pack `packages/telemetry`, then install the resulting tarball with your package manager. The `spawn add` module-upgrade workflow does not yet install telemetry into existing generated projects.

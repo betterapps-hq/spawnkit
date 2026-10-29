@@ -9,7 +9,7 @@ import { estimateProject } from "./pricing"
 export interface LocalProject {
   id: string
   name: string
-  configuration?: ProjectDraft
+  configuration: ProjectDraft
   productionBranch?: string
   domainConfigurations?: DomainConfiguration[]
 }
@@ -101,7 +101,7 @@ export function readProjectRecords(raw: string | null): LocalProject[] {
     )
       throw new Error("Saved projects could not be read.")
     ids.add(item.id)
-    const configuration = item.configuration === undefined ? undefined : readProjectDraft(item.configuration)
+    const configuration = readProjectDraft(item.configuration)
     const domainConfigurations =
       item.domainConfigurations === undefined ? undefined : readDomainConfigurations(item.domainConfigurations)
     if (domainConfigurations?.some((domain) => domain.environment === "sandbox") && !configuration?.sandbox)
@@ -110,14 +110,14 @@ export function readProjectRecords(raw: string | null): LocalProject[] {
       ...item,
       id: item.id,
       name: item.name,
-      ...(configuration ? { configuration } : {}),
+      configuration,
       ...(domainConfigurations ? { domainConfigurations } : {})
     } as LocalProject
   })
 }
 
 export function projectRecordModel(record: LocalProject): ProjectModel {
-  const draft = record.configuration ?? { ...defaultProjectDraft, name: record.name }
+  const draft = record.configuration
   const regions = (environment: "production" | "sandbox"): Region[] =>
     (draft.mode === "multiplayer"
       ? draft[environment === "production" ? "productionLocations" : "sandboxLocations"]

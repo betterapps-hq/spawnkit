@@ -31,7 +31,6 @@ import { CatalogToolbar } from "../catalog-toolbar"
 import { ComputeRegions } from "../compute-regions"
 import { CopyButton } from "../copy-button"
 import { CostEstimate } from "../cost-estimate"
-import { ExampleGames } from "../example-games"
 import { GitHubConfig } from "../github-config"
 import { ModuleCards } from "../module-cards"
 import { ServiceCards } from "../multiplayer-config"
@@ -41,7 +40,6 @@ import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
 import { defaultProjectDraft, projectSlug, scaffoldCommand, type ProjectDraft } from "./creation-model"
 import type { ActionHandler } from "./model"
 import { Notice } from "./primitives"
@@ -74,7 +72,6 @@ export function ProjectCreation({
   const [furthest, setFurthest] = useState(initialStep)
   const [search, setSearch] = useState("")
   const [dimension, setDimension] = useState("all")
-  const [catalog, setCatalog] = useState("kits")
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)
   const [created, setCreated] = useState<string | null>(null)
@@ -218,55 +215,46 @@ export function ProjectCreation({
           <fieldset disabled={pending || !canEdit} className="min-w-0">
             <legend className="sr-only">{headings[step]}</legend>
             {step === 0 && (
-              <Tabs value={catalog} onValueChange={setCatalog} className="gap-5">
-                <TabsList>
-                  <TabsTrigger value="kits">Starter kits</TabsTrigger>
-                  <TabsTrigger value="examples">Example games</TabsTrigger>
-                </TabsList>
-                <TabsContent value="kits">
-                  <CatalogToolbar
-                    label="templates"
-                    search={search}
-                    onSearch={setSearch}
-                    dimension={dimension}
-                    onDimension={setDimension}
-                  />
-                  <CatalogGrid>
-                    {filtered.map((item) => (
-                      <CatalogCard
-                        key={item.id}
-                        name={item.name}
-                        description={item.description}
-                        image={`/templates/${item.id}.webp`}
-                        engine={item.id}
-                        dimension={item.dimension}
-                        recommended={["pixi", "babylon"].includes(item.id)}
-                        selected={draft.template === item.id}
-                        onSelect={() => {
-                          if (item.id !== draft.template) patch({ template: item.id, physics: "none", ui: "html" })
-                        }}
-                      />
-                    ))}
-                  </CatalogGrid>
-                  {!filtered.length && (
-                    <div className="rounded-lg border border-dashed p-8 text-center text-sm">
-                      <p>No starter kits match your search.</p>
-                      <Button
-                        variant="link"
-                        onClick={() => {
-                          setSearch("")
-                          setDimension("all")
-                        }}
-                      >
-                        Clear filters
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="examples">
-                  <ExampleGames />
-                </TabsContent>
-              </Tabs>
+              <div className="space-y-5">
+                <CatalogToolbar
+                  label="templates"
+                  search={search}
+                  onSearch={setSearch}
+                  dimension={dimension}
+                  onDimension={setDimension}
+                />
+                <CatalogGrid>
+                  {filtered.map((item) => (
+                    <CatalogCard
+                      key={item.id}
+                      name={item.name}
+                      description={item.description}
+                      image={`/templates/${item.id}.webp`}
+                      engine={item.id}
+                      dimension={item.dimension}
+                      recommended={["pixi", "babylon"].includes(item.id)}
+                      selected={draft.template === item.id}
+                      onSelect={() => {
+                        if (item.id !== draft.template) patch({ template: item.id, physics: "none", ui: "html" })
+                      }}
+                    />
+                  ))}
+                </CatalogGrid>
+                {!filtered.length && (
+                  <div className="rounded-lg border border-dashed p-8 text-center text-sm">
+                    <p>No starter kits match your search.</p>
+                    <Button
+                      variant="link"
+                      onClick={() => {
+                        setSearch("")
+                        setDimension("all")
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
             {step === 1 && (
               <div className="rounded-xl border bg-card p-5 sm:p-6">
@@ -377,6 +365,7 @@ export function ProjectCreation({
                   onChange={(github) => patch({ github, ...(github.mode === "none" ? { previews: false } : {}) })}
                 />
                 <Environments
+                  multiplayer={draft.mode === "multiplayer"}
                   github={draft.github.mode !== "none"}
                   previews={draft.previews}
                   onPreviews={(previews) => patch({ previews })}
@@ -489,7 +478,7 @@ export function ProjectCreation({
               {step === 0 ? "Cancel" : "Back"}
             </Button>
             {step < 3 ? (
-              <Button disabled={!canEdit || (step === 0 && catalog === "examples")} onClick={() => move(step + 1)}>
+              <Button disabled={!canEdit} onClick={() => move(step + 1)}>
                 Continue
                 <ArrowRight />
               </Button>

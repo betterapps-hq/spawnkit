@@ -1,116 +1,61 @@
-# Cloud: page brief
+# Cloud page
 
-Status: proposed narrative, copy, and layout. Updated: 2026-10-14. Read with [public-site positioning](public-site-positioning.md) and [agreed pricing](decisions.md#agreed-pricing).
+Updated: 2026-10-14.
 
-## The case to make
+## Offer and audience
 
-A playable local project is only the beginning of releasing a game. Developers need a build that can be inspected, a URL players can open, a controlled way to release changes, and enough context to understand problems afterward.
+SpawnKit handles the infrastructure around a web game so creators can focus on gameplay with their preferred AI agent. Explain the work the platform takes off their hands: project setup, repeatable checks, managed builds and CI/CD, environments, versioning, and investigation using telemetry.
 
-SpawnKit Cloud should present those as one connected workflow. Lead with the frontend-only game that can be hosted, then explain the additional operating model. Do not lead with infrastructure vendors, a complex multiplayer topology, or a claim that every planned service is available.
+Keep the existing playful, polished visual design. Improve the substance and remove repetition instead of replacing the artwork, colors, cards, or page identity.
 
-Primary action now: **Open dashboard** → `/dashboard`. Secondary action: **See pricing** → `/cloud#pricing`. Change the primary label to “Publish your game” only when that destination starts a verified customer publishing flow. No waitlist or sales-contact action should appear without a real destination and process.
+## Page narrative
 
-## Proposed opening copy
+The hero keeps “Bring your game to players.” Supporting copy connects the creator's local AI workflow to hosting and iteration. The artwork represents Orchard Trail in production, with one specific deployment confirmation: the checkpoint fix is live. Remove abstract slogans, floating promises, and the redundant free-hosting reassurance line.
 
-Eyebrow: **SpawnKit Cloud**
+Use one interactive workflow:
 
-Headline: **Bring your game to players. Keep control of every release.**
+- **Create:** standalone TypeScript templates and CLI composition give creators and their AI agents an editable foundation.
+- **Test:** configured type checking, linting, and formatting, with optional Vitest and Playwright. Explain unit testing baselines for movement, world boundaries, and independent sessions. Demonstrate a regression check such as restoring a checkpoint.
+- **Deploy:** CLI source publishing and generated GitHub Actions workflows feed managed builds. Saved versions, Sandbox, promotion, and rollback explain delivery without asking the creator to assemble infrastructure.
+- **Monitor:** game events, errors, logs, version, environment, and session context help investigate a failed player action with the preferred AI agent.
 
-Body: Build supported game source in the cloud, share a hosted game URL, and manage versioned releases from one project. Inspect what changed, promote a tested build, and return to an earlier release when you need to.
+Use distinct animated illustrations for each task: a movement-code edit connected to a playable preview, queued/running/passed build checks, a pull request merging into staging before promotion or rollback, and session activity connected to an inspectable checkpoint error. A build is a saved version before production; reserve release language for publishing it. Remove the repeated source/build/artifact strips and the separate project-overview and error-context sections.
 
-Actions: **Open dashboard** / **See pricing**
+Animations pause outside the viewport and in hidden tabs. Provide pause controls and replay for the workflow sequences. Reduced motion shows meaningful static states while keeping deployment inspection and service selection usable. The service orbit also pauses on hover or keyboard focus so its buttons are easy to use.
 
-Hero visual: one release card connected to a playable game and its URL. Show a specific version and environment without fabricated traffic or uptime metrics. A restrained transition can make the relationship clear; the scene must also work as a static diagram.
+The multiplayer section explains Colyseus rooms, matchmaking, synchronized state, and reconnection. Managed game services orbit the game server, replacing the static player tokens. Selecting an orbit icon selects the matching service in the integrated browser below. It uses the shared catalog's official capabilities: player authentication, cloud saves, leaderboards, live configuration, game analytics, moderation, and player notes. Each description explains its practical function, shows a concrete example, and links to its official documentation. Managed multiplayer and game services remain coming soon.
 
-This is proposed launch copy. Resolve the customer publishing acceptance gap in the claim ledger before presenting the whole journey as generally available onboarding.
+## Pricing
 
-## Page sequence
+The revised offer replaces the earlier optional-Sandbox multiplayer structure:
 
-### 1. Make the release journey understandable
-
-Proposed heading: **From source to a game people can open.**
-
-Use a short, readable sequence with a real artifact at its center:
-
-| Step | Customer outcome | What to show |
+| Offer | Fixed fee | Includes |
 | --- | --- | --- |
-| Build | Supported source becomes a hosted release | Source revision, build result, completed build logs |
-| Check | Open the built game before changing the live version | Immutable release URL and a playable browser view |
-| Release | Point the intended environment at that build | Explicit target environment and release confirmation |
-| Improve | Inspect a problem and decide the next change | Release history, relevant logs, and rollback control |
+| Single-player | Free | Templates, CLI, managed build/deployment workflow, production hosting, version history, rollback, and platform telemetry |
+| Single-player Sandbox | +$5/month | Separate staging environment; metered resources remain separate |
+| Single-player game services | +$5/month | Official game services, including service usage within the eventual published quotas |
+| Multiplayer | $10/game/month plus machine usage | Managed Colyseus, Sandbox, and game services |
 
-Do not call the immutable release URL a pull-request preview. Customer GitHub previews are a separate integration whose live acceptance remains outstanding. Do not animate logs as a live stream: current build logs arrive after completion.
+Show two offer cards, with the single-player add-ons inside its card and dedicated Sandbox and managed game services inclusion cards in the multiplayer offer. Do not repeat the cards in a fixed-fee calculator.
 
-### 2. Explain why environments matter
+The compute calculator belongs directly under the multiplayer offer. Use shared catalog machine specifications and customer hourly estimates, with distinct production/Sandbox rates. Following the location-first pattern in the [Colyseus pricing simulator](https://colyseus.io/cloud-managed-hosting/), visitors choose a location and machine before adding it. Keep every configured region visible in its own card with its machine, production/Sandbox hours, and subtotal. A separate summary charges the bundle once. Prevent duplicate regions and hide the total if any region has invalid hours. Show CPU, memory, hourly rates, and estimated allocated hours. Default the example to one standard production machine at 730 hours and zero Sandbox machine hours. A zero-hour Sandbox does not mean its allocated machine can run for free.
 
-Proposed heading: **Try the next version without replacing the current one.**
+The estimate includes the $10 bundle exactly once and selected machine hours. Never charge another $5 for multiplayer Sandbox or services. Include idle allocated time; identify separately metered resources and estimated rates adjacent to the estimate. Do not expose internal provider costs or claim unlimited usage.
 
-Explain Production as what players receive, and the optional paid Sandbox as a separate staging environment for testing changes. Promotion reuses the built artifact; it does not create a different build. A release history provides a route back to a previous artifact.
+Keep the dashboard estimate consistent with the same pricing helper. Including Sandbox in the price does not silently enable or provision it in an existing project's saved configuration.
 
-Visual: two labeled environment cards, one selected release, and an explicit Promote action. Show the change in destination and preserve the version identity. State near rollback: **Rolling back a release does not undo database changes or player data.**
+## Editorial rules
 
-Keep “Preview,” “Sandbox,” and “Production” distinct. PR previews should join this section only after verification, with their lifecycle and cost explained. SpawnKit's own staging website is not a customer Sandbox example.
+The hero deployment confirmation is a compact angled toast with a success icon and subtle depth. Orbit icons are larger, with an individual color for each service and readable labels. Service previews use distinct account, checkpoint save, leaderboard, live settings, activity chart, moderation, and support-note layouts. Intro typography uses explicit spacing; wrapping service tabs leave room for their keyboard focus outlines.
 
-### 3. Make the platform visible through the product
+The seven services come from SpawnKit's current shared catalog, not an exhaustive Colyseus inventory. The [current Colyseus database overview](https://docs.colyseus.io/database) also lists player segments for targeting. Matchmaking, room management, state synchronization, and tooling are framework capabilities rather than additional entries in this managed-service browser. Adding a new managed service requires updating the shared product contract, not just marketing copy.
 
-Proposed heading: **One place to understand what is running.**
+No em dashes, decorative numbering, text-character arrows, or dots as separators. Primary actions have no arrow; secondary navigation may use an icon. Use “Start with a kit” for the starter CTA. No slogans that could fit any product, decorative three-item flows, or captions that repeat headings. Every paragraph must explain a feature, its value, a concrete example, or a necessary next step.
 
-Show a real project view with its active release, environment, game URL, build outcome, and recent errors. Annotate three decisions the developer can make: open this version, inspect its build, or review a problem. This is stronger evidence than an abstract cloud full of provider logos.
+## Availability and verification
 
-The platform benefit is coordination: source, artifact, environment, and operational context belong to the same project. Explain platform-managed infrastructure in one short supporting paragraph. Technical details should explain supported source, build output, and release behavior. Keep private hosting-provider mappings out of public copy, consistent with the development contract.
+Templates, the local CLI, source builds, version controls, and consent-gated telemetry have implementation evidence in the repository. The October 14 customer GitHub acceptance in [platform operations](internal/platform-operations.md) verifies production and Sandbox branch deployments, same-repository PR preview creation/update, and cleanup after closing the PR. The production GitHub App is enabled; staging retains its separate configuration. Public CLI registry distribution, paid multiplayer runtime, paid checkout, and native exports remain separate launch gates. Do not turn a pricing or copy change into infrastructure activation. Removing a consent caption does not change telemetry's consent behavior.
 
-### 4. Close the feedback loop
+Product visuals use illustrative records, not live deployments or monitoring results. The editor, check timings, PRs, version transitions, session activity, and service records are authored examples. Buttons inspect the examples without changing a project or provisioning resources. Keep that distinction documented here without adding redundant demo badges throughout the page.
 
-Proposed heading: **Give a bug report some context.**
-
-Show a supported error or event tied to a release and session, with nearby logs or breadcrumbs. Explain that configured telemetry helps the developer investigate what happened. The logger is consent-gated and bounded; do not promise complete recording of every player action.
-
-AI can be part of the developer's investigation, but the page must not suggest SpawnKit automatically diagnoses, patches, or deploys fixes. Session replay, symbolication, alerting, and regional analytics are not current logger capabilities. Link to technical setup rather than hiding these distinctions behind an “AI-powered” badge.
-
-### 5. Present the offers and their costs together
-
-Proposed heading: **Start with a browser game. Add what your game needs.**
-
-Use three comparable offer cards, with availability visible beside the price:
-
-| Offer | Best fit | Agreed price | Essential qualification |
-| --- | --- | --- | --- |
-| Frontend hosting | A frontend-only single-player game | Free production hosting | Usage/build allowances still need definition; free does not mean unlimited or include Sandbox |
-| Game services | A single-player game needing supported official Colyseus services | $5 per game/month, service usage included | Coming soon; included quotas and abuse limits unresolved; custom databases separately metered |
-| Multiplayer | A game needing a managed Colyseus runtime | $5 per game/month + provisioned runtime usage | Coming soon; allocated idle time counts; no fixed all-in $5 claim |
-
-Place **Optional Sandbox: +$5/month plus usage** below the cards as a shared add-on. It is one Sandbox fee per game, not per region. Do not present it as included in the free plan.
-
-The calculator should say **Fixed monthly fees** if it only adds game and Sandbox fees. For example, multiplayer plus Sandbox has $10 in fixed fees **before usage**, not an estimated $10 total. Put that distinction next to the number.
-
-Keep the detailed rate basis in internal pricing documentation. Public estimates use SpawnKit rates and plan names; do not expose provider costs or infrastructure mappings. Do not invent hourly prices or extrapolate a monthly total before allocation and usage policies are defined. Builds, networking, storage and preview allowances also need explicit policy before checkout.
-
-Paid cards should not contain an enabled purchase or activation action while billing and managed runtime delivery are unavailable. Clearly label their status and link to their explanation. Do not invent an email signup as a substitute.
-
-### 6. Explain multiplayer without letting it take over
-
-Proposed heading: **A path to multiplayer, built around Colyseus.**
-
-Present this as the next offer, with a visible coming-soon status. Explain rooms and synchronized game state in developer-friendly language. Show clients connecting to a game room, not an invented global fleet.
-
-Scope services to supported official Colyseus capabilities. Do not advertise a general economy, achievements, cross-game identity platform, automatic global matchmaking, autoscaling, or seamless room migration. Provider selection is architecture, not proof that the managed customer service is ready.
-
-### 7. End with a concrete next step
-
-Proposed heading: **Give your next release a home.**
-
-Action: **Open dashboard**. Supporting link: **Still building? Create a starter kit** → `/templates`.
-
-Before the final action, answer the practical questions not already resolved: supported static source/build format, whether a SpawnKit starter is required, domain availability, cost boundaries, and rollback scope. Verify import compatibility before claiming that any existing game can be hosted. Link to supported requirements rather than promising arbitrary backends or output directories.
-
-## Evidence and launch gates
-
-Use the October 14 [hosted build acceptance](internal/platform-operations.md#hosted-build-activation--october-14-2026) for the source → isolated build → playable artifact → promotion/rollback story. It proves that path in staging. Complete production-authenticated customer acceptance before asserting frictionless public availability.
-
-Keep customer GitHub preview creation, custom-domain TLS activation, publicly distributed CLI onboarding, and paid runtime/billing as separate gates. Existing internal CI previews or a production health endpoint cannot stand in for them. Recheck [CLI evidence](internal/cli-platform-handoff.md) and [telemetry boundaries](telemetry-design.md) when selecting screenshots and copy.
-
-## Design and acceptance
-
-Use one coherent release visual throughout the page instead of unrelated cloud metaphors. Let visitors inspect a state change without requiring constant animation. Keep pricing easy to compare on mobile, with qualifications adjacent to amounts and availability visible without hovering.
-
-Storybook should cover the page, environment explanation, pricing states/calculator, and reduced-motion/static presentation. Browser acceptance should verify navigation, price arithmetic and labels, disabled unavailable actions, keyboard/touch interaction, and every CTA destination. This brief defines those checks; it does not claim they have run.
+Storybook reuses the page, workflow, managed services, and pricing components, with focused build-check, promotion/rollback, and monitoring stories. Check desktop/mobile rendering, theme contrast, keyboard tabs and machine selection, multi-region estimates, invalid-hour handling, animation playback/reduced motion, service selection, and CTA destinations. Run the repository verification suite and relevant browser acceptance checks.

@@ -127,7 +127,7 @@ export function AuthForm({
   )
   return (
     <div className="auth-form w-full" aria-busy={busy}>
-      <div className="mb-8">
+      <div className={stage === "sign-in" ? "sr-only" : "mb-8"}>
         {verification && (
           <span className="mb-5 grid size-12 place-items-center rounded-2xl border border-primary/15 bg-accent text-primary">
             {stage === "mfa" ? <ShieldCheck /> : <Mail />}

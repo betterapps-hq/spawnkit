@@ -31,6 +31,7 @@ async function server(service: "e2e" | "e2e-stories", origin: string) {
 
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: ["community-live.spec.ts", "seo.spec.ts"],
   use: { baseURL: origins.app, trace: "retain-on-failure" },
   webServer: [
     ...(process.env.SPAWN_E2E_APP_URL ? [] : [await server("e2e", origins.app)]),

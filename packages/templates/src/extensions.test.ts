@@ -66,7 +66,7 @@ it("keeps Playwright optional and isolates browser tests from Vitest", () => {
   expect(plan.modules).toContain("playwright")
   const pkg = JSON.parse(plan.files["package.json"]!)
   expect(pkg.devDependencies["@playwright/test"]).toBe("1.64.0")
-  expect(pkg.scripts["test:e2e"]).toBe("playwright test")
+  expect(pkg.scripts.e2e).toBe("node scripts/browser-tools.mjs e2e")
   expect(plan.files["vitest.config.ts"]).toContain("src/**/*.test.ts")
   expect(plan.files["e2e/game.spec.ts"]).toContain("Collected: [1-9][0-9]*")
   const withoutHud = createProjectPlan({ name: "headless-hud", template: "three", addons: ["playwright"], ui: "none" })

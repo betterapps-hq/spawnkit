@@ -1,14 +1,14 @@
 import { expect, it } from "vitest"
 import { estimateRuntime, estimateProject } from "./pricing"
 it("adds the game fee once to usage and rounds cents", () => {
-  expect(estimateRuntime(0.028, 730)).toEqual({ fee: 5, compute: 20.44, total: 25.44 })
-  expect(estimateRuntime(0.021, 730)).toEqual({ fee: 5, compute: 15.33, total: 20.33 })
-  expect(estimateRuntime(0.028, 0).total).toBe(5)
+  expect(estimateRuntime(0.028, 730)).toEqual({ fee: 10, compute: 20.44, total: 30.44 })
+  expect(estimateRuntime(0.021, 730)).toEqual({ fee: 10, compute: 15.33, total: 25.33 })
+  expect(estimateRuntime(0.028, 0).total).toBe(10)
 })
 it.each([-1, 745, NaN, Infinity])("rejects invalid runtime hours %s", (hours) => {
   expect(() => estimateRuntime(0.1, hours)).toThrow("Invalid runtime estimate")
 })
-it("charges game and sandbox fees once across all multiplayer regions", () => {
+it("charges the multiplayer bundle once without charging again for included services or Sandbox", () => {
   const estimate = estimateProject({
     multiplayer: true,
     services: true,
@@ -20,7 +20,7 @@ it("charges game and sandbox fees once across all multiplayer regions", () => {
       { environment: "sandbox", rate: 0.021, hours: 20 }
     ]
   })
-  expect(estimate).toMatchObject({ gameFee: 5, sandboxFee: 5, total: 38.56 })
+  expect(estimate).toMatchObject({ gameFee: 10, sandboxFee: 0, total: 38.56 })
   expect(estimate.locations).toHaveLength(4)
 })
 it("excludes disabled sandbox compute", () => {
@@ -34,7 +34,7 @@ it("excludes disabled sandbox compute", () => {
         { environment: "sandbox", rate: 0.021, hours: 100 }
       ]
     })
-  ).toMatchObject({ gameFee: 5, sandboxFee: 0, total: 25.44 })
+  ).toMatchObject({ gameFee: 10, sandboxFee: 0, total: 30.44 })
 })
 it("keeps single-player static, with included services and a separate sandbox fee", () => {
   const base = {

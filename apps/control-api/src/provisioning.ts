@@ -1,7 +1,8 @@
 import { projectHostname } from "./hosting"
+import { requireActiveProject, withProjectResource } from "./project-lifecycle"
 
 const account = "544b5bfd594cd02a5da4b79a2038cc9f"
-const zone = "2a8126a122d81d58aafe2535a2219e7c"
+const zone = "b0f105530cc52d9f3a95ee4fd5592531"
 type Domain = { hostname: string; service: string; zone_id: string }
 type DnsRecord = { name: string; type: string; content: string; proxied: boolean }
 type Certificate = { status: string; hosts: string[] }
@@ -9,10 +10,14 @@ type Certificate = { status: string; hosts: string[] }
 /** Idempotent, bounded provider operations. Never move a hostname owned by another service. */
 export async function provisionProjectDomain(env: Env, projectId: string, slug: string) {
   if (!env.HOSTING_API_TOKEN) return false
+  return withProjectResource(env, projectId, () => provision(env, projectId, slug))
+}
+async function provision(env: Env, projectId: string, slug: string) {
   const internal = env.HOSTING_TEST === "true"
   const hostname = projectHostname(slug, "production", internal)
   const service = `spawnkit-games${internal ? "-staging" : ""}`
   async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+    await requireActiveProject(env, projectId)
     const response = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
       method,
       headers: { authorization: `Bearer ${env.HOSTING_API_TOKEN}`, "content-type": "application/json" },
@@ -59,7 +64,9 @@ export async function provisionProjectDomain(env: Env, projectId: string, slug: 
     return false
   // The provider's active wildcard certificate is authoritative. A same-zone Worker cannot
   // probe a route-only hostname with fetch; the reconciliation CLI also checks public TLS.
-  await env.DATABASE.prepare("UPDATE project_hostnames SET ready=1 WHERE project_id=? AND slug=?")
+  await env.DATABASE.prepare(
+    "UPDATE project_hostnames SET ready=1,domain='spawnkit.games' WHERE project_id=? AND slug=?"
+  )
     .bind(projectId, slug)
     .run()
   return true

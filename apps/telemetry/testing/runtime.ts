@@ -28,7 +28,7 @@ export async function startTelemetryRuntime() {
           load(id) {
             const path = id.replaceAll("\\", "/")
             if (id === "\0test-sandbox")
-              return `import { DurableObject } from "cloudflare:workers"; export class Sandbox extends DurableObject {}`
+              return `import { DurableObject, WorkerEntrypoint } from "cloudflare:workers"; export class Sandbox extends DurableObject {}; export class ContainerProxy extends WorkerEntrypoint {}`
             if (path.endsWith("/control-api/src/build-job.ts"))
               return `import { DurableObject } from "cloudflare:workers"; export class BuildJob extends DurableObject {}`
             if (path.endsWith("/control-api/src/deployments.ts"))
@@ -72,7 +72,11 @@ export async function startTelemetryRuntime() {
               BUILD_JOBS: { className: "BuildJob", useSQLite: true }
             },
             r2Buckets: ["ARTIFACTS"],
-            bindings: { BUILDS_ENABLED: "false", CLERK_SECRET_KEY: "test-only" }
+            bindings: {
+              BUILDS_ENABLED: "false",
+              CLERK_SECRET_KEY: "test-only",
+              DASHBOARD_URL: "https://spawnkit.cloud"
+            }
           }
         ]
       }),
@@ -85,11 +89,8 @@ export async function startTelemetryRuntime() {
         .filter((name) => name.endsWith(".sql"))
         .sort()) {
         const sql = await readFile(resolve(repo, "apps/control-api/migrations", migration), "utf8")
-        for (const statement of sql
-          .split(";")
-          .map((part) => part.trim())
-          .filter(Boolean))
-          await database.prepare(statement).run()
+        // Let SQLite parse complete trigger bodies; splitting at semicolons cuts BEGIN/END apart.
+        await database.prepare(sql).run()
       }
       const control = await mf.getWorker("control")
       async function request(path: string, method = "GET", body?: unknown, identity = "telemetry-test-owner") {

@@ -32,7 +32,7 @@ export function CostEstimate({
       <h3 className="text-sm font-semibold">Monthly estimate</h3>
       <dl className="space-y-3 text-xs">
         {objectEntries({
-          [multiplayer ? "Game fee" : "Game services"]: estimate.gameFee,
+          [multiplayer ? "Multiplayer bundle" : "Game services"]: estimate.gameFee,
           "Sandbox fee": estimate.sandboxFee
         })
           .filter(([, fee]) => fee > 0)
@@ -79,6 +79,7 @@ export function CostEstimate({
         </div>
       </dl>
       <p className="text-[11px] leading-5 text-muted-foreground">
+        {multiplayer ? "Sandbox and game services are included in the bundle. " : ""}
         {!multiplayer && services ? "Single-player service usage is included. " : ""}
         {customDatabase || multiplayer || sandbox ? "Additional metered usage is not included." : ""}
       </p>

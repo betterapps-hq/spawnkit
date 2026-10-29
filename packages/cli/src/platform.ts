@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 import { resolve } from "node:path"
 import { parseArgs, stripVTControlCharacters } from "node:util"
 import { readCredentials } from "./auth"
+import { terminalDeployment, watchDeployment } from "./deployment-watch"
 import { createPlatformApi, identifier } from "./platform-api"
 import type { Deployment, Environment, PlatformApi } from "./platform-api"
 import { projectSelection } from "./project"
@@ -12,6 +13,9 @@ export type PlatformOptions = {
   api?: PlatformApi
   confirm?: (summary: string) => Promise<boolean>
   progress?: (message: string) => void
+  log?: (text: string) => void
+  signal?: AbortSignal
+  sleep?: (ms: number, signal: AbortSignal) => Promise<void>
 }
 export async function runPlatform(
   args: string[],
@@ -31,6 +35,8 @@ export async function runPlatform(
       "dry-run": { type: "boolean" },
       "request-id": { type: "string" },
       cursor: { type: "string" },
+      "no-wait": { type: "boolean" },
+      follow: { type: "boolean", short: "f" },
       help: { type: "boolean", short: "h" }
     }
   })
@@ -40,11 +46,11 @@ export async function runPlatform(
   if (values.help) {
     const usage: Record<string, string> = {
       deploy:
-        "spawn deploy [--env sandbox|production] [--dry-run] [--yes]\nUploads source for a hosted build. Defaults to enabled Sandbox, otherwise production.",
+        "spawn deploy [--env sandbox|production] [--dry-run] [--yes] [--no-wait]\nUploads source, follows live build logs, and waits for the game and dashboard URLs. Use --no-wait to return after queuing. Defaults to enabled Sandbox, otherwise production.",
       releases: "spawn releases [--cursor <cursor>]\nLists retained releases, with a cursor for the next page.",
       status:
         "spawn status <deployment-id>\nShows deployment progress. Failed/cancelled/superseded operations return exit code 1.",
-      logs: "spawn logs <deployment-id> [--cursor <cursor>]\nShows one page of build/deployment logs; use the returned cursor to continue.",
+      logs: "spawn logs <deployment-id> [--cursor <cursor>] [--follow]\nShows build logs. --follow continues until deployment finishes; Ctrl+C stops watching without cancelling the deployment.",
       promote:
         "spawn promote <release-id> [--dry-run] [--yes]\nPromotes a successful Sandbox release to production without rebuilding.",
       rollback:
@@ -66,9 +72,11 @@ export async function runPlatform(
     throw new Error("Environment and mutation flags are only supported by deploy, promote and rollback.")
   if (values.cursor && !["releases", "logs"].includes(command))
     throw new Error("--cursor is only supported by releases and logs.")
-  const requested = values.env === "staging" ? "sandbox" : values.env
+  if (values["no-wait"] && command !== "deploy") throw new Error("--no-wait is only supported by deploy.")
+  if (values.follow && command !== "logs") throw new Error("--follow is only supported by logs.")
+  const requested = values.env
   if (requested !== undefined && requested !== "production" && requested !== "sandbox")
-    throw new Error("Choose --env sandbox or production (staging is an alias for sandbox).")
+    throw new Error("Choose --env sandbox or production.")
   if (command === "rollback" && !requested)
     throw new Error("Rollback requires an explicit --env sandbox or production.")
   if (command === "promote" && requested && requested !== "production")
@@ -82,6 +90,28 @@ export async function runPlatform(
     throw new Error("No project linked. Run spawn link --project <id>, or pass --project <id> for this command.")
   const projectId = identifier(selected)
   const api = options.api ?? createPlatformApi(await readCredentials())
+  const live =
+    options.log ??
+    (values.json
+      ? (text: string) => {
+          process.stderr.write(text)
+        }
+      : write)
+  const follow = async (initial: Deployment) => {
+    const result = await watchDeployment(api, projectId, initial, live, {
+      cursor: values.cursor,
+      signal: options.signal,
+      sleep: options.sleep
+    })
+    checkDeployment(result.deployment)
+    if (result.interrupted) {
+      process.exitCode = 130
+      live(
+        `Stopped watching. Deployment continues on SpawnKit.\nResume: spawn logs ${initial.id} --project ${projectId} --follow\n`
+      )
+    }
+    return result.deployment
+  }
   if (command === "releases") {
     const result = await api.releases(projectId, values.cursor)
     if (!Array.isArray(result.releases)) throw new Error("Invalid release listing response.")
@@ -99,6 +129,12 @@ export async function runPlatform(
     return
   }
   if (command === "logs") {
+    if (values.follow) {
+      const result = await follow(await api.status(projectId, target!))
+      emit(result, formatDeployment(result))
+      if (["failed", "cancelled", "superseded"].includes(result.status)) process.exitCode = 1
+      return
+    }
     const result = await api.logs(projectId, target!, values.cursor)
     if (
       !Array.isArray(result.entries) ||
@@ -150,12 +186,13 @@ export async function runPlatform(
             sha256: archive.sha256,
             sizeBytes: archive.sizeBytes,
             fileCount: archive.fileCount,
-            omitted: archive.omitted
+            omitted: archive.omitted,
+            mediaNotices: archive.mediaNotices
           }
         }
       : {})
   }
-  const summary = `${command === "deploy" ? "Deploy source" : command === "promote" ? "Promote Sandbox release" : "Roll back release"}\n\nProject: ${project.name} (${projectId})\nTarget: ${environment === "sandbox" ? "Sandbox" : "Production"}\nCurrent release: ${expectedReleaseId ?? "none"}\n${archive ? `Source: ${archive.fileCount} files · ${archive.sizeBytes} bytes\nBuild: on SpawnKit` : `Release: ${target}\nBuild: reuse existing artifacts; no rebuild`}\nRequest: ${requestId}`
+  const summary = `${archive?.mediaNotices.length ? archive.mediaNotices.join("\n") + "\n\n" : ""}${command === "deploy" ? "Deploy source" : command === "promote" ? "Promote Sandbox release" : "Roll back release"}\n\nProject: ${project.name} (${projectId})\nTarget: ${environment === "sandbox" ? "Sandbox" : "Production"}\nCurrent release: ${expectedReleaseId ?? "none"}\n${archive ? `Source: ${archive.fileCount} files · ${archive.sizeBytes} bytes\nBuild: on SpawnKit` : `Release: ${target}\nBuild: reuse existing artifacts; no rebuild`}\nRequest: ${requestId}`
   if (values["dry-run"]) {
     emit({ status: "planned", ...plan }, `${summary}\n\nPreview only. Nothing was uploaded or changed.`)
     return
@@ -197,9 +234,10 @@ export async function runPlatform(
     const message = error instanceof Error ? error.message : "Platform operation failed."
     throw new Error(`${message}\nRetry identity: --request-id ${requestId}`)
   }
+  if (command === "deploy" && !values["no-wait"]) result = await follow(result)
   emit(
     { ...result, requestId, projectId },
-    `${formatDeployment(result)}\nRequest: ${requestId}\n\nCheck progress: spawn status ${result.id} --project ${projectId}\nView logs: spawn logs ${result.id} --project ${projectId}`
+    `${formatDeployment(result)}\nRequest: ${requestId}${terminalDeployment(result.status) ? "" : `\n\nCheck progress: spawn status ${result.id} --project ${projectId}\nView logs: spawn logs ${result.id} --project ${projectId} --follow`}`
   )
   if (["failed", "cancelled", "superseded"].includes(result.status)) process.exitCode = 1
 }
@@ -214,5 +252,5 @@ function checkDeployment(result: Deployment) {
   identifier(result.id)
 }
 function formatDeployment(result: Deployment) {
-  return `Deployment: ${result.id}\nEnvironment: ${result.environment === "sandbox" ? "Sandbox" : "Production"}\nStatus: ${result.status}${result.releaseId ? `\nRelease: ${result.releaseId}` : ""}${result.url ? `\nURL: ${result.url}` : ""}${result.deploymentUrl ? `\nDeployment URL: ${result.deploymentUrl}` : ""}`
+  return `Deployment: ${result.id}\nEnvironment: ${result.environment === "sandbox" ? "Sandbox" : "Production"}\nStatus: ${result.status}${result.releaseId ? `\nRelease: ${result.releaseId}` : ""}${result.url ? `\nGame: ${result.url}` : ""}${result.dashboardUrl ? `\nDashboard: ${result.dashboardUrl}` : ""}${result.deploymentUrl ? `\nDeployment URL: ${result.deploymentUrl}` : ""}${result.mediaWarnings?.length ? `\n\nMedia warnings\n${result.mediaWarnings.map((warning) => `${warning.kind === "cover" ? "Cover image" : "Trailer"} omitted: ${warning.message}`).join("\n")}` : ""}`
 }

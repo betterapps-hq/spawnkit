@@ -26,8 +26,8 @@ function SignInPage() {
             <ClerkAuth continueSignUp={search.flow === "sign-up"} />
           ) : (
             <>
-              <h1 className="text-3xl font-semibold tracking-tight">Sign in to SpawnKit</h1>
-              <div className="mt-6 flex gap-3 rounded-lg border bg-card p-4 text-sm">
+              <h1 className="sr-only">Sign in to SpawnKit</h1>
+              <div className="flex gap-3 rounded-lg border bg-card p-4 text-sm">
                 <LockKeyhole className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div>
                   <p className="font-medium">Authentication setup required</p>

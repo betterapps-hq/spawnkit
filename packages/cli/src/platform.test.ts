@@ -90,7 +90,7 @@ function fixture(sandbox = true) {
       .mockImplementation(async (_project, id, bytes, sha256) => ({ id, sha256, sizeBytes: bytes.length })),
     deploy: vi.fn<PlatformApi["deploy"]>().mockResolvedValue(deployment),
     releases: vi.fn<PlatformApi["releases"]>().mockResolvedValue({ releases: [], nextCursor: "page-2" }),
-    status: vi.fn<PlatformApi["status"]>().mockResolvedValue(deployment),
+    status: vi.fn<PlatformApi["status"]>().mockResolvedValue({ ...deployment, status: "succeeded" }),
     logs: vi
       .fn<PlatformApi["logs"]>()
       .mockResolvedValue({ entries: [{ sequence: 1, message: "Installing dependencies" }] }),
@@ -153,7 +153,7 @@ it.each([true, false])("previews default destination (Sandbox enabled: %s) witho
 it("uploads verified source before requesting a hosted build with predecessor and retry identity", async () => {
   const api = fixture()
   await runCli(
-    ["deploy", "--project", "game_1", "--yes", "--json", "--request-id", "retry-1", "--env", "staging"],
+    ["deploy", "--project", "game_1", "--yes", "--json", "--request-id", "retry-1", "--env", "sandbox"],
     root,
     write,
     { platform: { api } }
@@ -164,7 +164,7 @@ it("uploads verified source before requesting a hosted build with predecessor an
     "retry-1"
   )
   expect(api.upload.mock.invocationCallOrder[0]).toBeLessThan(api.deploy.mock.invocationCallOrder[0]!)
-  expect(JSON.parse(output)).toMatchObject({ status: "queued", requestId: "retry-1", projectId: "game_1" })
+  expect(JSON.parse(output)).toMatchObject({ status: "succeeded", requestId: "retry-1", projectId: "game_1" })
   expect(await readFile(join(root, "package.json"), "utf8")).toContain("do-not-run-locally")
 })
 it("stops on mismatched digest, cancellation or missing noninteractive approval", async () => {
@@ -217,7 +217,7 @@ it("reads release pages, status and logs with a machine-readable result", async 
   expect(JSON.parse(output).nextCursor).toBe("page-2")
   output = ""
   await runCli(["status", "deployment_1", "--project", "game_1", "--json"], root, write, { platform: { api } })
-  expect(JSON.parse(output).status).toBe("queued")
+  expect(JSON.parse(output).status).toBe("succeeded")
   output = ""
   await runCli(["logs", "deployment_1", "--project", "game_1", "--json"], root, write, { platform: { api } })
   expect(JSON.parse(output).entries[0].message).toBe("Installing dependencies")
@@ -259,9 +259,14 @@ it("implements the HTTP upload and activation contract with stable retry identit
     return Response.json({ id: "deployment_1", status: "queued", environment: "sandbox" })
   })
   const api = createPlatformApi({ site: "https://spawn.example", accessToken: "fixture-token" }, transport)
-  await runCli(["deploy", "--project", "game_1", "--yes", "--json", "--request-id", "contract-1"], root, write, {
-    platform: { api }
-  })
+  await runCli(
+    ["deploy", "--project", "game_1", "--yes", "--json", "--request-id", "contract-1", "--no-wait"],
+    root,
+    write,
+    {
+      platform: { api }
+    }
+  )
   expect(calls.map((call) => [new URL(call.url).pathname, call.init.method])).toEqual([
     ["/api/platform/v1/projects/game_1", "GET"],
     ["/api/platform/v1/projects/game_1/uploads", "POST"],
@@ -280,9 +285,14 @@ it("implements the HTTP upload and activation contract with stable retry identit
     environment: "sandbox",
     expectedReleaseId: "release_s"
   })
-  await runCli(["deploy", "--project", "game_1", "--yes", "--json", "--request-id", "contract-1"], root, write, {
-    platform: { api }
-  })
+  await runCli(
+    ["deploy", "--project", "game_1", "--yes", "--json", "--request-id", "contract-1", "--no-wait"],
+    root,
+    write,
+    {
+      platform: { api }
+    }
+  )
   expect(calls[5]!.init.headers).toMatchObject({ "Idempotency-Key": "contract-1-upload" })
   expect(calls[5]!.init.body).toBe(calls[1]!.init.body)
   expect(calls[7]!.init.headers).toMatchObject({ "Idempotency-Key": "contract-1" })
@@ -334,12 +344,34 @@ it("preserves successful deployment URLs in status and activation output", async
   ]) {
     output = ""
     await runCli([...args, "--project", "game_1"], root, write, { platform: { api } })
-    expect(output).toContain("URL: https://game.example")
+    expect(output).toContain("Game: https://game.example")
     expect(output).toContain("Deployment URL: https://d-1234.game.example")
     output = ""
     await runCli([...args, "--project", "game_1", "--json"], root, write, { platform: { api } })
     expect(JSON.parse(output)).toMatchObject(result)
   }
+})
+
+it("waits for deployment, prints warnings and URLs, and keeps JSON stdout clean", async () => {
+  const api = fixture()
+  const log = vi.fn<(text: string) => void>()
+  const complete = {
+    id: "deployment_1",
+    environment: "sandbox" as const,
+    status: "succeeded",
+    url: "https://game.example",
+    dashboardUrl: "https://spawnkit.cloud/dashboard/projects/game_1",
+    mediaWarnings: [{ kind: "trailer" as const, message: "Trailer input exceeds 2 MiB." }]
+  }
+  api.status.mockResolvedValue(complete)
+  await runCli(["deploy", "--project", "game_1", "--yes", "--json"], root, write, { platform: { api, log } })
+  expect(JSON.parse(output)).toMatchObject(complete)
+  expect(log.mock.calls.flat().join("")).toContain("Installing dependencies")
+  output = ""
+  await runCli(["deploy", "--project", "game_1", "--yes"], root, write, { platform: { api, log } })
+  expect(output).toContain("Dashboard: https://spawnkit.cloud/dashboard/projects/game_1")
+  expect(output).toContain("Trailer omitted: Trailer input exceeds 2 MiB.")
+  expect(output).not.toMatch(/submission|approval/i)
 })
 
 it("uses project-scoped release, status, log, promotion and rollback endpoints", async () => {

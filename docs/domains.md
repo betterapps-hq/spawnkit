@@ -2,6 +2,12 @@
 
 Agreed 2026-10-14. Brand: **SpawnKit**. CLI: `spawn`. Root: `spawnkit.cloud`.
 
+## Dedicated game domain
+
+`spawnkit.games` is registered in the platform's Cloudflare account. The apex redirects to `https://spawnkit.cloud/`; its game subdomains use the game-host Worker. A proxied wildcard DNS record and wildcard Worker route ensure an unknown game address renders the existing branded **Game not found** page with HTTP 404, `no-store`, and `noindex`. The recovery link leads back to the platform. No new error-page design is needed.
+
+Existing projects, immutable deployments, catalog media, and new project provisioning use `.games`. Old `.cloud` game addresses redirect to their corresponding `.games` addresses, preserving paths and queries; immutable links retain their original release. The account site and platform services remain on `.cloud`.
+
 ## Platform environments
 
 Production is implicit. Internal testing nests below `staging.spawnkit.cloud`.
@@ -25,23 +31,25 @@ Each project reserves a unique public slug within its platform environment. The 
 
 | Customer destination | Production platform | Internal staging platform |
 | --- | --- | --- |
-| Production alias | `emberfall.spawnkit.cloud` | `emberfall.staging.spawnkit.cloud` |
-| Staging alias | `staging.emberfall.spawnkit.cloud` | `staging.emberfall.staging.spawnkit.cloud` |
-| Pull request alias | `pr-42.emberfall.spawnkit.cloud` | `pr-42.emberfall.staging.spawnkit.cloud` |
-| Immutable deployment | `d-a1b2c3d4.emberfall.spawnkit.cloud` | `d-a1b2c3d4.emberfall.staging.spawnkit.cloud` |
-| Local game | `local.emberfall.spawnkit.cloud` | Explicit local configuration |
+| Production alias | `emberfall.spawnkit.games` | `emberfall.staging.spawnkit.games` |
+| Staging alias | `staging.emberfall.spawnkit.games` | `staging.emberfall.staging.spawnkit.games` |
+| Pull request alias | `pr-42.emberfall.spawnkit.games` | `pr-42.emberfall.staging.spawnkit.games` |
+| Immutable deployment | `d-a1b2c3d4.emberfall.spawnkit.games` | `d-a1b2c3d4.emberfall.staging.spawnkit.games` |
+| Local game | `local.emberfall.spawnkit.games` | `local.emberfall.staging.spawnkit.games` |
 
-Environment aliases move when a release activates or rolls back. Deployment URLs identify retained immutable artifacts. Closed or disabled preview environments must not remain accessible through a pinned URL. Existing published addresses remain compatibility aliases. The API's `sandbox` environment means customer staging; it is not the platform's staging environment.
+Generated CLI projects use `<package-name>.local.spawnkit.games` before linking. Verified `spawn link` saves the assigned hostname in `.spawn/project.json`; dev-domains then uses `local.<assigned-hostname>`, `stories.local.<assigned-hostname>`, and `e2e.local.<assigned-hostname>`. An explicit `SPAWN_GAME_DOMAIN` overrides the linked hostname. The shared `*.local.spawnkit.games` and per-project local DNS records resolve to loopback. Developers still need to trust the local proxy's CA once.
+
+Environment aliases move when a release activates or rolls back. Deployment URLs identify retained immutable artifacts. Closed or disabled preview environments must not remain accessible through a pinned URL. The API's `sandbox` environment means customer staging; it is not the platform's staging environment.
 
 ## Planned regional telemetry
 
 EU telemetry endpoints selected from game-server deployment location are an agreed requirement. Proposed names are `telemetry.eu.spawnkit.cloud` for production, `telemetry.eu.staging.spawnkit.cloud` for internal staging, and `telemetry.eu.local.spawnkit.cloud` for local regional tests. These names are not yet provisioned, registered with local routing, or verified. The `/v1/logs` path remains the log-ingestion contract.
 
-Keep the existing nonregional telemetry names as compatibility endpoints during migration. A hostname does not establish processing/storage location. Verify DNS, nested certificates, region-scoped routing and the complete data path before advertising EU handling. Configuration comes from the running server allocation; multi-region games must not have a single hardcoded global endpoint. See [regional selection and acceptance](telemetry-analytics-architecture.md#eu-endpoints-and-endpoint-selection).
+A hostname does not establish processing/storage location. Verify DNS, nested certificates, region-scoped routing and the complete data path before advertising EU handling. Configuration comes from the running server allocation; multi-region games must not have a single hardcoded global endpoint. See [regional selection and acceptance](telemetry-analytics-architecture.md#eu-endpoints-and-endpoint-selection).
 
 ## DNS, HTTPS, and isolation
 
-DNS wildcard matching and certificate wildcard matching are different. A certificate for `*.spawnkit.cloud` does not cover `staging.emberfall.spawnkit.cloud`. Provision and verify the required nested certificates before advertising those addresses. Unknown hosts fail closed. Platform hosts must bypass the customer artifact router.
+DNS wildcard matching and certificate wildcard matching are different. A certificate for `*.spawnkit.games` does not cover `staging.emberfall.spawnkit.games`. Provision and verify the required nested certificates before advertising those addresses. Unknown hosts fail closed. Platform hosts must bypass the customer artifact router.
 
 Unknown game hosts, unpublished games, disabled environments, and missing artifacts that reach the game router return a branded **Game not found** page with HTTP 404. Its **Discover games** link uses the absolute `https://spawnkit.cloud/` homepage so recovery leaves the unavailable game domain. The response is self-contained HTML/CSS, works without JavaScript or remote assets, is not cached, and is excluded from indexing. Main-site missing routes and unknown game slugs share the same presentation with a local homepage link. DNS and TLS must still reach the platform before any HTTP fallback can be served; this cannot replace a browser's DNS or certificate error for an unrelated or unconfigured domain.
 
@@ -49,7 +57,7 @@ The current provisioner registers a Custom Domain for each project base, verifie
 
 Loopback local names resolve to `127.0.0.1` and are DNS-only. Public webhook names are explicit proxied records or tunnel routes and override loopback DNS. The root `dev-domains.config.ts` is the local naming contract. Published `@buildkitgg/dev-domains` reserves backend ports and registers exact hosts through Portless, which owns the shared HTTPS proxy and certificates. Other repositories can share the proxy with their own domain, such as `local.copacker.ai`. Never stop the shared proxy or replace another checkout's routes. Local certificate trust is machine setup, not a browser-test exception.
 
-Platform and customer authentication use host-only cookies. Never set `Domain=.spawnkit.cloud`; customer-controlled content shares this registrable domain. Customer origins are not authorized platform sign-in origins. Each customer integration has its own exact origin/callback allowlist and credentials per environment. Domain layout alone does not isolate sites for SameSite cookies; sensitive platform operations still require origin/CSRF checks.
+Platform sessions use host-only cookies on `spawnkit.cloud`; Clerk's long-lived client cookie belongs to `clerk.spawnkit.cloud`. Clerk also sets parent-scoped non-secret session-update timestamps on `.spawnkit.cloud`. A live signed-in audit verified these attributes without recording values, and confirmed zero account cookies for `.games`. Games cannot read or overwrite `.cloud` cookies. Customer origins are not authorized platform sign-in origins. Each customer integration has its own exact origin/callback allowlist and credentials per environment; sensitive platform operations still require origin/CSRF checks.
 
 ## Auth and webhooks
 
@@ -67,7 +75,7 @@ Customer callback paths and credentials belong to their chosen integration. Spaw
 - Customer OAuth callbacks use stable environment aliases, not immutable deployment URLs. Providers that require exact redirects cannot be configured with a wildcard. If a customer needs arbitrary preview sign-in, they must register previews explicitly or configure a provider-supported callback relay with validated state and an exact destination allowlist.
 - Customer webhook registrations use a stable production or staging alias. A game must implement a server-side receiver before it can accept webhooks; static artifact hosting does not supply that receiver. Do not expose webhook signing secrets in browser configuration.
 - SpawnKit's GitHub webhook receiver is `/api/platform/v1/github/webhook` on the environment's `hooks` host. Verify signatures over raw request bytes and preserve delivery deduplication. A local public receiver requires a named tunnel to an explicitly selected local checkout; local loopback URLs cannot receive internet webhooks.
-- Telemetry accepts exact configured game origins, including active new and compatibility aliases during migration. It does not allow every customer or preview origin globally.
+- Telemetry accepts exact configured game origins, including active environment and deployment addresses. It does not allow every customer or preview origin globally.
 
 ## Operations
 

@@ -4,11 +4,19 @@ export const projects = sqliteTable("projects", {
   id: text("id").primaryKey(),
   ownerId: text("owner_id").notNull(),
   name: text("name").notNull(),
+  lifecycle: text("lifecycle").notNull().default("active"),
   configuration: text("configuration", { mode: "json" }).$type<Record<string, unknown>>().notNull(),
   metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>().notNull().default({}),
   revision: integer("revision").notNull().default(1),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull()
+})
+
+export const projectHostnames = sqliteTable("project_hostnames", {
+  projectId: text("project_id")
+    .primaryKey()
+    .references(() => projects.id),
+  slug: text("slug").notNull().unique()
 })
 
 export const environments = sqliteTable(

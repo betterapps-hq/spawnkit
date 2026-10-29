@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ComponentProps } from "react"
-import { DashboardView } from "../Dashboard"
+import { DashboardView } from "../dashboard-view"
 import { readDomainConfigurations } from "../lib/domain-config"
 import { ProjectInputError, readProjectDraft, readProjectRecords, saveProjectRecord } from "../lib/project-records"
 import { defaultProjectDraft } from "./project/creation-model"

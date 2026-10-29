@@ -1,17 +1,4 @@
-import {
-  ArrowRight,
-  Zap,
-  Cloud,
-  Gamepad2,
-  WandSparkles,
-  Sun,
-  Moon,
-  Monitor,
-  Mail,
-  Menu,
-  MessageCircle,
-  X
-} from "lucide-react"
+import { ArrowRight, Zap, Cloud, Gamepad2, WandSparkles, Sun, Moon, Monitor, Menu, BookOpen, X } from "lucide-react"
 import { useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,50 +9,64 @@ import {
   DropdownMenuRadioItem
 } from "@/components/ui/dropdown-menu"
 import { Brand } from "../brand"
-import { GithubMark } from "../github-mark"
 import { useTheme } from "../theme-provider"
 import "./public.css"
 import "./navigation.css"
+import "./footer.css"
 
 const navigation = [
   { href: "/", label: "Discover", icon: Gamepad2 },
   { href: "/create", label: "For creators", icon: WandSparkles },
-  { href: "/cloud", label: "Cloud", icon: Cloud }
+  { href: "/cloud", label: "Cloud", icon: Cloud },
+  { href: "/docs", label: "Documentation", icon: BookOpen }
 ]
 const footerGroups = [
   {
-    title: "Explore",
+    title: "Play",
     links: [
-      ["Browse games", "/#games"],
-      ["Play now", "/?availability=playable#games"],
-      ["Game concepts", "/?availability=concept#games"]
+      ["Browse games", "/browse"],
+      ["How to play", "/help#playing"],
+      ["Community guidelines", "/community-guidelines"]
     ]
   },
   {
-    title: "Create",
+    title: "Starter kits",
     links: [
-      ["For creators", "/create"],
-      ["Starter kit builder", "/templates"],
-      ["Game cloud", "/cloud"],
-      ["Cloud pricing", "/cloud#pricing"]
+      ["Choose a starter kit", "/templates"],
+      ["PixiJS starter kit", "/kits/pixi"],
+      ["Phaser starter kit", "/kits/phaser"],
+      ["Three.js starter kit", "/kits/three"],
+      ["Babylon.js starter kit", "/kits/babylon"]
     ]
   },
   {
-    title: "Resources",
+    title: "Documentation",
     links: [
-      ["Getting started", "/help"],
-      ["Game controls", "/help#playing"],
-      ["Community guidelines", "/community-guidelines"],
-      ["Support", "/contact#support"]
+      ["All documentation", "/docs"],
+      ["Build your first game", "/docs/getting-started"],
+      ["Upload an existing game", "/docs/upload-existing-game"],
+      ["Use the dashboard", "/docs/dashboard"],
+      ["Testing and debugging", "/docs/testing"],
+      ["Publish your game", "/docs/publishing"]
+    ]
+  },
+  {
+    title: "Code with AI",
+    links: [
+      ["Build with Codex", "/docs/codex"],
+      ["Build with Claude Code", "/docs/claude-code"],
+      ["Build with Cursor", "/docs/cursor"],
+      ["CLI reference", "/docs/cli"],
+      ["API resources", "/docs/api"]
     ]
   },
   {
     title: "SpawnKit",
     links: [
-      ["About", "/about"],
-      ["Platform availability", "/about#availability"],
-      ["Contact", "/contact"],
-      ["Your dashboard", "/dashboard"]
+      ["Hosting plans", "/cloud#pricing"],
+      ["About SpawnKit", "/about"],
+      ["Help center", "/help"],
+      ["Contact", "/contact"]
     ]
   }
 ]
@@ -138,7 +139,7 @@ export function PublicShell({ active, children }: { active: string; children: Re
             </a>
             <Button asChild>
               <a className="p-button p-button-small" href="/templates">
-                Make a game <ArrowRight size={16} />
+                Make a game
               </a>
             </Button>
             <Button
@@ -176,7 +177,7 @@ export function PublicShell({ active, children }: { active: string; children: Re
               <ArrowRight size={16} />
             </a>
             <a href="/templates" className="p-mobile-create" onKeyDown={closeMenuOnEscape}>
-              Make a game <ArrowRight size={16} />
+              Make a game
             </a>
           </nav>
         )}
@@ -188,42 +189,34 @@ export function PublicShell({ active, children }: { active: string; children: Re
       </main>
       <footer className="p-company-footer">
         <div className="p-container">
-          <div className="p-footer-top">
+          <div className="p-footer-intro">
             <div className="p-footer-brand">
               <Brand />
-              <p>
-                Play browser games.
-                <br />
-                Build and share your own.
-              </p>
-              <nav className="p-social-links" aria-label="Social links">
-                <a href="/contact#github" aria-label="GitHub" title="GitHub">
-                  <GithubMark size={18} />
-                </a>
-                <a href="/contact#social" aria-label="Discord" title="Discord">
-                  <MessageCircle size={18} />
-                </a>
-                <a href="/contact#updates" aria-label="X" title="X">
-                  <span aria-hidden="true">𝕏</span>
-                </a>
-                <a href="/contact#support" aria-label="Email support" title="Email support">
-                  <Mail size={18} />
-                </a>
-              </nav>
+              <p>Discover browser games. Create and publish your own with AI.</p>
             </div>
-            <nav className="p-footer-links" aria-label="Footer navigation">
-              {footerGroups.map((group) => (
-                <div key={group.title}>
-                  <h2>{group.title}</h2>
-                  {group.links.map(([label, href]) => (
-                    <a key={href} href={href}>
-                      {label}
-                    </a>
-                  ))}
-                </div>
-              ))}
-            </nav>
+            <div className="p-footer-start">
+              <a href="/templates">
+                Choose a free starter kit <ArrowRight size={16} aria-hidden="true" />
+              </a>
+              <a href="/docs/getting-started">
+                Read the quickstart <ArrowRight size={16} aria-hidden="true" />
+              </a>
+            </div>
           </div>
+          <nav className="p-footer-links" aria-label="Footer navigation">
+            {footerGroups.map((group) => (
+              <div key={group.title}>
+                <h2>{group.title}</h2>
+                <ul>
+                  {group.links.map(([label, href]) => (
+                    <li key={href}>
+                      <a href={href}>{label}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
           <div className="p-footer-bottom">
             <span>© 2026 SpawnKit</span>
             <nav className="p-legal-links" aria-label="Legal">
@@ -248,7 +241,7 @@ export function CreatorBanner() {
       </div>
       <Button asChild>
         <a href="/templates" className="p-button">
-          Build a starter kit <ArrowRight size={18} />
+          Start with a kit
         </a>
       </Button>
     </section>

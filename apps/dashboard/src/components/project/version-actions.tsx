@@ -437,7 +437,10 @@ export function VersionActionSheet({
                   <Sparkles className="size-5 text-primary" />
                   <h2 className="mt-4 text-base font-semibold">One shared staging environment</h2>
                   <p className="mt-3 text-2xl font-semibold">
-                    $5<span className="text-sm font-normal text-muted-foreground"> / month + usage</span>
+                    {project.mode === "multiplayer" ? "Included in your bundle" : "$5"}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {project.mode === "multiplayer" ? " + machine usage" : " / month + usage"}
+                    </span>
                   </p>
                   <p className="mt-3 text-xs leading-6 text-muted-foreground">
                     {project.mode === "multiplayer"

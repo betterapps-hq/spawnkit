@@ -1,20 +1,44 @@
-import { Eye, Star, Users } from "lucide-react"
-import { communityPreview } from "@/lib/community-preview"
+import { Eye, MessageSquare, Play, Star } from "lucide-react"
+import type { GameActivityCounts } from "@/lib/game-activity"
+import type { FeedbackTotals } from "@/lib/game-feedback"
 
-export function GameSignals({ gameId, playable }: { gameId: string; playable: boolean }) {
-  const { rating, reviews, activity } = communityPreview(gameId)
-  const count = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(activity)
+export function GameSignals({
+  feedback,
+  activity: live,
+  showPlays = false
+}: {
+  feedback?: Partial<FeedbackTotals>
+  activity?: GameActivityCounts | undefined
+  showPlays?: boolean
+}) {
+  const { rating = 0, reviews = 0, comments = 0 } = feedback ?? {}
+  const views = live?.views ?? 0
+  const format = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 })
   return (
     <div className="p-game-signals">
-      <span aria-label={`Rating ${rating} out of 5 from ${reviews} reviews`}>
-        <Star size={13} fill="currentColor" />
-        <b>{rating.toFixed(1)}</b>
-        <small>({reviews})</small>
+      <span
+        aria-label={`Rating ${rating} out of 5 from ${reviews} reviews`}
+        title={reviews ? `${reviews} reviews` : "Not rated yet"}
+      >
+        <Star size={13} fill={reviews ? "currentColor" : "none"} aria-hidden="true" />
+        <b>{reviews ? rating.toFixed(1) : "0"}</b>
       </span>
-      <span aria-label={`${playable ? "players" : "views"}: ${activity}`}>
-        {playable ? <Users size={13} /> : <Eye size={13} />}
-        {count}
-        <small>{playable ? "players" : "views"}</small>
+      <span aria-label={`Views: ${views}`} title={`${views} views`}>
+        <Eye size={13} aria-hidden="true" />
+        {format.format(views)}
+        <small>views</small>
+      </span>
+      {showPlays && (
+        <span aria-label={`Plays: ${live?.plays ?? 0}`} title={`${live?.plays ?? 0} plays`}>
+          <Play size={13} aria-hidden="true" />
+          {format.format(live?.plays ?? 0)}
+          <small>plays</small>
+        </span>
+      )}
+      <span aria-label={`Comments: ${comments}`} title={comments ? `${comments} comments` : "No comments yet"}>
+        <MessageSquare size={13} aria-hidden="true" />
+        {format.format(comments)}
+        <small>comments</small>
       </span>
     </div>
   )

@@ -1,9 +1,16 @@
 import { createHash } from "node:crypto"
 import { and, eq, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/d1"
+import { agentAccountRoute, agentAuthorizationRoute, maintainAgentAuthorization } from "./agent-authorization"
+import { agentIssuer } from "./agent-credentials"
 import { authenticate } from "./auth"
+import { communityRole } from "./community-access"
+import { reportsRoute, submitReport } from "./community-reports"
+import { acceptInvitation, deliverInvitations, teamRoute } from "./community-team"
 import { deploymentRoute } from "./deployments"
 import { domainRoute } from "./domains"
+import { mutateFeedback, personalFeedback, publicFeedback } from "./game-feedback"
+import { adminGamesRoute, isPlatformAdmin, publicGames, publicGameSitemap, publicGameBrowse } from "./game-submissions"
 import {
   connectGitHub,
   githubCallback,
@@ -12,20 +19,30 @@ import {
   queueGitHubBuild,
   retryGitHubPreview
 } from "./github"
-import { reserveProjectSlug } from "./hosting"
+import { projectHostname, projectSlug, reserveProjectSlug } from "./hosting"
 import { boundedBody, HttpError, jsonBody, record, requireValue } from "./http"
 import { maintainPlatform } from "./maintenance"
+import { mediaWarnings } from "./media-warnings"
+import { moderationRoute } from "./moderation"
+import { deleteProject, deletionStatus, processProjectDeletions } from "./project-deletion"
+import { putProjectArtifact, withProjectResource } from "./project-lifecycle"
+import { projectListing } from "./project-listing"
+import { updateListingMedia } from "./project-listing-media"
 import { projectSummaries } from "./project-summaries"
 import { releaseChanges } from "./release-changes"
-import { environments, projects, uploads } from "./schema"
+import { environments, projects, projectHostnames, uploads } from "./schema"
 import { decodeSource, MAX_SOURCE_BYTES } from "./source"
 import { telemetryRoute } from "./telemetry"
-export { Sandbox } from "@cloudflare/sandbox"
+export { ContainerProxy } from "@cloudflare/sandbox"
+export { Sandbox } from "./sandbox"
 export { BuildJob } from "./build-job"
+export { GameActivity } from "./game-activity-entrypoint"
+export { CreatorMetrics } from "./creator-metrics-entrypoint"
+import { creatorMetrics } from "./creator-metrics"
 
 const idPattern = /^[A-Za-z0-9_-]{1,128}$/
 
-async function route(request: Request, env: Env): Promise<Response> {
+async function route(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const url = new URL(request.url)
   if (url.pathname === "/health" && request.method === "GET") return Response.json({ status: "ok" })
   if (url.pathname === "/api/platform/v1/github/webhook" && request.method === "POST")
@@ -37,12 +54,58 @@ async function route(request: Request, env: Env): Promise<Response> {
     url.hostname.endsWith(".hooks.local.spawnkit.cloud")
   )
     throw new HttpError(404, "not_found", "Not found.")
+  if (request.method === "GET" && url.pathname === "/api/platform/v1/games")
+    return publicGames(env, url.searchParams.get("project") ?? undefined)
+  if (request.method === "GET" && url.pathname === "/api/platform/v1/games/sitemap")
+    return publicGameSitemap(env, url.searchParams.get("page"))
+  if (request.method === "GET" && url.pathname === "/api/platform/v1/games/browse")
+    return publicGameBrowse(env, url.searchParams)
+  const feedback =
+    /^\/api\/platform\/v1\/games\/([A-Za-z0-9_-]{1,128})\/(feedback|rating|comments)(?:\/([A-Za-z0-9_-]{1,128}))?$/.exec(
+      url.pathname
+    )
+  if (feedback && request.method === "GET" && feedback[2] === "feedback" && !feedback[3])
+    return publicFeedback(request, env, feedback[1]!)
+  const agentResponse = await agentAuthorizationRoute(request, env)
+  if (agentResponse) return agentResponse
   const ownerId = await authenticate(request, env)
   const limiter = request.method === "GET" || request.method === "HEAD" ? env.API_READ_LIMIT : env.API_WRITE_LIMIT
   if (limiter && !(await limiter.limit({ key: ownerId })).success)
     throw new HttpError(429, "rate_limited", "Too many requests. Please retry in a minute.")
+  const accountResponse = await agentAccountRoute(request, env, ownerId)
+  if (accountResponse) return accountResponse
+  if (url.pathname === "/api/platform/v1/admin/creator-metrics" && request.method === "GET") {
+    if (!(await isPlatformAdmin(env, ownerId))) throw new HttpError(403, "forbidden", "Administrator access required.")
+    return Response.json(await creatorMetrics(env), { headers: { "cache-control": "no-store" } })
+  }
+  const reportMatch = /^\/api\/platform\/v1\/games\/([A-Za-z0-9_-]{1,128})\/reports$/.exec(url.pathname)
+  if (reportMatch) return submitReport(request, env, ownerId, reportMatch[1]!)
+  const reportsMatch = /^\/api\/platform\/v1\/admin\/reports(?:\/([A-Za-z0-9_-]{1,128}))?$/.exec(url.pathname)
+  if (reportsMatch) return reportsRoute(request, env, ownerId, reportsMatch[1])
+  if (feedback) {
+    if (request.method === "GET" && feedback[2] === "feedback" && feedback[3] === "me")
+      return personalFeedback(env, feedback[1]!, ownerId)
+    return mutateFeedback(request, env, feedback[1]!, ownerId, feedback[2]!, feedback[3])
+  }
   if (url.pathname === "/api/platform/v1/github/callback" && request.method === "GET")
     return githubCallback(request, env, ownerId)
+  if (url.pathname === "/api/platform/v1/me" && request.method === "GET")
+    return Response.json({
+      admin: await isPlatformAdmin(env, ownerId),
+      role: await communityRole(env, ownerId),
+      userId: ownerId
+    })
+  if (url.pathname === "/api/platform/v1/team/accept") return acceptInvitation(request, env, ownerId)
+  const teamMatch =
+    /^\/api\/platform\/v1\/admin\/team\/(members|invitations|history)(?:\/([A-Za-z0-9_-]{1,128}))?$/.exec(url.pathname)
+  if (teamMatch) return teamRoute(request, env, ownerId, teamMatch[1]!, teamMatch[2])
+  const adminMatch = /^\/api\/platform\/v1\/admin\/submissions(?:\/([A-Za-z0-9_-]+))?$/.exec(url.pathname)
+  if (adminMatch) return adminGamesRoute(request, env, ownerId, adminMatch[1])
+  const manageMatch =
+    /^\/api\/platform\/v1\/admin\/manage\/(summary|games|comments|history|decisions)(?:\/([A-Za-z0-9_-]{1,128}))?$/.exec(
+      url.pathname
+    )
+  if (manageMatch) return moderationRoute(request, env, ownerId, manageMatch[1]!, manageMatch[2])
   const db = drizzle(env.DATABASE)
   const path = url.pathname
     .replace(/^\/api\/platform\/v1/, "")
@@ -50,9 +113,29 @@ async function route(request: Request, env: Env): Promise<Response> {
     .filter(Boolean)
   const [resource, projectId, operation, resourceId] = path
   if (resource !== "projects") throw new HttpError(404, "not_found", "Not found.")
+  if (projectId === "name-availability" && request.method === "GET") {
+    const name = url.searchParams.get("name") ?? ""
+    requireValue(name.trim().length > 0 && name.length <= 64, "Enter a game title of up to 64 characters.")
+    const slug = projectSlug(name)
+    const taken = await db
+      .select({ slug: projectHostnames.slug })
+      .from(projectHostnames)
+      .where(eq(projectHostnames.slug, slug))
+      .get()
+    return Response.json({ available: !taken, slug }, { headers: { "cache-control": "no-store" } })
+  }
   if (!projectId && request.method === "GET") {
     return Response.json({
-      projects: await db.select().from(projects).where(eq(projects.ownerId, ownerId)),
+      projects: await db
+        .select()
+        .from(projects)
+        .where(and(eq(projects.ownerId, ownerId), sql`${projects.lifecycle} != 'deleted'`)),
+      deletedProjectIds: (
+        await db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(and(eq(projects.ownerId, ownerId), eq(projects.lifecycle, "deleted")))
+      ).map((row) => row.id),
       ...(url.searchParams.get("summary") === "true" ? { summaries: await projectSummaries(env, ownerId) } : {})
     })
   }
@@ -69,26 +152,52 @@ async function route(request: Request, env: Env): Promise<Response> {
     const existing = await db.select().from(projects).where(eq(projects.id, id)).get()
     if (existing) {
       if (existing.ownerId !== ownerId) throw new HttpError(409, "id_unavailable", "Project ID is unavailable.")
+      if (existing.lifecycle !== "active") throw new HttpError(410, "project_deleted", "This project has been deleted.")
       const slug = await reserveProjectSlug(env.DATABASE, id, existing.name)
       return Response.json({ ...existing, slug })
     }
     const now = new Date().toISOString()
-    await db.batch([
-      db.insert(projects).values({
-        id,
-        ownerId,
-        name: body.name.trim(),
-        configuration,
-        metadata: record(body.metadata ?? {}),
-        createdAt: now,
-        updatedAt: now
-      }),
-      db.insert(environments).values([
-        { id: `${id}:production`, projectId: id, name: "production", enabled: true },
-        { id: `${id}:sandbox`, projectId: id, name: "sandbox", enabled: configuration.sandbox }
+    try {
+      await db.batch([
+        db.insert(projects).values({
+          id,
+          ownerId,
+          name: body.name.trim(),
+          configuration,
+          metadata: record(body.metadata ?? {}),
+          createdAt: now,
+          updatedAt: now
+        }),
+        db.insert(environments).values([
+          { id: `${id}:production`, projectId: id, name: "production", enabled: true },
+          { id: `${id}:sandbox`, projectId: id, name: "sandbox", enabled: configuration.sandbox }
+        ]),
+        ...(body.requireUniqueName === true
+          ? [db.insert(projectHostnames).values({ projectId: id, slug: projectSlug(body.name.trim()) })]
+          : [])
       ])
-    ])
+    } catch (error) {
+      if (
+        body.requireUniqueName === true &&
+        (await db
+          .select()
+          .from(projectHostnames)
+          .where(eq(projectHostnames.slug, projectSlug(body.name.trim())))
+          .get())
+      )
+        throw new HttpError(
+          409,
+          "name_unavailable",
+          `The name "${body.name.trim()}" is already taken! Please choose a unique name.`
+        )
+      throw error
+    }
     const slug = await reserveProjectSlug(env.DATABASE, id, body.name.trim())
+    const provisioning = import("./provisioning")
+      .then(({ provisionProjectDomain }) => provisionProjectDomain(env, id, slug))
+      .catch(() => console.warn("initial_domain_provisioning_pending"))
+    if (ctx) ctx.waitUntil(provisioning)
+    else await provisioning
     return Response.json({ id, name: body.name.trim(), slug, configuration, revision: 1 }, { status: 201 })
   }
   requireValue(projectId && idPattern.test(projectId), "Invalid project ID.")
@@ -98,6 +207,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
     .get()
   if (!project) throw new HttpError(404, "not_found", "Project not found.")
+  if (!operation && request.method === "DELETE") return deleteProject(request, env, ownerId, projectId, ctx)
+  if (operation === "deletion" && !resourceId && request.method === "GET")
+    return Response.json(await deletionStatus(env, projectId))
+  if (project.lifecycle !== "active") throw new HttpError(409, "project_deleting", "This project is being deleted.")
+  if (operation === "listing" && resourceId === "media") return updateListingMedia(request, env, ownerId, projectId)
+  if (operation === "listing" && !resourceId) return projectListing(request, env, ownerId, projectId)
   if (operation === "release-changes" && request.method === "GET") return releaseChanges(request, env, projectId)
   if (operation === "github" && resourceId === "connect" && request.method === "POST")
     return connectGitHub(env, ownerId, projectId, project.configuration)
@@ -126,14 +241,15 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (operation === "domains") return domainRoute(request, env, projectId, resourceId)
   if (operation === "previews" && resourceId && url.pathname.endsWith("/retry") && request.method === "POST")
     return retryGitHubPreview(env, projectId, decodeURIComponent(resourceId))
-  if (operation === "telemetry") return telemetryRoute(request, env, projectId, resourceId)
+  if (operation === "telemetry")
+    return withProjectResource(env, projectId, () => telemetryRoute(request, env, projectId, resourceId))
   if (operation === "state" && request.method === "GET") {
     const results = await env.DATABASE.batch([
       env.DATABASE.prepare(
         "SELECT e.name,e.enabled,e.current_release_id AS currentReleaseId,h.hostname FROM environments e LEFT JOIN hosting_slots h ON h.project_id=e.project_id AND h.environment=e.name WHERE e.project_id=?"
       ).bind(projectId),
       env.DATABASE.prepare(
-        "SELECT r.id,r.build_id AS buildId,r.status,r.environment,r.created_at AS createdAt,r.artifact_digest AS artifactDigest,r.url,(SELECT COUNT(*) FROM releases older WHERE older.project_id=r.project_id AND older.rowid<=r.rowid) AS versionNumber,g.commit_sha AS commitSha,g.branch,g.title AS sourceTitle FROM releases r LEFT JOIN github_events g ON g.deployment_id=r.build_id WHERE r.project_id=? AND (r.rowid IN (SELECT recent.rowid FROM releases recent WHERE recent.project_id=r.project_id ORDER BY recent.rowid DESC LIMIT 100) OR r.id IN (SELECT current_release_id FROM environments WHERE project_id=r.project_id AND enabled=1)) ORDER BY r.rowid DESC"
+        "SELECT r.id,r.build_id AS buildId,r.status,r.environment,r.created_at AS createdAt,r.artifact_digest AS artifactDigest,r.media_warnings AS mediaWarnings,r.url,(SELECT COUNT(*) FROM releases older WHERE older.project_id=r.project_id AND older.rowid<=r.rowid) AS versionNumber,g.commit_sha AS commitSha,g.branch,g.title AS sourceTitle FROM releases r LEFT JOIN github_events g ON g.deployment_id=r.build_id WHERE r.project_id=? AND (r.rowid IN (SELECT recent.rowid FROM releases recent WHERE recent.project_id=r.project_id ORDER BY recent.rowid DESC LIMIT 100) OR r.id IN (SELECT current_release_id FROM environments WHERE project_id=r.project_id AND enabled=1)) ORDER BY r.rowid DESC"
       ).bind(projectId),
       env.DATABASE.prepare(
         "SELECT id,release_id AS releaseId,environment,status,operation,expected_release_id AS previousReleaseId,created_at AS createdAt FROM deployments WHERE project_id=? ORDER BY created_at DESC LIMIT 100"
@@ -150,8 +266,14 @@ async function route(request: Request, env: Env): Promise<Response> {
       ).bind(projectId)
     ])
     return Response.json({
+      activity: (await env.DATABASE.prepare("SELECT views,plays FROM game_activity_totals WHERE project_id=?")
+        .bind(projectId)
+        .first()) ?? { views: 0, plays: 0 },
       environments: results[0]!.results,
-      releases: results[1]!.results,
+      releases: results[1]!.results.map((release) => ({
+        ...record(release),
+        mediaWarnings: mediaWarnings(record(release).mediaWarnings)
+      })),
       deployments: results[2]!.results,
       logs: results[3]!.results,
       domains: results[4]!.results,
@@ -167,8 +289,12 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   if (!operation && request.method === "GET") {
     const rows = await db.select().from(environments).where(eq(environments.projectId, projectId))
+    const address = await env.DATABASE.prepare("SELECT slug FROM project_hostnames WHERE project_id=?")
+      .bind(projectId)
+      .first<{ slug: string }>()
     return Response.json({
       ...project,
+      ...(address ? { hostname: projectHostname(address.slug, "production", env.HOSTING_TEST === "true") } : {}),
       environments: Object.fromEntries(
         rows.map((row) => [row.name, { enabled: row.enabled, currentReleaseId: row.currentReleaseId }])
       )
@@ -205,7 +331,13 @@ async function route(request: Request, env: Env): Promise<Response> {
           revision: Number(body.revision) + 1,
           updatedAt: new Date().toISOString()
         })
-        .where(and(eq(projects.id, projectId), eq(projects.revision, Number(body.revision))))
+        .where(
+          and(
+            eq(projects.id, projectId),
+            eq(projects.revision, Number(body.revision)),
+            eq(projects.lifecycle, "active")
+          )
+        )
         .returning()
     ])
     if (!changed.length) throw new HttpError(409, "conflict", "This project changed. Reload before saving.")
@@ -258,7 +390,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const bytes = await boundedBody(request, MAX_SOURCE_BYTES)
     requireValue(bytes.length === upload.sizeBytes, "Source size mismatch.")
     decodeSource(bytes, upload.sha256)
-    await env.ARTIFACTS.put(`sources/${projectId}/${resourceId}.gz`, bytes, { sha256: upload.sha256 })
+    await putProjectArtifact(env, projectId, `sources/${projectId}/${resourceId}.gz`, bytes, { sha256: upload.sha256 })
     await db.update(uploads).set({ status: "ready" }).where(eq(uploads.id, resourceId))
     return Response.json({ id: resourceId, sha256: upload.sha256, sizeBytes: bytes.length })
   }
@@ -279,14 +411,19 @@ async function route(request: Request, env: Env): Promise<Response> {
 }
 
 export default {
-  async scheduled(_event, env) {
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(maintainAgentAuthorization(env))
+    ctx.waitUntil(deliverInvitations(env))
+    ctx.waitUntil(processProjectDeletions(env))
+    const { processBuildQueue } = await import("./build-queue")
+    await processBuildQueue(env)
     await maintainPlatform(env)
     const { processGitHubEvents } = await import("./github-jobs")
     await processGitHubEvents(env)
   },
-  async fetch(request, env) {
+  async fetch(request, env, ctx?: ExecutionContext) {
     try {
-      const result = await route(request, env)
+      const result = await route(request, env, ctx)
       const response = new Response(result.body, result)
       response.headers.set("cache-control", "no-store")
       response.headers.set("x-content-type-options", "nosniff")
@@ -297,7 +434,15 @@ export default {
           { error: { code: error.code, message: error.message } },
           {
             status: error.status,
-            headers: { "cache-control": "no-store", ...(error.status === 429 ? { "retry-after": "60" } : {}) }
+            headers: {
+              "cache-control": "no-store",
+              ...(error.status === 429 ? { "retry-after": "60" } : {}),
+              ...(error.status === 401
+                ? {
+                    "www-authenticate": `Bearer resource_metadata="${agentIssuer(env)}/.well-known/oauth-protected-resource"`
+                  }
+                : {})
+            }
           }
         )
       console.error(

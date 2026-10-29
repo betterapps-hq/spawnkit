@@ -1,108 +1,41 @@
 # For Creators: page brief
 
-Status: proposed narrative, copy, and layout. Updated: 2026-10-14. Read with [public-site positioning](public-site-positioning.md).
+Status: implemented locally, updated 2026-10-14. Read with [public-site positioning](public-site-positioning.md).
 
-## The case to make
+## The offer
 
-Starting a game should begin with something playable. SpawnKit provides the project foundation so a developer can spend their attention on the game: choose compatible tools, get editable source, and iterate locally with checks alongside the code.
+SpawnKit provides a playable TypeScript starting point with compatible development tools. Creators choose an engine, inspect and download standalone source, then develop the game in their preferred editor. Hosting is optional.
 
-The offer is a **standalone starter project**, not access to a proprietary browser editor. The page must answer, in order: what can I make, what do I receive, how do I make it mine, and how does it reach players?
-
-Primary action: **Build your starter kit** → `/templates`. Secondary action: **Explore games** → `/`. Engine-specific links may preselect `/templates?engine=pixi`, `phaser`, `babylon`, or `three`. Do not send the first action to a sign-in screen when the visitor can use the builder directly.
-
-## Proposed opening copy
-
-Eyebrow: **For game creators**
-
-Headline: **Start with a playable game. Make it yours.**
-
-Body: Choose your engine, add the tools your game needs, and download a standalone TypeScript project. Build in your own editor, with your own ideas—and your AI coding tools if you use them.
-
-Actions: **Build your starter kit** / **Explore games**
-
-Supporting line: **Editable source. Compatible tools. A starting point you can play.**
-
-The hero should show a small playable starter beside a compact view of its project files. Game artwork can frame the experience, but should not imply the generator delivers the illustrated finished game. Keep the primary action visible without scrolling on common laptop screens.
+Use **Start with a kit** for the primary action. The user is building a game from a kit. Engine-specific links preselect the shared catalog choice at `/templates?engine=pixi`, `phaser`, `babylon`, or `three`. The public builder does not require sign-in.
 
 ## Page sequence
 
-### 1. Choose the starting point that fits your game
+The hero says **Start with a playable game. Make it yours.** Supporting copy: “Pick an engine and the tools your game needs. Download a free TypeScript starter and make it your own in your preferred editor.” Keep the engine-specific game art and source confirmation. Remove decorative captions and repeated reassurance lines. Concept art does not imply the generator delivers that finished game.
 
-Visitor question: “Is this for the kind of game I want to make?”
+**Start your engines** introduces PixiJS, Phaser, Babylon.js, and Three.js from the shared template catalog. Explain their 2D/3D roles and preserve the chosen engine in builder links and the setup summary.
 
-Explain 2D and 3D before listing libraries. Present PixiJS and Babylon.js as the default paths, with Phaser and Three.js as alternatives. Avoid declaring one engine universally best. A selected engine changes the relevant visual, a short explanation, and the builder link.
+The tools section explains a development stack handpicked by experts. TypeScript, Vite, Oxlint, and Oxfmt have concrete roles. Two spacious workbench rows demonstrate physics and regression protection instead of generic feature cards.
 
-Proposed heading: **Your game, your starting point.**
+The physics illustration is a real Rapier 3D marble course with an inclined track, barriers, collision posts, and a landing target. “Release marbles” starts a bounded simulation. WebGL failure keeps a static SVG course and the surrounding content available. Reduced motion directly renders a settled state.
 
-Proposed copy: Start in 2D or 3D. Pick an engine, then choose the compatible pieces your project needs. You can inspect the files before downloading them.
+The testing workbench switches between unit and browser suites. Unit testing baselines demonstrate movement bounds, consistent simulation, and independent sessions. Browser checks show a keyboard-controlled player collecting an item. Queued, running, and passed states explain repeatable checks without claiming a guarantee of correctness. Pause and replay are available; offscreen/hidden-tab playback stops and reduced motion shows passed examples. Copy explicitly connects tests to preventing regressions and use by the preferred AI agent.
 
-Visual: two clear 2D/3D groups with engine choices and one selected preview. Use the actual shared catalog to determine available selections; do not maintain a separate marketing compatibility matrix.
+The local setup panel uses the generated project commands: `pnpm install`, `pnpm dev:setup`, and `pnpm dev`. Copy remains available in the panel header. Runtime prerequisites belong in the generated README and getting-started documentation, rather than a second marketing footer.
 
-### 2. Show what comes in the download
+The browser showcase places a laptop and phone in one composition. The Prism Break screen is drawn in SVG, with browser chrome, device bezels, a keyboard, and trackpad. The laptop participates in document flow so its height cannot overlap the next section. Both devices represent browser play. Native desktop and mobile exports are separately marked coming soon.
 
-Visitor question: “What am I actually getting?”
+The finale says **Choose a kit. Build your game.** It repeats the primary action and offers a secondary Cloud link.
 
-Proposed heading: **A real project, ready to become your game.**
+## Visual and editorial rules
 
-Show an actual generated file tree with three annotated areas: game source, selected modules, and development commands. Explain that the ZIP is standalone, dependencies are installed locally, and source can be edited in a normal editor. Hosting is optional.
+Use the existing theme tokens and shadcn controls. Scope marketing typography so the public base styles cannot collapse heading size, line height, or paragraph spacing. Headings need room for multiple lines. Default new visitors to dark mode across the app; honor explicit Light and System preferences, including OS changes.
 
-Make the first-use path explicit: **configure → download → install dependencies → run locally**. Use exact commands from the selected generated README when implemented. Avoid an unpublished global CLI command or a fake one-click path that skips installation.
+No em dashes, decorative numbering, text arrows, or dot separators. Primary actions have no arrow. Secondary navigation uses icons. Avoid filler, repeated promises, and generic lists that do not explain the product.
 
-Proof: a file preview linked to the builder, not an illustration of files the generator does not produce. Describe selectable tests and modules as selections, rather than implying every starter includes every option.
+The gameplay, test results, and device screens are illustrative examples. Keep tests and optional physics honest about builder selections. Native exports remain future scope.
 
-### 3. Make the benefit tangible through play
+## Acceptance
 
-Visitor question: “How does this help me build?”
+Verify selected-engine links, standalone download accuracy, keyboard and touch controls, animated test pause/replay, reduced motion, WebGL fallback, and actual physics settling. Check that both devices stay within the section at desktop, tablet, and narrow-phone widths.
 
-Proposed heading: **Less setup. More things to try.**
-
-Pair a small physics interaction with its editable source and a meaningful test example. Let visitors drop an object or collect an item, then explain the small behavior they could change. Keep interactions bounded, touch-friendly, and optional.
-
-Three messages are enough:
-
-- **Change the game:** own the movement, rules, and presentation in readable source.
-- **Add compatible pieces:** select supported physics, interface, and data options in the builder.
-- **Check your changes:** selected unit and browser tests give the development loop concrete checks.
-
-Do not frame tests as a guarantee that AI-written code is correct. Show what a check actually verifies, such as movement and collection, rather than an invented quality score.
-
-### 4. Explain the local and AI-assisted workflow
-
-Visitor question: “Do I have to change how I work?”
-
-Proposed heading: **Keep your editor. Bring your imagination.**
-
-Proposed copy: Work with the source locally. Read it, change it, commit it, and use the coding tools you already prefer. SpawnKit gives you a foundation to build on; you decide what the game becomes.
-
-Use a compact source/change/play sequence. Do not fabricate an AI chat that promises to generate a finished game, and do not make an AI subscription appear required. Include the CLI as a secondary workflow only once public installation is verified.
-
-### 5. Connect creation to players
-
-Visitor question: “What happens when I want to share it?”
-
-Proposed heading: **Built for the browser. Ready for your next step.**
-
-Lead with browser play and responsive game experiences. If the platform showcase includes desktop or phone frames, distinguish playing in those browsers from native application export. Native packaging remains coming soon.
-
-Briefly introduce Cloud: **When your game is ready to share, explore hosted builds, release controls, and a game URL with SpawnKit Cloud.** Link **Explore Cloud** → `/cloud`. Keep this subordinate to creating the starter, rather than turning the page into a second pricing page.
-
-Final action: **Make your first move.** / **Build your starter kit**.
-
-## Questions the page should resolve
-
-| Question | Answer to communicate |
-| --- | --- |
-| Do I need to code? | This is a developer workflow using editable TypeScript, including AI-assisted coding |
-| Is it a finished game? | It is a playable foundation to develop into your game |
-| Can I keep the source? | The generated project is standalone and editable; do not imply ownership of third-party engines or assets |
-| Do I need SpawnKit hosting? | No; creation and hosting are separate offers |
-| Does every engine support every feature? | Available combinations come from the builder's shared compatibility contract |
-| Does it export native apps? | The current offer is browser games; native distribution is future scope |
-
-Use short inline explanations where the question arises. Add a small FAQ only for answers that do not fit naturally; do not repeat the entire page below the CTA.
-
-## Design and acceptance
-
-Give the page one memorable playable moment, one concrete source view, and a clear progression. Avoid several simultaneous animated scenes. Real engine logos support selection; they should not dominate the hero.
-
-Before shipping: verify selected-engine links, generated-output accuracy, keyboard/touch behavior, static fallback, reduced motion, narrow screens, and the absence of unpublished install instructions. Add full-page and key-interaction Storybook coverage. These are acceptance requirements, not claims that the current draft has passed.
+Storybook reuses the full Creators page and has focused creator-workbench and browser-device stories. Browser acceptance covers the dark default and saved theme choices. Run `pnpm verify` and the public, marketing, Cloud, and Creator browser suites after coherent changes.

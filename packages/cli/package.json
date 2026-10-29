@@ -1,7 +1,13 @@
 {
-  "name": "@spawn/cli",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@spawnkit/cli",
+  "version": "0.1.0",
+  "description": "Create, extend, and publish standalone browser games with SpawnKit",
+  "license": "UNLICENSED",
+  "homepage": "https://spawnkit.cloud/docs/cli",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "type": "module",
   "bin": {
     "spawn": "./dist/main.mjs"
@@ -20,12 +26,11 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@babel/parser": "7.29.9",
     "@clack/prompts": "1.8.1",
     "@spawn/templates": "workspace:*",
-    "picocolors": "^1.1.1"
-  },
-  "devDependencies": {
+    "picocolors": "^1.1.1",
     "@spawn/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",

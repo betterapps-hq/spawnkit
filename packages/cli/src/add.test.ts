@@ -53,5 +53,5 @@ it("refuses preexisting new files and incompatible ECS choices", async () => {
 })
 it("refuses unsupported ownership versions", async () => {
   await writeFile(join(project, ".spawn/state.json"), '{"schemaVersion":99}')
-  await expect(addModules(project, ["vitest"], true)).rejects.toThrow("migration")
+  await expect(addModules(project, ["vitest"], true)).rejects.toThrow("Unsupported SpawnKit ownership record")
 })

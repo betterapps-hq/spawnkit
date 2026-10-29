@@ -41,12 +41,26 @@ export async function requireAuthSuccess(request: Promise<{ error: unknown }>) {
 
 export function authDestination() {
   let cliReturn: string | null = null
+  let gameReturn: string | null = null
+  let teamReturn: string | null = null
   try {
     cliReturn = window.sessionStorage?.getItem("spawn-cli-return") ?? null
+    gameReturn = window.sessionStorage?.getItem("spawn-game-return") ?? null
+    teamReturn = window.sessionStorage?.getItem("spawn-team-return") ?? null
+    window.sessionStorage?.removeItem("spawn-team-return")
+    window.sessionStorage?.removeItem("spawn-game-return")
   } catch {
     /* Storage can be unavailable in private browser contexts. */
   }
-  return cliReturn?.startsWith("/cli/login?") ? cliReturn : "/dashboard"
+  return teamReturn && /^\/team\/invitation#[a-f0-9]{64}$/.test(teamReturn)
+    ? teamReturn
+    : cliReturn?.startsWith("/cli/login?") ||
+        cliReturn === "/cli/access" ||
+        (cliReturn && /^\/cli\/claim\?claim_attempt_token=cla_[A-Za-z0-9_-]{43}$/.test(cliReturn))
+      ? cliReturn
+      : gameReturn && /^\/play\/[A-Za-z0-9_-]{1,128}#community$/.test(gameReturn)
+        ? gameReturn
+        : "/dashboard"
 }
 
 export const navigateAfterAuth: SetActiveNavigate = ({ session, decorateUrl }) => {

@@ -33,12 +33,12 @@ describe("CLI", () => {
     ])
   })
   it("plans without writing anything", async () => {
-    await runCli(["init", "demo", "--template", "phaser", "--dry-run", "--json"], directory, write)
+    await runCli(["init", "demo", "--add", "phaser", "--dry-run", "--json"], directory, write)
     expect(JSON.parse(output).status).toBe("planned")
     expect(await readdir(directory)).toEqual([])
   })
   it("creates a standalone project with composed modules", async () => {
-    await runCli(["init", "demo", "--template", "babylon", "--with", "vitest", "--json"], directory, write)
+    await runCli(["init", "demo", "--add", "babylon,vitest", "--yes", "--json"], directory, write)
     expect(JSON.parse(output).status).toBe("created")
     const pkg = JSON.parse(await readFile(join(directory, "demo/package.json"), "utf8"))
     expect(pkg.name).toBe("demo")
@@ -47,7 +47,7 @@ describe("CLI", () => {
   })
   it("refuses an existing destination and preserves content", async () => {
     await writeFile(join(directory, "keep.txt"), "important")
-    await expect(runCli(["init", ".", "--name", "demo", "--template", "phaser"], directory, write)).rejects.toThrow(
+    await expect(runCli(["init", ".", "--name", "demo", "--add", "phaser"], directory, write)).rejects.toThrow(
       "already exists"
     )
     expect(await readFile(join(directory, "keep.txt"), "utf8")).toBe("important")
@@ -58,25 +58,25 @@ describe("CLI", () => {
     await expect(scaffoldProject(plan, join(directory, "demo"))).rejects.toThrow("Unsafe")
     expect(await readdir(directory)).toEqual([])
   })
-  it("defaults to PixiJS and composes bitECS", async () => {
-    await runCli(["init", "demo", "--with", "bitecs", "--json"], directory, write)
-    expect(JSON.parse(output).template).toBe("pixi")
+  it("composes PixiJS and bitECS", async () => {
+    await runCli(["init", "demo", "--add", "pixi,bitecs", "--yes", "--json"], directory, write)
+    expect(JSON.parse(output).composition.options.template).toBe("pixi")
     expect(await readFile(join(directory, "demo/src/simulation.ts"), "utf8")).toContain('from "bitecs"')
   })
   it("rejects incompatible physics before any writes", async () => {
-    await expect(
-      runCli(["init", "demo", "--template", "three", "--physics", "havok"], directory, write)
-    ).rejects.toThrow("not compatible")
+    await runCli(["init", "demo", "--add", "three,havok", "--json"], directory, write)
+    expect(JSON.parse(output).status).toBe("needs-decision")
+    process.exitCode = 0
     expect(await readdir(directory)).toEqual([])
   })
   it("includes physics, UI, and telemetry in a JSON dry-run", async () => {
     await runCli(
-      ["init", "demo", "--physics", "rapier2d", "--ui", "pixi", "--telemetry", "platform", "--dry-run", "--json"],
+      ["init", "demo", "--add", "pixi,rapier2d,pixi-ui,platform-telemetry", "--dry-run", "--json"],
       directory,
       write
     )
-    expect(JSON.parse(output).modules).toEqual(
-      expect.arrayContaining(["physics:rapier2d", "ui:pixi", "telemetry:platform"])
+    expect(JSON.parse(output).composition.selected).toEqual(
+      expect.arrayContaining(["rapier2d", "pixi-ui", "platform-telemetry"])
     )
     expect(await readdir(directory)).toEqual([])
   })
@@ -88,9 +88,11 @@ describe("CLI", () => {
   })
   it.each([
     { args: ["not-a-command"], error: "Unknown command" },
-    { args: ["init"], error: "Provide exactly one destination" },
-    { args: ["init", "demo", "--template", "colyseus"], error: "Choose a supported template" },
-    { args: ["init", "demo", "--template", "phaser", "--with", "unknown"], error: "Unknown add-on" },
+    { args: ["project", "show"], error: "Unknown command" },
+    { args: ["init", "demo", "--template", "pixi"], error: "Unknown option" },
+    { args: ["init"], error: "Use spawn init <directory>" },
+    { args: ["init", "demo", "--add", "colyseus"], error: "Unknown add-on" },
+    { args: ["init", "demo", "--add", "phaser,unknown"], error: "Unknown add-on" },
     { args: ["init", "demo", "--unknown"], error: "Unknown option" }
   ])("rejects invalid input $args without writing", async ({ args, error }) => {
     await expect(runCli(args, directory, write)).rejects.toThrow(error)
@@ -99,22 +101,24 @@ describe("CLI", () => {
 })
 
 it("previews the exact package dependencies and scripts that will be generated", async () => {
-  await runCli(["init", "demo", "--with", "vitest", "--dry-run", "--json"], directory, write)
+  await runCli(["init", "demo", "--add", "pixi,vitest", "--yes", "--dry-run", "--json"], directory, write)
   const preview = JSON.parse(output)
   output = ""
-  await runCli(["init", "demo", "--with", "vitest", "--json"], directory, write)
+  await runCli(["init", "demo", "--add", "pixi,vitest", "--yes", "--json"], directory, write)
   const pkg = JSON.parse(await readFile(join(directory, "demo/package.json"), "utf8"))
-  expect(preview.setup.dependencies).toEqual(pkg.dependencies)
-  expect(preview.setup.devDependencies).toEqual(pkg.devDependencies)
-  expect(preview.setup.scripts).toEqual(pkg.scripts)
-  expect(preview.setup.resources).toEqual([])
+  const planned = JSON.parse(createProjectPlan(preview.composition.options).files["package.json"]!)
+  expect(planned.dependencies).toEqual(pkg.dependencies)
+  expect(planned.devDependencies).toEqual(pkg.devDependencies)
+  expect(planned.scripts).toEqual(pkg.scripts)
 })
 it("rejects existing destinations even during a dry run", async () => {
-  await expect(runCli(["init", ".", "--name", "demo", "--dry-run"], directory, write)).rejects.toThrow("already exists")
+  await expect(runCli(["init", ".", "--name", "demo", "--add", "pixi", "--dry-run"], directory, write)).rejects.toThrow(
+    "already exists"
+  )
   expect(await readdir(directory)).toEqual([])
 })
 it("explains missing destination parents without writing files", async () => {
-  await expect(runCli(["init", "missing/demo", "--dry-run"], directory, write)).rejects.toThrow(
+  await expect(runCli(["init", "missing/demo", "--add", "pixi", "--dry-run"], directory, write)).rejects.toThrow(
     "parent must be an existing directory"
   )
   expect(await readdir(directory)).toEqual([])
@@ -122,7 +126,7 @@ it("explains missing destination parents without writing files", async () => {
 
 it("writes the DSN only to ignored local configuration, never output or ownership", async () => {
   const sentryDsn = "https://publickey@sentry.example/123"
-  const args = ["init", "sentry-demo", "--telemetry", "sentry", "--json"]
+  const args = ["init", "sentry-demo", "--add", "pixi,sentry", "--yes", "--json"]
   await runCli([...args, "--dry-run"], directory, write, { sentryDsn })
   expect(await readdir(directory)).toEqual([])
   expect(output).not.toContain(sentryDsn)
@@ -138,9 +142,9 @@ it("writes the DSN only to ignored local configuration, never output or ownershi
 it.each(["sntrys_secret", "https://key:secret@sentry.example/123", "https://key@sentry.example/123\nOTHER=bad"])(
   "rejects tokens and unsafe DSNs without writing",
   async (sentryDsn) => {
-    await expect(runCli(["init", "demo", "--telemetry", "sentry"], directory, write, { sentryDsn })).rejects.toThrow(
-      "public HTTPS Sentry DSN"
-    )
+    await expect(
+      runCli(["init", "demo", "--add", "pixi,sentry", "--yes"], directory, write, { sentryDsn })
+    ).rejects.toThrow("public HTTPS Sentry DSN")
     expect(await readdir(directory)).toEqual([])
   }
 )

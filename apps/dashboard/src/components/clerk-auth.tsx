@@ -168,14 +168,15 @@ export function ClerkAuth({ continueSignUp = false }: { continueSignUp?: boolean
       onFactor={(next) => void run(() => prepareFactor(next))}
       onSocial={(strategy) =>
         void run(async () => {
-          if (!signIn) return
-          await requireAuthSuccess(
-            signIn.sso({
-              strategy,
-              redirectUrl: new URL("/session-tasks", window.location.origin).href,
-              redirectCallbackUrl: new URL("/sso-callback", window.location.origin).href
-            })
-          )
+          if (!signIn || !clerk.client) return
+          // A previous password attempt can have no OAuth redirect to resume.
+          await requireAuthSuccess(signIn.reset())
+          // Read the replacement resource after reset, rather than the stale hook instance.
+          await clerk.client.signIn.authenticateWithRedirect({
+            strategy,
+            redirectUrl: new URL("/sso-callback", window.location.origin).href,
+            redirectUrlComplete: new URL("/session-tasks", window.location.origin).href
+          })
         })
       }
       onStage={(next) =>

@@ -10,19 +10,25 @@ An AI-native web-game hosting platform: “Vercel meets PlayFab” for developer
 | --- | --- |
 | [Decisions and open questions](decisions.md) | Agreed product boundaries, pricing, and unresolved choices |
 | [Public-site positioning](public-site-positioning.md) | Proposed audiences, offers, value, navigation, and evidence boundaries |
+| [SEO and agent discovery](../specs/seo/README.md) | Foundation and product pages live; public CLI and scoped remote-agent publishing verified. Search measurement awaits more data; articles and Copy for your agent remain last |
 | [For Creators page brief](creators-page.md) | Proposed creator narrative, copy, demonstrations, and starter-kit journey |
 | [Cloud page brief](cloud-page.md) | Proposed hosting narrative, release workflow, pricing presentation, and availability |
 | [Deployment](deployment.md) | Source upload, isolated builds, environments, promotion, rollback, and GitHub Actions |
 | [Management dashboard](management-dashboard.md) | Developer workflows, operational visibility, environment controls, and billing |
+| [Project settings](project-settings-design.md) | Approved settings, saves, media replacement and Danger Zone |
+| [Project deletion](project-deletion.md) | Resource cleanup, domain deprovisioning, retries and audit retention |
 | [Project dashboard design](project-dashboard-storybook.md) | Storybook screen matrix, template creation, version operations, PR previews, and domains |
 | [Analytics experience](analytics-experience.md) | Detailed Sentry feature study, Analytics workflows, Storybook walkthrough and capability boundaries |
 | [Telemetry analytics architecture](telemetry-analytics-architecture.md) | Proposed self-hosted ClickHouse/ClickStack system, game metrics, and EU endpoint routing based on server location |
 | [Games platform](games-platform.md) | Control plane, hosting, containers, routing, isolation, metering, and provider ownership |
+| [Game publishing](game-publishing.md) | Creator submissions, administrator review, approved discovery and isolated players |
+| [Community safety design](community-safety-design.md) | Implemented reports, team permissions and listing settings; Storybook proposals for storage cleanup |
 | [Game services](game-services.md) | Supported official Colyseus capabilities and their configuration/persistence lifecycle |
 | [Project templates](project-templates.md) | Presets, composable stack selection, generation, import, install, and add |
 | [Domains](domains.md) | Environment mappings, typed local configuration, authentication and webhook migration |
 | [Development](development.md) | Current workspace, local commands, template implementation, and next steps |
 | [Performance and usage controls](internal/performance-and-limits.md) | Polling, cache behavior, build allowances, rate limits, CPU bounds and billing alerts |
+| [Game upload security audit](internal/game-upload-security-audit.md) | Upload/build boundaries, iframe and CSP controls, verified risks and remediation priorities |
 
 ## Reading requirements
 
@@ -38,7 +44,7 @@ Implemented telemetry: [design and boundaries](telemetry-design.md), [setup and 
 
 Launch includes local project creation/import, CLI source publishing, hosted isolated builds, sandbox/staging and production, promotion, rollback, generated GitHub Actions workflows, and dashboard management. Provider accounts belong to the platform.
 
-Frontend-only production is free. Multiplayer incurs $5/month per game plus usage. Single-player services cost $5/month including service usage. One optional Sandbox adds a separate $5/month plus usage, regardless of region count. Sandbox Neon/Vultr/D1 costs have 50% markup; production costs have 100% markup. See [the decision log](decisions.md) for exact boundaries and unresolved pricing.
+Single-player web-game hosting is free. Single-player game services and Sandbox are separate $5/month add-ons. Multiplayer costs $10/month per game, including Sandbox and game services, plus machine usage. Included service quotas and separately metered resource policies remain open. See [the decision log](decisions.md) for exact boundaries and internal usage pricing.
 
 Game services are limited to official Colyseus capabilities at launch. The free single-player preset is frontend-only. Broader custom services and browser workspaces remain later scope. Managed GitHub App integration is included in the current implementation work.
 

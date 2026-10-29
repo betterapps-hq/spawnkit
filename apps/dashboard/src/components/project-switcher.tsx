@@ -17,9 +17,9 @@ export function ProjectSwitcher({
   onAll,
   onCreate
 }: {
-  projects: LocalProject[]
-  active: LocalProject | null
-  onSelect: (project: LocalProject) => void
+  projects: Pick<LocalProject, "id" | "name">[]
+  active: Pick<LocalProject, "id" | "name"> | null
+  onSelect: (project: Pick<LocalProject, "id" | "name">) => void
   onAll: () => void
   onCreate: () => void
 }) {

@@ -137,7 +137,7 @@ Use TypeScript, Node.js, Vite/Rolldown, Oxlint, Oxfmt, Vitest, Playwright, and D
 
 Pin compatible versions and record the package-manager lockfile. Validate Vite/Rolldown integration and Colyseus/Drizzle versions before choosing release pins. Do not install an excluded tool merely because a third-party starter includes it.
 
-Imported projects using excluded tools must receive an explicit compatibility report and migration steps; do not silently rewrite their stack or claim full support.
+Imported projects using excluded tools must receive an explicit report of unsupported tooling; do not silently rewrite their stack or claim full support.
 
 ## Composable module model
 
@@ -189,7 +189,7 @@ Proposed CLI distinction:
 - `install`: resolve/install the modules already declared by a project, including their configuration requirements.
 - `add <module>`: add a capability, resolve compatible dependencies, and apply reviewable file/configuration changes.
 
-Show a change plan before applying modifications. Repeating the same add operation is idempotent. Preserve custom code; report conflicts instead of overwriting it. An upgrade of a previously added module uses an explicit versioned migration rather than treating the project as a fresh template.
+Show a change plan before applying modifications. Repeating the same add operation is idempotent. Preserve custom code; report conflicts instead of overwriting it. Module addition requires a matching template baseline and ownership record.
 
 Adding a persistence/auth module must disclose paid backend/storage requirements. Installing dependencies does not provision provider resources; deployment planning is the provisioning boundary.
 

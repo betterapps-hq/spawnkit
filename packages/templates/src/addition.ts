@@ -39,15 +39,16 @@ export function planAddition(
     !object(state.options) ||
     !object(state.files)
   )
-    throw new Error("Unsupported SpawnKit ownership record. A versioned migration is required.")
+    throw new Error("Unsupported SpawnKit ownership record. Run this command from a generated project root.")
   const options = state.options as unknown as ProjectOptions
   const before = createProjectPlan(options)
   const expectedState = JSON.parse(before.files[".spawn/state.json"]!) as JsonObject
   if (!equal(state.moduleVersions, expectedState.moduleVersions))
-    throw new Error("Unsupported module versions. A versioned migration is required.")
+    throw new Error("Unsupported module versions in .spawn/state.json.")
   delete before.files[".spawn/state.json"]
+  delete before.files["AGENTS.md"]
   if (!equal(before.files, state.files))
-    throw new Error("Template baseline changed. A versioned migration is required.")
+    throw new Error("Template baseline does not match this generator. No files were changed.")
   const selected: AddonId[] = [...(options.addons ?? [])]
   for (const id of requested) {
     if (!isAddonId(id))
@@ -56,11 +57,12 @@ export function planAddition(
   }
   const next = targetOptions ?? { ...options, addons: selected }
   if (next.name !== options.name || next.template !== options.template)
-    throw new Error("Project renaming and renderer migration are not supported by add.")
+    throw new Error("Project names and renderers cannot be changed with add.")
   const after = createProjectPlan(next)
   const conflicts: string[] = []
   const changes: { path: string; before: string | undefined; after: string | undefined }[] = []
   for (const path of new Set([...Object.keys(before.files), ...Object.keys(after.files)])) {
+    if (path === "AGENTS.md") continue // User-owned instructions are never rewritten by module updates.
     const target = after.files[path]
     if (path === ".spawn/state.json" || before.files[path] === target) continue
     const existing = current[path]

@@ -21,7 +21,7 @@ function CliAuthorize() {
     <main className="grid min-h-screen place-items-center bg-background p-6">
       <section className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-3 text-xl font-bold">
-          <Terminal className="size-6 text-primary" /> spawn
+          <Terminal className="size-6 text-primary" /> SpawnKit
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Developer tools</p>

@@ -5,6 +5,7 @@ export type Environment = "sandbox" | "production"
 export type Project = {
   id: string
   name: string
+  hostname?: string
   environments: Record<Environment, { enabled: boolean; currentReleaseId: string | null }>
 }
 export type Deployment = {
@@ -14,6 +15,8 @@ export type Deployment = {
   releaseId?: string
   url?: string
   deploymentUrl?: string
+  dashboardUrl?: string
+  mediaWarnings?: { kind: "cover" | "trailer"; message: string }[]
 }
 type Release = {
   id: string
@@ -48,11 +51,12 @@ export interface PlatformApi {
     requestId: string
   ): Promise<Deployment>
   releases(project: string, cursor?: string): Promise<{ releases: Release[]; nextCursor?: string }>
-  status(project: string, deployment: string): Promise<Deployment>
+  status(project: string, deployment: string, signal?: AbortSignal): Promise<Deployment>
   logs(
     project: string,
     deployment: string,
-    cursor?: string
+    cursor?: string,
+    signal?: AbortSignal
   ): Promise<{ entries: { sequence: number; message: string }[]; nextCursor?: string }>
   promote(
     project: string,
@@ -81,7 +85,8 @@ export function createPlatformApi(
     body?: unknown,
     key?: string,
     binary?: Uint8Array,
-    sha256?: string
+    sha256?: string,
+    signal?: AbortSignal
   ): Promise<T> {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${credentials.accessToken}`,
@@ -99,7 +104,9 @@ export function createPlatformApi(
         method,
         headers,
         redirect: "error",
-        signal: AbortSignal.timeout(binary ? 120_000 : 30_000),
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(30_000)])
+          : AbortSignal.timeout(binary ? 120_000 : 30_000),
         ...(binary ? { body: new Uint8Array(binary) } : body !== undefined ? { body: JSON.stringify(body) } : {})
       })
     } catch {
@@ -141,8 +148,26 @@ export function createPlatformApi(
       request(`${base(project)}/uploads/${identifier(id)}`, "PUT", undefined, undefined, bytes, digest),
     deploy: (project, body, key) => request(`${base(project)}/deployments`, "POST", body, key),
     releases: (project, cursor) => request(`${base(project)}/releases${query(cursor)}`),
-    status: (project, id) => request(`${base(project)}/deployments/${identifier(id)}`),
-    logs: (project, id, cursor) => request(`${base(project)}/deployments/${identifier(id)}/logs${query(cursor)}`),
+    status: (project, id, signal) =>
+      request(
+        `${base(project)}/deployments/${identifier(id)}`,
+        "GET",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        signal
+      ),
+    logs: (project, id, cursor, signal) =>
+      request(
+        `${base(project)}/deployments/${identifier(id)}/logs${query(cursor)}`,
+        "GET",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        signal
+      ),
     promote: (project, body, key) => request(`${base(project)}/promotions`, "POST", body, key),
     rollback: (project, body, key) => request(`${base(project)}/rollbacks`, "POST", body, key)
   }

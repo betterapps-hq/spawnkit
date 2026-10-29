@@ -1,0 +1,103 @@
+import { expect, test, type Page } from "@playwright/test"
+import { testOrigins } from "../scripts/dev-environment.mjs"
+
+const stories = testOrigins().stories
+async function openSettings(page: Page, variant: string) {
+  await page.goto(`${stories}/iframe.html?id=project-dashboard-settings--${variant}&viewMode=story`)
+  await expect(page.locator(".settings-proposal")).toBeVisible({ timeout: 20_000 })
+}
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("spawn:theme", "dark"))
+  await page.route("**/api/**", () => {
+    throw new Error("Settings prototype must not call a platform API")
+  })
+})
+
+test("settings draft edits, media replacement, discard and save", async ({ page }, info) => {
+  await openSettings(page, "game")
+  const settings = page.locator(".settings-proposal")
+  await expect(settings).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole("button", { name: "Save changes", exact: true })).toHaveCount(0)
+  await expect(settings).not.toContainText(
+    /Telemetry|Environment variables|Objective|Source code license|Public creator/
+  )
+  const name = page.getByRole("textbox", { name: "Game name", exact: true })
+  await expect(settings.locator("details")).toHaveCount(0)
+  await expect(settings.locator("header").getByRole("button", { name: "Copy project ID", exact: true })).toBeVisible()
+  await name.fill("Orchard Snake Deluxe")
+  const actions = settings.locator("header [aria-label='Page actions']")
+  await expect(actions.getByRole("button", { name: "Discard", exact: true })).toBeVisible()
+  await expect(actions.getByRole("button", { name: "Save changes", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Save changes", exact: true })).toHaveCount(1)
+  await page.getByRole("button", { name: "3D", exact: true }).click()
+  await page.locator("#settings-cover").setInputFiles("apps/dashboard/public/examples/breakout.webp")
+  await expect(settings.getByRole("img", { name: "Orchard Snake Deluxe cover" })).toHaveAttribute("src", /^blob:/)
+  await page.getByRole("button", { name: "Discard", exact: true }).click()
+  await expect(name).toHaveValue("Orchard Snake")
+  await expect(actions).toHaveCount(0)
+  await expect(settings.getByRole("button", { name: "2D", exact: true })).toHaveAttribute("aria-pressed", "true")
+  await expect(settings.getByRole("img", { name: "Orchard Snake cover" })).toHaveAttribute(
+    "src",
+    "/examples/snake.webp"
+  )
+  await name.fill("Orchard Snake Deluxe")
+  await page.getByRole("button", { name: "Save changes", exact: true }).click()
+  await expect(page.locator(".settings-toast").getByText("Changes saved", { exact: true })).toBeVisible()
+  await expect(actions).toHaveCount(0)
+  await expect(settings.locator("header").getByText("Changes saved", { exact: true })).toHaveCount(0)
+  await expect(settings.locator(".settings-identity a").first().locator("svg")).toHaveCount(0)
+  await expect(page.locator(".settings-toast-viewport")).toHaveCSS("position", "fixed")
+  await expect(name).toHaveValue("Orchard Snake Deluxe")
+  await expect(page.getByRole("button", { name: "Copy project ID", exact: true })).toBeVisible()
+  await expect(settings.getByText("spawn-snake.spawnkit.games", { exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: `work/settings-design-${info.project.name}.png`, fullPage: true })
+  await page.getByRole("button", { name: "Dismiss notification", exact: true }).click()
+  await expect(page.locator(".settings-toast")).toHaveCount(0)
+  await name.fill("Orchard Snake")
+  await page.getByRole("button", { name: "Save changes", exact: true }).click()
+  await expect(page.locator(".settings-toast")).toBeVisible()
+  await expect(page.locator(".settings-toast")).toHaveCount(0, { timeout: 7000 })
+})
+
+test("deletion requires exact confirmation, supports cancel, then completes locally", async ({ page }, info) => {
+  await openSettings(page, "game")
+  const trigger = page.getByRole("button", { name: "Delete project", exact: true })
+  await trigger.click()
+  const dialog = page.getByRole("dialog", { name: "Delete project?", exact: true })
+  const remove = dialog.getByRole("button", { name: "Delete project", exact: true })
+  await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeFocused()
+  await expect(remove).toBeDisabled()
+  await dialog.getByRole("textbox").fill("orchard snake")
+  await expect(remove).toBeDisabled()
+  await dialog.getByRole("textbox").fill("Orchard Snake")
+  await expect(remove).toBeEnabled()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: `work/settings-delete-${info.project.name}.png` })
+  await page.keyboard.press("Escape")
+  await expect(dialog).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await expect(dialog.getByRole("textbox")).toHaveValue("")
+  await dialog.getByRole("textbox").fill("Orchard Snake")
+  await remove.click()
+  await expect(dialog.getByRole("button", { name: "Deleting…" })).toBeDisabled()
+  await expect(page.getByRole("heading", { name: "Orchard Snake was deleted" })).toBeVisible()
+  await page.getByRole("button", { name: "Back to projects", exact: true }).click()
+  await expect(page.locator(".settings-proposal")).toHaveCount(0)
+})
+
+test("failed saves and deletes preserve input and can be retried", async ({ page }) => {
+  await openSettings(page, "save-failed")
+  await expect(page.getByRole("alert")).toHaveText("Couldn't save changes. Try again.")
+  await expect(page.locator(".settings-toast")).toHaveCount(0)
+  await expect(page.getByRole("textbox", { name: "Description", exact: true })).toHaveValue(/beat your best score/)
+  await page.getByRole("button", { name: "Save changes", exact: true }).click()
+  await expect(page.locator(".settings-toast").getByText("Changes saved", { exact: true })).toBeVisible()
+  await openSettings(page, "delete-failed")
+  const dialog = page.getByRole("dialog", { name: "Delete project?", exact: true })
+  await expect(dialog.getByRole("alert")).toHaveText("Couldn't delete the project. Try again.")
+  await expect(dialog.getByRole("textbox")).toHaveValue("Orchard Snake")
+  await dialog.getByRole("button", { name: "Delete project", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Orchard Snake was deleted" })).toBeVisible()
+})

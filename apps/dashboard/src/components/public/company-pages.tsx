@@ -1,49 +1,70 @@
-import { ArrowLeft, ArrowUpRight, Mail, MessageCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { GithubMark } from "../github-mark"
-import { PublicShell } from "./shell"
+import { ContentPage, ResourceLink } from "./content-page"
 
 export function ContactPage() {
   return (
-    <PublicShell active="">
-      <div className="p-container p-info-page">
-        <h1>Contact SpawnKit</h1>
-        <p className="p-info-lead">Get help with your game or connect with other creators.</p>
-        <section>
-          <div className="p-contact-grid">
-            <article id="support">
-              <Mail size={25} />
-              <h2>Support</h2>
-              <p>Questions about your project, hosting, or account.</p>
-              <code>hello@spawnkit.cloud</code>
-            </article>
-            <article id="social">
-              <MessageCircle size={25} />
-              <h2>Community</h2>
-              <p>Share your game, ask for feedback, and meet other builders.</p>
-              <code>SpawnKit on Discord</code>
-              <span>Community link coming soon</span>
-            </article>
-            <article id="github">
-              <GithubMark size={25} />
-              <h2>GitHub</h2>
-              <p>Project examples, issue reports, and development updates.</p>
-              <code>github.com/spawnkit</code>
-            </article>
-            <article id="updates">
-              <ArrowUpRight size={25} />
-              <h2>Follow along</h2>
-              <p>New games, product updates, and creator releases.</p>
-              <code>@spawnkit</code>
-            </article>
-          </div>
-        </section>
-        <Button asChild variant="outline">
-          <a href="/help">
-            <ArrowLeft size={16} /> Visit the help center
+    <ContentPage title="Contact" description="Get help with your account, a game, or a deployment.">
+      <section className="p-resource-section" id="support">
+        <div>
+          <h2>Email SpawnKit</h2>
+          <a className="p-resource-email" href="mailto:hello@spawnkit.cloud">
+            hello@spawnkit.cloud
           </a>
-        </Button>
-      </div>
-    </PublicShell>
+          <p>
+            Describe what you were trying to do and what happened. Include the page or game link and any error message.
+          </p>
+          <p>
+            For a build or deployment issue, include the project or deployment ID from your dashboard. Remove
+            credentials and personal information from screenshots and logs before sending them.
+          </p>
+        </div>
+        <div className="p-resource-answer">
+          <h3>Details that help</h3>
+          <ul>
+            <li>Steps to reproduce the issue</li>
+            <li>The result you expected</li>
+            <li>Your browser and device</li>
+            <li>A screenshot or short relevant error excerpt</li>
+          </ul>
+          <p>Never send passwords, API keys, login codes, or an entire environment file.</p>
+        </div>
+      </section>
+      <section className="p-resource-section">
+        <div>
+          <h2>Find an answer in the guides</h2>
+          <p>These guides cover the most common setup and publishing questions.</p>
+        </div>
+        <div className="p-resource-links">
+          <ResourceLink href="/docs/getting-started" title="Run a starter kit">
+            Required tools, installation, and local development.
+          </ResourceLink>
+          <ResourceLink href="/docs/upload-existing-game" title="Upload an existing game">
+            Build requirements, ZIP layout, and publishing.
+          </ResourceLink>
+          <ResourceLink href="/docs/testing" title="Troubleshoot your game">
+            Test setup, browser errors, and missing assets.
+          </ResourceLink>
+          <ResourceLink href="/docs/authentication" title="Accounts and access">
+            When sign-in is needed and how project access works.
+          </ResourceLink>
+        </div>
+      </section>
+      <section className="p-resource-section">
+        <div>
+          <h2>Content and privacy questions</h2>
+          <p>
+            Use a game's report control to flag inappropriate content, or email us with the game URL. For privacy
+            questions or requests about your information, use the same email address and describe the request.
+          </p>
+        </div>
+        <div className="p-resource-links">
+          <ResourceLink href="/community-guidelines" title="Community guidelines">
+            Publishing, feedback, reports, and moderation.
+          </ResourceLink>
+          <ResourceLink href="/privacy" title="Privacy policy">
+            What we collect and how to contact us about your data.
+          </ResourceLink>
+        </div>
+      </section>
+    </ContentPage>
   )
 }

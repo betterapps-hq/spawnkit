@@ -11,24 +11,42 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as CloudRouteImport } from './routes/cloud'
 import { Route as CommunityGuidelinesRouteImport } from './routes/community-guidelines'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as HelpRouteImport } from './routes/help'
-import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SessionTasksRouteImport } from './routes/session-tasks'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SsoCallbackRouteImport } from './routes/sso-callback'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as CategoriesGenreRouteImport } from './routes/categories.$genre'
+import { Route as CliAccessRouteImport } from './routes/cli.access'
 import { Route as CliAuthorizeRouteImport } from './routes/cli.authorize'
+import { Route as CliClaimRouteImport } from './routes/cli.claim'
 import { Route as CliLoginRouteImport } from './routes/cli.login'
-import { Route as GamesSlugRouteImport } from './routes/games.$slug'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardManageRouteImport } from './routes/dashboard.manage'
+import { Route as DashboardNewRouteImport } from './routes/dashboard.new'
+import { Route as DashboardReportsRouteImport } from './routes/dashboard.reports'
+import { Route as DashboardSubmissionsRouteImport } from './routes/dashboard.submissions'
+import { Route as DashboardTeamRouteImport } from './routes/dashboard.team'
+import { Route as DashboardUploadRouteImport } from './routes/dashboard.upload'
+import { Route as DocsIndexRouteImport } from './routes/docs.index'
+import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
+import { Route as KitsKitRouteImport } from './routes/kits.$kit'
+import { Route as PlayProjectIdRouteImport } from './routes/play.$projectId'
+import { Route as TeamInvitationRouteImport } from './routes/team.invitation'
 import { Route as ApiCliAuthRouteImport } from './routes/api.cli.auth'
+import { Route as DashboardProjectsProjectIdRouteImport } from './routes/dashboard.projects.$projectId'
 import { Route as ApiPlatformV1SplatRouteImport } from './routes/api.platform.v1.$'
+import { Route as DashboardProjectsProjectIdIndexRouteImport } from './routes/dashboard.projects.$projectId.index'
+import { Route as DashboardProjectsProjectIdPageRouteImport } from './routes/dashboard.projects.$projectId.$page'
+import { Route as DashboardProjectsProjectIdReleasesVersionIdRouteImport } from './routes/dashboard.projects.$projectId.releases.$versionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -38,6 +56,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrowseRoute = BrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CloudRoute = CloudRouteImport.update({
@@ -70,11 +93,6 @@ const HelpRoute = HelpRouteImport.update({
   path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -105,9 +123,24 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriesGenreRoute = CategoriesGenreRouteImport.update({
+  id: '/categories/$genre',
+  path: '/categories/$genre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CliAccessRoute = CliAccessRouteImport.update({
+  id: '/cli/access',
+  path: '/cli/access',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CliAuthorizeRoute = CliAuthorizeRouteImport.update({
   id: '/cli/authorize',
   path: '/cli/authorize',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CliClaimRoute = CliClaimRouteImport.update({
+  id: '/cli/claim',
+  path: '/cli/claim',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CliLoginRoute = CliLoginRouteImport.update({
@@ -115,9 +148,64 @@ const CliLoginRoute = CliLoginRouteImport.update({
   path: '/cli/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GamesSlugRoute = GamesSlugRouteImport.update({
-  id: '/games/$slug',
-  path: '/games/$slug',
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardManageRoute = DashboardManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNewRoute = DashboardNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardReportsRoute = DashboardReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSubmissionsRoute = DashboardSubmissionsRouteImport.update({
+  id: '/submissions',
+  path: '/submissions',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardTeamRoute = DashboardTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardUploadRoute = DashboardUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/docs/',
+  path: '/docs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSlugRoute = DocsSlugRouteImport.update({
+  id: '/docs/$slug',
+  path: '/docs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KitsKitRoute = KitsKitRouteImport.update({
+  id: '/kits/$kit',
+  path: '/kits/$kit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayProjectIdRoute = PlayProjectIdRouteImport.update({
+  id: '/play/$projectId',
+  path: '/play/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamInvitationRoute = TeamInvitationRouteImport.update({
+  id: '/team/invitation',
+  path: '/team/invitation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCliAuthRoute = ApiCliAuthRouteImport.update({
@@ -125,167 +213,302 @@ const ApiCliAuthRoute = ApiCliAuthRouteImport.update({
   path: '/api/cli/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardProjectsProjectIdRoute =
+  DashboardProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const ApiPlatformV1SplatRoute = ApiPlatformV1SplatRouteImport.update({
   id: '/api/platform/v1/$',
   path: '/api/platform/v1/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardProjectsProjectIdIndexRoute =
+  DashboardProjectsProjectIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardProjectsProjectIdRoute,
+  } as any)
+const DashboardProjectsProjectIdPageRoute =
+  DashboardProjectsProjectIdPageRouteImport.update({
+    id: '/$page',
+    path: '/$page',
+    getParentRoute: () => DashboardProjectsProjectIdRoute,
+  } as any)
+const DashboardProjectsProjectIdReleasesVersionIdRoute =
+  DashboardProjectsProjectIdReleasesVersionIdRouteImport.update({
+    id: '/releases/$versionId',
+    path: '/releases/$versionId',
+    getParentRoute: () => DashboardProjectsProjectIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/browse': typeof BrowseRoute
   '/cloud': typeof CloudRoute
   '/community-guidelines': typeof CommunityGuidelinesRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/help': typeof HelpRoute
-  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/session-tasks': typeof SessionTasksRoute
   '/sign-in': typeof SignInRoute
   '/sso-callback': typeof SsoCallbackRoute
   '/templates': typeof TemplatesRoute
   '/terms': typeof TermsRoute
+  '/categories/$genre': typeof CategoriesGenreRoute
+  '/cli/access': typeof CliAccessRoute
   '/cli/authorize': typeof CliAuthorizeRoute
+  '/cli/claim': typeof CliClaimRoute
   '/cli/login': typeof CliLoginRoute
-  '/games/$slug': typeof GamesSlugRoute
+  '/dashboard/manage': typeof DashboardManageRoute
+  '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/reports': typeof DashboardReportsRoute
+  '/dashboard/submissions': typeof DashboardSubmissionsRoute
+  '/dashboard/team': typeof DashboardTeamRoute
+  '/dashboard/upload': typeof DashboardUploadRoute
+  '/docs/$slug': typeof DocsSlugRoute
+  '/kits/$kit': typeof KitsKitRoute
+  '/play/$projectId': typeof PlayProjectIdRoute
+  '/team/invitation': typeof TeamInvitationRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/docs/': typeof DocsIndexRoute
   '/api/cli/auth': typeof ApiCliAuthRoute
+  '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRouteWithChildren
   '/api/platform/v1/$': typeof ApiPlatformV1SplatRoute
+  '/dashboard/projects/$projectId/$page': typeof DashboardProjectsProjectIdPageRoute
+  '/dashboard/projects/$projectId/': typeof DashboardProjectsProjectIdIndexRoute
+  '/dashboard/projects/$projectId/releases/$versionId': typeof DashboardProjectsProjectIdReleasesVersionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/browse': typeof BrowseRoute
   '/cloud': typeof CloudRoute
   '/community-guidelines': typeof CommunityGuidelinesRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
-  '/dashboard': typeof DashboardRoute
   '/help': typeof HelpRoute
-  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/session-tasks': typeof SessionTasksRoute
   '/sign-in': typeof SignInRoute
   '/sso-callback': typeof SsoCallbackRoute
   '/templates': typeof TemplatesRoute
   '/terms': typeof TermsRoute
+  '/categories/$genre': typeof CategoriesGenreRoute
+  '/cli/access': typeof CliAccessRoute
   '/cli/authorize': typeof CliAuthorizeRoute
+  '/cli/claim': typeof CliClaimRoute
   '/cli/login': typeof CliLoginRoute
-  '/games/$slug': typeof GamesSlugRoute
+  '/dashboard/manage': typeof DashboardManageRoute
+  '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/reports': typeof DashboardReportsRoute
+  '/dashboard/submissions': typeof DashboardSubmissionsRoute
+  '/dashboard/team': typeof DashboardTeamRoute
+  '/dashboard/upload': typeof DashboardUploadRoute
+  '/docs/$slug': typeof DocsSlugRoute
+  '/kits/$kit': typeof KitsKitRoute
+  '/play/$projectId': typeof PlayProjectIdRoute
+  '/team/invitation': typeof TeamInvitationRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/docs': typeof DocsIndexRoute
   '/api/cli/auth': typeof ApiCliAuthRoute
   '/api/platform/v1/$': typeof ApiPlatformV1SplatRoute
+  '/dashboard/projects/$projectId/$page': typeof DashboardProjectsProjectIdPageRoute
+  '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdIndexRoute
+  '/dashboard/projects/$projectId/releases/$versionId': typeof DashboardProjectsProjectIdReleasesVersionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/browse': typeof BrowseRoute
   '/cloud': typeof CloudRoute
   '/community-guidelines': typeof CommunityGuidelinesRoute
   '/contact': typeof ContactRoute
   '/create': typeof CreateRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/help': typeof HelpRoute
-  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/session-tasks': typeof SessionTasksRoute
   '/sign-in': typeof SignInRoute
   '/sso-callback': typeof SsoCallbackRoute
   '/templates': typeof TemplatesRoute
   '/terms': typeof TermsRoute
+  '/categories/$genre': typeof CategoriesGenreRoute
+  '/cli/access': typeof CliAccessRoute
   '/cli/authorize': typeof CliAuthorizeRoute
+  '/cli/claim': typeof CliClaimRoute
   '/cli/login': typeof CliLoginRoute
-  '/games/$slug': typeof GamesSlugRoute
+  '/dashboard/manage': typeof DashboardManageRoute
+  '/dashboard/new': typeof DashboardNewRoute
+  '/dashboard/reports': typeof DashboardReportsRoute
+  '/dashboard/submissions': typeof DashboardSubmissionsRoute
+  '/dashboard/team': typeof DashboardTeamRoute
+  '/dashboard/upload': typeof DashboardUploadRoute
+  '/docs/$slug': typeof DocsSlugRoute
+  '/kits/$kit': typeof KitsKitRoute
+  '/play/$projectId': typeof PlayProjectIdRoute
+  '/team/invitation': typeof TeamInvitationRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/docs/': typeof DocsIndexRoute
   '/api/cli/auth': typeof ApiCliAuthRoute
+  '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRouteWithChildren
   '/api/platform/v1/$': typeof ApiPlatformV1SplatRoute
+  '/dashboard/projects/$projectId/$page': typeof DashboardProjectsProjectIdPageRoute
+  '/dashboard/projects/$projectId/': typeof DashboardProjectsProjectIdIndexRoute
+  '/dashboard/projects/$projectId/releases/$versionId': typeof DashboardProjectsProjectIdReleasesVersionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
+    | '/browse'
     | '/cloud'
     | '/community-guidelines'
     | '/contact'
     | '/create'
     | '/dashboard'
     | '/help'
-    | '/pricing'
     | '/privacy'
     | '/session-tasks'
     | '/sign-in'
     | '/sso-callback'
     | '/templates'
     | '/terms'
+    | '/categories/$genre'
+    | '/cli/access'
     | '/cli/authorize'
+    | '/cli/claim'
     | '/cli/login'
-    | '/games/$slug'
+    | '/dashboard/manage'
+    | '/dashboard/new'
+    | '/dashboard/reports'
+    | '/dashboard/submissions'
+    | '/dashboard/team'
+    | '/dashboard/upload'
+    | '/docs/$slug'
+    | '/kits/$kit'
+    | '/play/$projectId'
+    | '/team/invitation'
+    | '/dashboard/'
+    | '/docs/'
     | '/api/cli/auth'
+    | '/dashboard/projects/$projectId'
     | '/api/platform/v1/$'
+    | '/dashboard/projects/$projectId/$page'
+    | '/dashboard/projects/$projectId/'
+    | '/dashboard/projects/$projectId/releases/$versionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/browse'
     | '/cloud'
     | '/community-guidelines'
     | '/contact'
     | '/create'
-    | '/dashboard'
     | '/help'
-    | '/pricing'
     | '/privacy'
     | '/session-tasks'
     | '/sign-in'
     | '/sso-callback'
     | '/templates'
     | '/terms'
+    | '/categories/$genre'
+    | '/cli/access'
     | '/cli/authorize'
+    | '/cli/claim'
     | '/cli/login'
-    | '/games/$slug'
+    | '/dashboard/manage'
+    | '/dashboard/new'
+    | '/dashboard/reports'
+    | '/dashboard/submissions'
+    | '/dashboard/team'
+    | '/dashboard/upload'
+    | '/docs/$slug'
+    | '/kits/$kit'
+    | '/play/$projectId'
+    | '/team/invitation'
+    | '/dashboard'
+    | '/docs'
     | '/api/cli/auth'
     | '/api/platform/v1/$'
+    | '/dashboard/projects/$projectId/$page'
+    | '/dashboard/projects/$projectId'
+    | '/dashboard/projects/$projectId/releases/$versionId'
   id:
     | '__root__'
     | '/'
     | '/about'
+    | '/browse'
     | '/cloud'
     | '/community-guidelines'
     | '/contact'
     | '/create'
     | '/dashboard'
     | '/help'
-    | '/pricing'
     | '/privacy'
     | '/session-tasks'
     | '/sign-in'
     | '/sso-callback'
     | '/templates'
     | '/terms'
+    | '/categories/$genre'
+    | '/cli/access'
     | '/cli/authorize'
+    | '/cli/claim'
     | '/cli/login'
-    | '/games/$slug'
+    | '/dashboard/manage'
+    | '/dashboard/new'
+    | '/dashboard/reports'
+    | '/dashboard/submissions'
+    | '/dashboard/team'
+    | '/dashboard/upload'
+    | '/docs/$slug'
+    | '/kits/$kit'
+    | '/play/$projectId'
+    | '/team/invitation'
+    | '/dashboard/'
+    | '/docs/'
     | '/api/cli/auth'
+    | '/dashboard/projects/$projectId'
     | '/api/platform/v1/$'
+    | '/dashboard/projects/$projectId/$page'
+    | '/dashboard/projects/$projectId/'
+    | '/dashboard/projects/$projectId/releases/$versionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  BrowseRoute: typeof BrowseRoute
   CloudRoute: typeof CloudRoute
   CommunityGuidelinesRoute: typeof CommunityGuidelinesRoute
   ContactRoute: typeof ContactRoute
   CreateRoute: typeof CreateRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   HelpRoute: typeof HelpRoute
-  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   SessionTasksRoute: typeof SessionTasksRoute
   SignInRoute: typeof SignInRoute
   SsoCallbackRoute: typeof SsoCallbackRoute
   TemplatesRoute: typeof TemplatesRoute
   TermsRoute: typeof TermsRoute
+  CategoriesGenreRoute: typeof CategoriesGenreRoute
+  CliAccessRoute: typeof CliAccessRoute
   CliAuthorizeRoute: typeof CliAuthorizeRoute
+  CliClaimRoute: typeof CliClaimRoute
   CliLoginRoute: typeof CliLoginRoute
-  GamesSlugRoute: typeof GamesSlugRoute
+  DocsSlugRoute: typeof DocsSlugRoute
+  KitsKitRoute: typeof KitsKitRoute
+  PlayProjectIdRoute: typeof PlayProjectIdRoute
+  TeamInvitationRoute: typeof TeamInvitationRoute
+  DocsIndexRoute: typeof DocsIndexRoute
   ApiCliAuthRoute: typeof ApiCliAuthRoute
   ApiPlatformV1SplatRoute: typeof ApiPlatformV1SplatRoute
 }
@@ -304,6 +527,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/browse': {
+      id: '/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof BrowseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cloud': {
@@ -348,13 +578,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -397,11 +620,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categories/$genre': {
+      id: '/categories/$genre'
+      path: '/categories/$genre'
+      fullPath: '/categories/$genre'
+      preLoaderRoute: typeof CategoriesGenreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cli/access': {
+      id: '/cli/access'
+      path: '/cli/access'
+      fullPath: '/cli/access'
+      preLoaderRoute: typeof CliAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cli/authorize': {
       id: '/cli/authorize'
       path: '/cli/authorize'
       fullPath: '/cli/authorize'
       preLoaderRoute: typeof CliAuthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cli/claim': {
+      id: '/cli/claim'
+      path: '/cli/claim'
+      fullPath: '/cli/claim'
+      preLoaderRoute: typeof CliClaimRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cli/login': {
@@ -411,11 +655,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CliLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/games/$slug': {
-      id: '/games/$slug'
-      path: '/games/$slug'
-      fullPath: '/games/$slug'
-      preLoaderRoute: typeof GamesSlugRouteImport
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/manage': {
+      id: '/dashboard/manage'
+      path: '/manage'
+      fullPath: '/dashboard/manage'
+      preLoaderRoute: typeof DashboardManageRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/new': {
+      id: '/dashboard/new'
+      path: '/new'
+      fullPath: '/dashboard/new'
+      preLoaderRoute: typeof DashboardNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/reports': {
+      id: '/dashboard/reports'
+      path: '/reports'
+      fullPath: '/dashboard/reports'
+      preLoaderRoute: typeof DashboardReportsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/submissions': {
+      id: '/dashboard/submissions'
+      path: '/submissions'
+      fullPath: '/dashboard/submissions'
+      preLoaderRoute: typeof DashboardSubmissionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/team': {
+      id: '/dashboard/team'
+      path: '/team'
+      fullPath: '/dashboard/team'
+      preLoaderRoute: typeof DashboardTeamRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/upload': {
+      id: '/dashboard/upload'
+      path: '/upload'
+      fullPath: '/dashboard/upload'
+      preLoaderRoute: typeof DashboardUploadRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/docs/': {
+      id: '/docs/'
+      path: '/docs'
+      fullPath: '/docs/'
+      preLoaderRoute: typeof DocsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/$slug': {
+      id: '/docs/$slug'
+      path: '/docs/$slug'
+      fullPath: '/docs/$slug'
+      preLoaderRoute: typeof DocsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kits/$kit': {
+      id: '/kits/$kit'
+      path: '/kits/$kit'
+      fullPath: '/kits/$kit'
+      preLoaderRoute: typeof KitsKitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/play/$projectId': {
+      id: '/play/$projectId'
+      path: '/play/$projectId'
+      fullPath: '/play/$projectId'
+      preLoaderRoute: typeof PlayProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team/invitation': {
+      id: '/team/invitation'
+      path: '/team/invitation'
+      fullPath: '/team/invitation'
+      preLoaderRoute: typeof TeamInvitationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/cli/auth': {
@@ -425,6 +746,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCliAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/projects/$projectId': {
+      id: '/dashboard/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/dashboard/projects/$projectId'
+      preLoaderRoute: typeof DashboardProjectsProjectIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/platform/v1/$': {
       id: '/api/platform/v1/$'
       path: '/api/platform/v1/$'
@@ -432,28 +760,101 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlatformV1SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/projects/$projectId/': {
+      id: '/dashboard/projects/$projectId/'
+      path: '/'
+      fullPath: '/dashboard/projects/$projectId/'
+      preLoaderRoute: typeof DashboardProjectsProjectIdIndexRouteImport
+      parentRoute: typeof DashboardProjectsProjectIdRoute
+    }
+    '/dashboard/projects/$projectId/$page': {
+      id: '/dashboard/projects/$projectId/$page'
+      path: '/$page'
+      fullPath: '/dashboard/projects/$projectId/$page'
+      preLoaderRoute: typeof DashboardProjectsProjectIdPageRouteImport
+      parentRoute: typeof DashboardProjectsProjectIdRoute
+    }
+    '/dashboard/projects/$projectId/releases/$versionId': {
+      id: '/dashboard/projects/$projectId/releases/$versionId'
+      path: '/releases/$versionId'
+      fullPath: '/dashboard/projects/$projectId/releases/$versionId'
+      preLoaderRoute: typeof DashboardProjectsProjectIdReleasesVersionIdRouteImport
+      parentRoute: typeof DashboardProjectsProjectIdRoute
+    }
   }
 }
+
+interface DashboardProjectsProjectIdRouteChildren {
+  DashboardProjectsProjectIdPageRoute: typeof DashboardProjectsProjectIdPageRoute
+  DashboardProjectsProjectIdIndexRoute: typeof DashboardProjectsProjectIdIndexRoute
+  DashboardProjectsProjectIdReleasesVersionIdRoute: typeof DashboardProjectsProjectIdReleasesVersionIdRoute
+}
+
+const DashboardProjectsProjectIdRouteChildren: DashboardProjectsProjectIdRouteChildren =
+  {
+    DashboardProjectsProjectIdPageRoute: DashboardProjectsProjectIdPageRoute,
+    DashboardProjectsProjectIdIndexRoute: DashboardProjectsProjectIdIndexRoute,
+    DashboardProjectsProjectIdReleasesVersionIdRoute:
+      DashboardProjectsProjectIdReleasesVersionIdRoute,
+  }
+
+const DashboardProjectsProjectIdRouteWithChildren =
+  DashboardProjectsProjectIdRoute._addFileChildren(
+    DashboardProjectsProjectIdRouteChildren,
+  )
+
+interface DashboardRouteChildren {
+  DashboardManageRoute: typeof DashboardManageRoute
+  DashboardNewRoute: typeof DashboardNewRoute
+  DashboardReportsRoute: typeof DashboardReportsRoute
+  DashboardSubmissionsRoute: typeof DashboardSubmissionsRoute
+  DashboardTeamRoute: typeof DashboardTeamRoute
+  DashboardUploadRoute: typeof DashboardUploadRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardProjectsProjectIdRoute: typeof DashboardProjectsProjectIdRouteWithChildren
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardManageRoute: DashboardManageRoute,
+  DashboardNewRoute: DashboardNewRoute,
+  DashboardReportsRoute: DashboardReportsRoute,
+  DashboardSubmissionsRoute: DashboardSubmissionsRoute,
+  DashboardTeamRoute: DashboardTeamRoute,
+  DashboardUploadRoute: DashboardUploadRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardProjectsProjectIdRoute: DashboardProjectsProjectIdRouteWithChildren,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  BrowseRoute: BrowseRoute,
   CloudRoute: CloudRoute,
   CommunityGuidelinesRoute: CommunityGuidelinesRoute,
   ContactRoute: ContactRoute,
   CreateRoute: CreateRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   HelpRoute: HelpRoute,
-  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   SessionTasksRoute: SessionTasksRoute,
   SignInRoute: SignInRoute,
   SsoCallbackRoute: SsoCallbackRoute,
   TemplatesRoute: TemplatesRoute,
   TermsRoute: TermsRoute,
+  CategoriesGenreRoute: CategoriesGenreRoute,
+  CliAccessRoute: CliAccessRoute,
   CliAuthorizeRoute: CliAuthorizeRoute,
+  CliClaimRoute: CliClaimRoute,
   CliLoginRoute: CliLoginRoute,
-  GamesSlugRoute: GamesSlugRoute,
+  DocsSlugRoute: DocsSlugRoute,
+  KitsKitRoute: KitsKitRoute,
+  PlayProjectIdRoute: PlayProjectIdRoute,
+  TeamInvitationRoute: TeamInvitationRoute,
+  DocsIndexRoute: DocsIndexRoute,
   ApiCliAuthRoute: ApiCliAuthRoute,
   ApiPlatformV1SplatRoute: ApiPlatformV1SplatRoute,
 }

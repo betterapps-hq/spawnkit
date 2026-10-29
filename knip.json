@@ -4,12 +4,16 @@
     "apps/dashboard/src/components/ui/**": ["exports"]
   },
   "ignoreDependencies": ["cloudflare"],
-  "ignoreBinaries": ["openssl"],
+  "ignoreBinaries": ["openssl", "ffmpeg", "ffprobe"],
   "workspaces": {
     ".": {
+      "ignoreDependencies": ["cf"],
       "entry": [
         "dev-domains.config.ts",
         "tests/**/*.ts",
+        "playwright.community.config.ts",
+        "playwright.seo.config.ts",
+        "scripts/seo-test-server.mjs",
         "scripts/dev-environment.mjs",
         "scripts/ci-*.mjs",
         "scripts/migrate.mjs",
@@ -18,11 +22,11 @@
       "project": ["tests/**/*.ts", "scripts/**/*.mjs", "*.ts", "scripts/**/*.ts"]
     },
     "apps/dashboard": {
-      "entry": ["cloudflare.config.ts"],
+      "entry": ["cloudflare.config.ts", "community-test-server.mjs", "docs-highlight.ts"],
       "project": ["src/**/*.{ts,tsx,css}"]
     },
     "apps/control-api": {
-      "entry": ["src/index.ts", "cloudflare.config.ts", "build-runner.mjs"],
+      "entry": ["src/index.ts", "cloudflare.config.ts", "build-runner.mjs", "media-runner.mjs"],
       "project": ["src/**/*.ts", "*.ts", "*.mjs"]
     },
     "apps/game-host": {

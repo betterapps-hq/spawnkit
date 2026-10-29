@@ -1,6 +1,5 @@
-import assert from "node:assert/strict"
 import { spawnSync } from "node:child_process"
-import { copyFile, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises"
+import { copyFile, mkdir, mkdtemp, readFile, writeFile, unlink } from "node:fs/promises"
 import { createServer } from "node:http"
 import { extname, join, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -12,19 +11,18 @@ const directory = await mkdtemp(join(root, "work", "templates-"))
 const pnpm = process.env.npm_execpath
 if (!pnpm) throw new Error("Run through pnpm test:templates")
 const log = []
-function run(command, args, cwd, env = process.env) {
-  const result = spawnSync(command, args, { cwd, env, encoding: "utf8", windowsHide: true, timeout: 180_000 })
+function run(command, args, cwd) {
+  const result = spawnSync(command, args, { cwd, encoding: "utf8", windowsHide: true, timeout: 180_000 })
   log.push(`$ ${command} ${args.join(" ")}\n${result.stdout ?? ""}${result.stderr ?? ""}`)
   if (result.error || result.status !== 0) {
     throw new Error(
       `${args.join(" ")} failed: ${result.error?.message ?? ""}\n${result.stdout ?? ""}${result.stderr ?? ""}`
     )
   }
-  return result.stdout
 }
-function packageCommand(args, cwd, env) {
-  if (/\.[cm]?js$/.test(pnpm)) return run(process.execPath, [pnpm, ...args], cwd, env)
-  return run(pnpm, args, cwd, env)
+function packageCommand(args, cwd) {
+  if (/\.[cm]?js$/.test(pnpm)) run(process.execPath, [pnpm, ...args], cwd)
+  else run(pnpm, args, cwd)
 }
 
 // Copy the bundle away from its package to verify that templates are embedded.
@@ -40,7 +38,7 @@ try {
       name: `${renderer}-koota`,
       renderer,
       ecs: false,
-      flags: ["--with", "koota,vitest"]
+      flags: ["--add", "koota,vitest"]
     })),
     ...["pixi", "phaser", "babylon", "three"].map((renderer) => ({
       name: `${renderer}-playwright`,
@@ -49,7 +47,7 @@ try {
       flags: [],
       playwright: true
     })),
-    { name: "pixi-playwright-no-ui", renderer: "pixi", ecs: false, flags: ["--ui", "none"], playwright: true },
+    { name: "pixi-playwright-no-ui", renderer: "pixi", ecs: false, flags: ["--add", "no-ui"], playwright: true },
     { name: "pixi-storybook", renderer: "pixi", ecs: false, flags: [], storybook: true },
     ...["pixi", "phaser", "babylon", "three"].flatMap((renderer) =>
       [false, true].map((ecs) => ({ renderer, ecs, name: `${renderer}-${ecs ? "ecs" : "plain"}`, flags: [] }))
@@ -58,22 +56,24 @@ try {
       name: "pixi-rapier-ui",
       renderer: "pixi",
       ecs: true,
-      flags: ["--physics", "rapier2d", "--ui", "pixi", "--telemetry", "platform"]
+      flags: ["--add", "rapier2d,pixi-ui,platform-telemetry"]
     },
-    { name: "phaser-arcade", renderer: "phaser", ecs: true, flags: ["--physics", "arcade", "--telemetry", "sentry"] },
+    { name: "phaser-arcade", renderer: "phaser", ecs: true, flags: ["--add", "arcade,sentry"] },
     {
       name: "phaser-matter",
       renderer: "phaser",
       ecs: false,
-      flags: ["--physics", "matter", "--telemetry", "platform"]
+      flags: ["--add", "matter,platform-telemetry"]
     },
     {
       name: "babylon-havok-gui",
       renderer: "babylon",
       ecs: true,
-      flags: ["--physics", "havok", "--ui", "babylon", "--telemetry", "sentry"]
+      flags: ["--add", "havok,babylon-gui,sentry"]
     },
-    { name: "three-rapier", renderer: "three", ecs: true, flags: ["--physics", "rapier3d", "--telemetry", "platform"] }
+    { name: "three-rapier", renderer: "three", ecs: true, flags: ["--add", "rapier3d,platform-telemetry"] },
+    { name: "kit-phaser-arcade", renderer: "phaser", ecs: false, flags: ["--add", "arcade"] },
+    { name: "kit-three-rapier", renderer: "three", ecs: false, flags: ["--add", "rapier3d"] }
   ]
   for (const { renderer, ecs, name, flags, storybook, playwright, add } of cases.filter(
     (entry) =>
@@ -86,21 +86,21 @@ try {
         cli,
         "init",
         name,
-        "--template",
+        "--add",
         renderer,
         ...(add
           ? []
           : [
-              "--with",
+              "--add",
               playwright ? "vitest,playwright" : storybook ? "vitest,storybook" : ecs ? "bitecs,vitest" : "vitest"
             ]),
         ...flags,
-        "--json"
+        "--json",
+        "--yes"
       ],
       directory
     )
     const project = join(directory, name)
-    run("git", ["init", "--quiet"], project)
     if (add) {
       run(process.execPath, [cli, "add", "vitest", "playwright", "--yes", "--json"], project)
       run(process.execPath, [cli, "add", "vitest", "playwright", "--yes", "--json"], project)
@@ -108,35 +108,44 @@ try {
     packageCommand(["install"], project)
     // pnpm may add explicit release-age exceptions on its initial install.
     packageCommand(["install", "--frozen-lockfile"], project)
-    const endpoints = JSON.parse(packageCommand(["exec", "dev-domains", "urls"], project))
-    assert.equal(
-      endpoints.find((endpoint) => endpoint.service === "app")?.origin,
-      `https://${name}.local.spawnkit.cloud`
+    run(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        `
+      import assert from 'node:assert/strict';
+      import { getEndpoint } from '@buildkitgg/dev-domains/node';
+      assert.equal((await getEndpoint('app', process.cwd())).origin, 'https://${name}.local.spawnkit.games');
+    `
+      ],
+      project
     )
-    assert.equal(
-      endpoints.some((endpoint) => endpoint.service === "stories"),
-      Boolean(storybook)
+    await mkdir(join(project, ".spawn"), { recursive: true })
+    await writeFile(
+      join(project, ".spawn/project.json"),
+      JSON.stringify({ version: 1, projectId: "local-test", hostname: "template-check.spawnkit.games" })
     )
-    assert.equal(
-      endpoints.some((endpoint) => endpoint.service === "e2e"),
-      Boolean(playwright)
+    run(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        `
+      import assert from 'node:assert/strict';
+      import { getEndpoint } from '@buildkitgg/dev-domains/node';
+      assert.equal((await getEndpoint('app', process.cwd())).origin, 'https://local.template-check.spawnkit.games');
+    `
+      ],
+      project
     )
-    const assigned = JSON.parse(
-      packageCommand(["exec", "dev-domains", "urls"], project, {
-        ...process.env,
-        SPAWN_GAME_DOMAIN: "fixture.staging.spawnkit.cloud"
-      })
-    )
-    assert.equal(
-      assigned.find((endpoint) => endpoint.service === "app")?.origin,
-      "https://local.fixture.staging.spawnkit.cloud"
-    )
+    await unlink(join(project, ".spawn/project.json"))
+    if (process.env.CI) packageCommand(["test:setup"], project)
     for (const task of ["lint", "test", "build"]) packageCommand([task], project)
     if (playwright) {
-      packageCommand(["exec", "playwright", "install", "chromium"], project)
-      packageCommand(["test:e2e"], project, { ...process.env, SPAWN_E2E_LOOPBACK: "1" })
+      packageCommand(["e2e"], project)
     }
-    if (storybook) packageCommand(["build:storybook"], project)
+    if (storybook) packageCommand(["exec", "storybook", "build"], project)
     const dist = join(project, "dist")
     const server = createServer(async (request, response) => {
       try {

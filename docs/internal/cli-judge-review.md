@@ -6,8 +6,8 @@ Method: one LLM evaluated the implementation through three explicit perspectives
 
 Criteria: discoverable next action, minimal repeated setup, clear game/environment identity, actionable errors.
 
-* Fixed: project set/show/clear required the exact game root even though deployment searched parents. All project association operations now locate the nearest game root, including use from `src/`.
-* Fixed: the agreed linking vocabulary was absent. Added `spawn link --project <id>` and `spawn unlink`; link verifies authenticated account access before writing, while unlink removes local association only. The legacy local `project set/show/clear` commands remain compatible.
+* Project linking and unlinking locate the nearest game root, including use from `src/`.
+* Fixed: the agreed linking vocabulary was absent. Added `spawn link --project <id>` and `spawn unlink`; link verifies authenticated account access before writing, while unlink removes local association only.
 * Integration blocker: post-login New project / Existing project / Skip, searchable project picker and editable default project name require the list/create API. Link help explicitly identifies this limitation and gives the usable ID-based path. Do not describe onboarding as complete until it is connected.
 
 Judgment: explicit-ID workflows are usable; novice onboarding remains incomplete pending the project API.
@@ -18,9 +18,9 @@ Criteria: consistent command/flag semantics, context inference, predictable side
 
 * Fixed: every platform command printed the entire platform help block. Each now has focused syntax, behavior and relevant options; rollback explains that migrations are not reversed, logs explains pagination, and shared project inference is stated.
 * Fixed: invalid or missing environment options could trigger credential lookup/API calls first. Validation now occurs before filesystem context, authentication or network activity, with tests asserting no project API invocation.
-* Preserved: Sandbox is canonical, staging is an input alias; promotion only targets production. Mutation preview includes the current release, selected target, retry identity and build behavior. JSON does not prompt or open a browser.
+* Preserved: Accepted CLI environments are `sandbox` and `production`; promotion only targets production. Mutation preview includes the current release, selected target, retry identity and build behavior. JSON does not prompt or open a browser.
 
-Judgment: command semantics are consistent for the implemented contract. `project set` is a compatibility/manual-local operation, while `link` is the preferred authenticated path.
+Judgment: `link` verifies project access and `unlink` removes the local association.
 
 ## Experienced platform developer perspective
 

@@ -71,7 +71,7 @@ describe("GitHub repository authorization", () => {
     ])
     const response = await githubCallback(request, env, "owner")
     expect(response.status).toBe(303)
-    expect(response.headers.get("location")).toBe("https://spawnkit.cloud/dashboard?page=settings&project=project")
+    expect(response.headers.get("location")).toBe("https://spawnkit.cloud/dashboard/projects/project/settings")
     expect(
       db.prepare("SELECT project_id,installation_id,repository_id,connected_by FROM github_connections").get()
     ).toEqual({ project_id: "project", installation_id: 7, repository_id: 9, connected_by: "owner" })

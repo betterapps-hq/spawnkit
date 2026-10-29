@@ -1,0 +1,8 @@
+Copyright (c) 2026 SpawnKit. All rights reserved.
+
+This package is proprietary software. You may install and use the distributed CLI
+to create, develop, and publish your projects. No permission is granted to modify,
+redistribute, or sublicense the CLI implementation. This restriction does not
+claim ownership of projects you create using the CLI.
+Third-party components retain their respective licenses; see
+dist/THIRD-PARTY-LICENSES.md.

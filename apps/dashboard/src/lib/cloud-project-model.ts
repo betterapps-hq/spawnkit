@@ -3,6 +3,8 @@ import type { EnvironmentName, ProjectModel, Release } from "@/components/projec
 type CloudEnvironment = EnvironmentName | `preview-${number}`
 
 export interface ProjectState {
+  lifecycle?: "active" | "deleting" | undefined
+  activity?: { views: number; plays: number }
   environments: { name: CloudEnvironment; enabled: number; currentReleaseId: string | null; hostname: string | null }[]
   releases: {
     id: string
@@ -16,6 +18,7 @@ export interface ProjectState {
     commitSha: string | null
     branch: string | null
     sourceTitle: string | null
+    mediaWarnings?: Release["build"]["mediaWarnings"]
   }[]
   deployments: {
     id: string
@@ -49,7 +52,10 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
   const releases: Release[] = state.releases.map((release) => ({
     id: release.id,
     number: release.versionNumber,
-    title: release.sourceTitle ?? `Version ${release.versionNumber}`,
+    title:
+      release.sourceTitle && !release.sourceTitle.startsWith("Push to ")
+        ? release.sourceTitle
+        : `Version ${release.versionNumber}`,
     branch: release.branch ?? "",
     commit: release.commitSha ?? "",
     actor: "",
@@ -63,6 +69,7 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
       source: release.commitSha ? "GitHub" : "CLI",
       artifact: release.artifactDigest ? { digest: release.artifactDigest, size: "", files: 0 } : null,
       checks: [],
+      mediaWarnings: release.mediaWarnings ?? [],
       changes: [],
       logs: state.logs
         .filter((line) => line.releaseId === release.id)
@@ -86,7 +93,9 @@ export function applyCloudState(project: ProjectModel, state?: ProjectState): Pr
   }
   return {
     ...project,
+    lifecycle: state.lifecycle,
     connected: true,
+    activity: state.activity,
     capabilities: state.capabilities,
     repository: state.repository,
     previewsEnabled: Boolean(state.repository && project.configuration?.previews),

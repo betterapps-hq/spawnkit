@@ -1,23 +1,32 @@
 import { ClerkProvider } from "@clerk/tanstack-react-start"
 import { shadcn } from "@clerk/ui/themes"
+import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url"
 import type { QueryClient } from "@tanstack/react-query"
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router"
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Outlet,
+  Scripts,
+  useRouter,
+  useRouterState
+} from "@tanstack/react-router"
 import { NotFoundPage } from "@/components/public/not-found-page"
 import { ThemeProvider, themeScript } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { getSession } from "@/lib/server"
+import { getAuthConfiguration } from "@/lib/server"
 import styles from "../style.css?url"
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: () => getSession(),
+  loader: () => getAuthConfiguration(),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SpawnKit — Your games, in one place" }
+      { title: "SpawnKit | Your games, in one place" }
     ],
     links: [
       { rel: "stylesheet", href: styles },
+      { rel: "preload", href: interLatin, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }
     ]
   }),
@@ -34,6 +43,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   )
 })
 function Root() {
+  const nonce = useRouter().options.ssr?.nonce
+  const cliAuthorization = useRouterState({ select: (state) => state.location.pathname.startsWith("/cli/") })
   const session = Route.useLoaderData()
   const content = (
     <ThemeProvider>
@@ -43,14 +54,16 @@ function Root() {
     </ThemeProvider>
   )
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
       </head>
       <body>
         {session.configured ? (
           <ClerkProvider
+            {...(nonce ? { nonce } : {})}
+            {...(cliAuthorization ? {} : { prefetchUI: false })}
             signInUrl="/sign-in"
             signInFallbackRedirectUrl="/dashboard"
             signUpFallbackRedirectUrl="/dashboard"

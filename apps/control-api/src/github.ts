@@ -241,7 +241,7 @@ export async function githubCallback(request: Request, env: Env, ownerId: string
     )
     .run()
   return Response.redirect(
-    `${env.DASHBOARD_URL}/dashboard?page=settings&project=${encodeURIComponent(pending.project_id)}`,
+    `${env.DASHBOARD_URL}/dashboard/projects/${encodeURIComponent(pending.project_id)}/settings`,
     303
   )
 }

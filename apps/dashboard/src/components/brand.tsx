@@ -13,7 +13,7 @@ export function BrandSymbol() {
 export function BrandWordmark({ className = "" }: { className?: string }) {
   return (
     <span data-brand-wordmark className={`text-xl font-semibold tracking-tight ${className}`}>
-      SpawnKit<span className="text-primary">.</span>
+      SpawnKit
     </span>
   )
 }

@@ -3,6 +3,18 @@ import { componentCatalog, resolveComposition, selectedComponents } from "./comp
 import { createProjectPlan, planAddition, type ProjectOptions } from "./index"
 
 const current: ProjectOptions = { name: "game", template: "pixi", addons: ["bitecs"] }
+it("preserves user-owned agent instructions, including user deletion", () => {
+  const plan = createProjectPlan(current)
+  expect(plan.files["AGENTS.md"]).toContain("Standalone PixiJS")
+  expect(JSON.parse(plan.files[".spawn/state.json"]!).files).not.toHaveProperty("AGENTS.md")
+  for (const instructions of [undefined, "My own project instructions\n"]) {
+    const result = planAddition(plan.files[".spawn/state.json"]!, { ...plan.files, "AGENTS.md": instructions }, [
+      "vitest"
+    ])
+    expect(result.conflicts).toEqual([])
+    expect(result.changes.some((change) => change.path === "AGENTS.md")).toBe(false)
+  }
+})
 it.each(componentCatalog.filter((entry) => entry.requires.length))(
   "resolves dependencies for $id",
   ({ id, requires }) => {
@@ -45,7 +57,7 @@ it.each([
   { requested: ["rapier"], replace: [], message: "Did you mean" },
   { requested: ["koota"], replace: ["sentry"], message: "not selected" },
   { requested: ["vitest"], replace: ["bitecs"], message: "same category" },
-  { requested: ["phaser"], replace: ["pixi"], message: "migration" }
+  { requested: ["phaser"], replace: ["pixi"], message: "The renderer cannot be changed with add" }
 ])("rejects invalid replacements: $message", ({ requested, replace, message }) => {
   expect(() => resolveComposition("game", requested, current, replace)).toThrow(message)
 })

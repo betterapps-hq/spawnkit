@@ -57,7 +57,7 @@ export async function reserveProjectSlug(database: D1Database, projectId: string
 
 export function projectHostname(slug: string, environment: string, internal: boolean) {
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) throw new Error("Invalid project slug")
-  const base = `${slug}.${internal ? "staging." : ""}spawnkit.cloud`
+  const base = `${slug}.${internal ? "staging." : ""}spawnkit.games`
   if (environment === "production") return base
   if (environment === "sandbox") return `staging.${base}`
   const preview = /^preview-([1-9]\d{0,9})$/.exec(environment)

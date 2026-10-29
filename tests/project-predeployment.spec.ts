@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
+import { defaultProjectDraft } from "../apps/dashboard/src/components/project/creation-model"
 import { testOrigins } from "../scripts/dev-environment.mjs"
 const home = `${testOrigins().stories}/iframe.html?id=dashboard-dashboard--home&viewMode=story`
 const key = "spawn:workspaces:v1:storybook-user"
@@ -12,21 +13,22 @@ async function navigate(page: Page, name: string) {
 }
 async function openProject(page: Page) {
   await page.addInitScript(
-    ({ key }) => {
+    ({ key, configuration }) => {
       if (!localStorage.getItem(key))
         localStorage.setItem(
           key,
           JSON.stringify([
-            { id: "setup-project", name: "Moon Garden" },
+            { id: "setup-project", name: "Moon Garden", configuration: { ...configuration, name: "Moon Garden" } },
             {
               id: "other-project",
               name: "Other game",
+              configuration: { ...configuration, name: "Other game" },
               domainConfigurations: [{ hostname: "reserved.example.com", environment: "production" }]
             }
           ])
         )
     },
-    { key }
+    { key, configuration: defaultProjectDraft }
   )
   await page.goto(home)
   await page

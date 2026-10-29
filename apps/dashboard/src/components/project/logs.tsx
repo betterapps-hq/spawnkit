@@ -11,10 +11,14 @@ import type { ProjectModel } from "./model"
 import { Notice } from "./primitives"
 
 type LogEntry = ProjectModel["logs"][number]
-const ROW_HEIGHT = 26
+const ROW_HEIGHT = 32
 const OVERSCAN = 8
 const columns =
-  "grid grid-cols-[60px_36px_minmax(0,1fr)] items-center gap-2 px-3 sm:grid-cols-[84px_40px_minmax(0,1fr)] sm:gap-3 sm:px-4"
+  "grid grid-cols-[8ch_5ch_minmax(0,1fr)] items-center gap-2 px-3 sm:grid-cols-[12ch_5ch_minmax(0,1fr)] sm:gap-3 sm:px-4"
+function logTime(value: string) {
+  const iso = /^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2}(?:\.\d+)?)/.exec(value)
+  return iso?.[1]?.slice(0, 12) ?? value
+}
 function logText(log: LogEntry) {
   return `${log.time} ${log.level.toUpperCase()} [${log.environment}/${log.region}] [${log.release}] ${log.message}`
 }
@@ -260,9 +264,12 @@ export function Logs({
                         selected?.id === log.id && "bg-white/10"
                       )}
                     >
-                      <time className="text-slate-400" title={`${log.time} UTC`}>
-                        <span className="sm:hidden">{log.time.slice(0, 8)}</span>
-                        <span className="hidden sm:inline">{log.time}</span>
+                      <time
+                        className="min-w-0 truncate whitespace-nowrap text-slate-400 tabular-nums"
+                        title={`${log.time} UTC`}
+                      >
+                        <span className="sm:hidden">{logTime(log.time).slice(0, 8)}</span>
+                        <span className="hidden sm:inline">{logTime(log.time)}</span>
                       </time>
                       <span className={cn("uppercase", levelColor(log.level))}>{log.level}</span>
                       <span className="truncate">{log.message}</span>

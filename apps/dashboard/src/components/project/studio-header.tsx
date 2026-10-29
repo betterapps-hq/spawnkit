@@ -1,5 +1,17 @@
 import { useOs } from "@mantine/hooks"
-import { ArrowUpRight, Check, CornerDownLeft, Plus, Search, Slash, X } from "lucide-react"
+import {
+  ArrowUpRight,
+  Inbox,
+  ShieldCheck,
+  Check,
+  CornerDownLeft,
+  Plus,
+  Search,
+  Slash,
+  X,
+  Users,
+  Flag
+} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Notifications, type StudioNotification } from "../notifications"
@@ -15,7 +27,6 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { SidebarTrigger } from "../ui/sidebar"
-import { primaryHostname } from "./domains"
 import type { ProjectModel, ProjectPage, Release, StudioLocation } from "./model"
 import { projectNavigation } from "./navigation"
 import { StatusBadge } from "./primitives"
@@ -42,10 +53,18 @@ export function StudioHeader({
   canCreate: boolean
 }) {
   const home = page === "projects"
-  const creating = page === "create" || page === "configure"
+  const creating = ["upload", "create", "configure", "submissions", "manage", "team", "reports"].includes(page)
   const inProject = !home && !creating
-  const PageIcon = projectNavigation.find((item) => item.id === page)?.icon ?? Plus
-  const hostname = primaryHostname(project, "production")
+  const PageIcon =
+    page === "manage"
+      ? ShieldCheck
+      : page === "submissions"
+        ? Inbox
+        : page === "team"
+          ? Users
+          : page === "reports"
+            ? Flag
+            : (projectNavigation.find((item) => item.id === page)?.icon ?? Plus)
   return (
     <header className="sticky top-0 z-20 flex h-[76px] shrink-0 items-center gap-3 border-b bg-linear-to-r from-card/95 via-card/90 to-accent/35 px-4 shadow-[0_1px_12px_-8px_color-mix(in_oklab,var(--primary)_25%,transparent)] backdrop-blur-xl md:gap-4 md:px-8">
       <SidebarTrigger className="size-9 shrink-0 rounded-lg border bg-background text-muted-foreground shadow-xs hover:border-primary/30 hover:text-foreground" />
@@ -72,7 +91,7 @@ export function StudioHeader({
             <BreadcrumbItem className="min-w-0">
               <BreadcrumbPage className="flex items-center gap-2 text-xs font-medium">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Plus className="size-4" />
+                  <PageIcon className="size-4" />
                 </span>
                 <span className="truncate">{title}</span>
               </BreadcrumbPage>
@@ -136,19 +155,6 @@ export function StudioHeader({
           <div className="hidden 2xl:block">
             <StatusBadge status={project.production.status} />
           </div>
-        )}
-        {inProject && project.production.release && hostname && (
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="hidden h-9 gap-1.5 bg-background text-xs lg:inline-flex"
-          >
-            <a href={`https://${hostname}`} target="_blank" rel="noreferrer">
-              Visit game
-              <ArrowUpRight className="size-3.5" />
-            </a>
-          </Button>
         )}
         <QuickNavigation
           projects={projects}

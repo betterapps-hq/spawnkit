@@ -1,8 +1,36 @@
 import { afterEach, expect, it, vi } from "vitest"
-import { authErrorMessage, navigateAfterAuth, requireAuthSuccess, signInStep, signUpStep } from "./auth-flow"
+import {
+  authDestination,
+  authErrorMessage,
+  navigateAfterAuth,
+  requireAuthSuccess,
+  signInStep,
+  signUpStep
+} from "./auth-flow"
 
 afterEach(() => vi.unstubAllGlobals())
+it("returns game reviewers to their game after sign-in and rejects other return addresses", () => {
+  const store = new Map([["spawn-game-return", "/play/game-1#community"]])
+  vi.stubGlobal("window", {
+    sessionStorage: { getItem: (key: string) => store.get(key), removeItem: (key: string) => store.delete(key) }
+  })
+  expect(authDestination()).toBe("/play/game-1#community")
+  expect(authDestination()).toBe("/dashboard")
+  store.set("spawn-game-return", "//evil.example")
+  expect(authDestination()).toBe("/dashboard")
+})
 
+it("preserves invitation fragments through sign-in without accepting an external redirect", () => {
+  const token = "a".repeat(64)
+  const store = new Map([["spawn-team-return", `/team/invitation#${token}`]])
+  vi.stubGlobal("window", {
+    sessionStorage: { getItem: (key: string) => store.get(key), removeItem: (key: string) => store.delete(key) }
+  })
+  expect(authDestination()).toBe(`/team/invitation#${token}`)
+  expect(authDestination()).toBe("/dashboard")
+  store.set("spawn-team-return", "https://evil.example/team/invitation#" + token)
+  expect(authDestination()).toBe("/dashboard")
+})
 it("never completes sign-in before Clerk verifies all required factors", () => {
   expect(signInStep({ status: "needs_first_factor", supportedSecondFactors: [] })).toEqual({ step: "unsupported" })
   expect(signInStep({ status: "needs_second_factor", supportedSecondFactors: [{ strategy: "totp" }] })).toEqual({

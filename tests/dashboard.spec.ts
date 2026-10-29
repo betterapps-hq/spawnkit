@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
+import { defaultProjectDraft } from "../apps/dashboard/src/components/project/creation-model"
 import { testOrigins } from "../scripts/dev-environment.mjs"
 const appStory = `${testOrigins().stories}/iframe.html?id=dashboard-dashboard--home&viewMode=story`
 const key = "spawn:workspaces:v1:storybook-user"
@@ -21,14 +22,15 @@ async function review(page: Page) {
   await page.getByRole("button", { name: "Continue", exact: true }).click()
 }
 
-test("migrates existing projects and persists the complete starter configuration", async ({ page }, testInfo) => {
+test("reads current projects and persists the complete starter configuration", async ({ page }, testInfo) => {
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   await page.addInitScript(
-    ({ key }) => {
-      if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify([{ id: "legacy-test", name: "Test" }]))
+    ({ key, configuration }) => {
+      if (!localStorage.getItem(key))
+        localStorage.setItem(key, JSON.stringify([{ id: "current-test", name: "Test", configuration }]))
     },
-    { key }
+    { key, configuration: { ...defaultProjectDraft, name: "Test" } }
   )
   await page.goto(appStory)
   await expect(page.getByRole("heading", { name: "Test", exact: true })).toBeVisible()
@@ -45,11 +47,15 @@ test("migrates existing projects and persists the complete starter configuration
   await expect(page.getByRole("heading", { name: "Night Orchard is ready", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Open project", exact: true }).click()
   await expect(page.getByTestId("scaffold-command")).toContainText(
-    "--template three --with vitest,bitecs --physics rapier3d"
+    "--add three,rapier3d,html-ui,no-telemetry,vitest,bitecs"
   )
   await expect(page.getByRole("button", { name: "New version", exact: true })).toBeDisabled()
   const records = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), key)
-  expect(records[0]).toEqual({ id: "legacy-test", name: "Test" })
+  expect(records[0]).toEqual({
+    id: "current-test",
+    name: "Test",
+    configuration: { ...defaultProjectDraft, name: "Test" }
+  })
   expect(records[1].configuration.template).toBe("three")
   const savedId = records[1].id
   await page.reload()
@@ -57,7 +63,7 @@ test("migrates existing projects and persists the complete starter configuration
     .getByRole("button")
     .filter({ has: page.getByRole("heading", { name: "Night Orchard", exact: true }) })
     .click()
-  await expect(page.getByTestId("scaffold-command")).toContainText("--physics rapier3d")
+  await expect(page.getByTestId("scaffold-command")).toContainText("rapier3d")
   await page.getByRole("button", { name: "Edit configuration", exact: true }).first().click()
   await expect(page.getByLabel("Project name", { exact: true })).toHaveValue("Night Orchard")
   await page.getByLabel("Project name", { exact: true }).fill("Moon Orchard")
@@ -76,7 +82,7 @@ test("migrates existing projects and persists the complete starter configuration
   await expect(page.getByText("Settings saved.", { exact: true })).toBeVisible()
   await navigate(page, "Dashboard")
   await expect(page.getByRole("heading", { name: "Moon Garden", exact: true })).toBeVisible()
-  await page.screenshot({ path: `work/migrated-dashboard-${testInfo.project.name}.png`, fullPage: true })
+  await page.screenshot({ path: `work/persisted-dashboard-${testInfo.project.name}.png`, fullPage: true })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(errors).toEqual([])
 })
@@ -138,11 +144,13 @@ test("preserves unreadable existing storage and blocks writes", async ({ page })
 })
 
 test("isolates accounts and synchronizes project additions between tabs", async ({ page, context }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem(
-      "spawn:workspaces:v1:another-user",
-      JSON.stringify([{ id: "private", name: "Other account project" }])
-    )
+  await page.addInitScript(
+    (configuration) =>
+      localStorage.setItem(
+        "spawn:workspaces:v1:another-user",
+        JSON.stringify([{ id: "private", name: "Other account project", configuration }])
+      ),
+    { ...defaultProjectDraft, name: "Other account project" }
   )
   await page.goto(appStory)
   await expect(page.getByRole("heading", { name: "Other account project", exact: true })).toHaveCount(0)
@@ -156,13 +164,16 @@ test("isolates accounts and synchronizes project additions between tabs", async 
   await expect(second.getByRole("heading", { name: "Other account project", exact: true })).toHaveCount(0)
 })
 
-test("keeps example games separate and all template option controls in the guided flow", async ({ page }) => {
+test("filters starter kits and exposes current template options in the guided flow", async ({ page }) => {
   await page.goto(appStory)
   await page.getByRole("button", { name: "Create project", exact: true }).first().click()
-  await page.getByRole("tab", { name: "Example games", exact: true }).click()
   await page.getByRole("button", { name: "3D", exact: true }).click()
-  await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeDisabled()
-  await page.getByRole("tab", { name: "Starter kits", exact: true }).click()
+  await expect(page.getByRole("button", { name: "Select PixiJS", exact: true })).toHaveCount(0)
+  await page.getByRole("button", { name: "Select Three.js", exact: true }).click()
+  await expect(page.getByRole("button", { name: "Select Three.js", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  )
   await page.getByRole("button", { name: "Continue", exact: true }).click()
   await page.getByLabel("Project name", { exact: true }).fill("Skyward")
   await page.locator("summary").filter({ hasText: "Customize your stack" }).click()
@@ -182,7 +193,7 @@ test("copies the generated command and reports clipboard failure", async ({ page
   await context.grantPermissions(["clipboard-read", "clipboard-write"])
   await page.getByRole("button", { name: "Copy scaffold command", exact: true }).click()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    "npx spawn init emberfall --template pixi --with vitest"
+    "npx @spawnkit/cli init emberfall --add pixi,no-physics,html-ui,no-telemetry,vitest,no-ecs"
   )
   await page.evaluate(() => {
     Object.defineProperty(navigator, "clipboard", {

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#121116"/>
+  <path d="M920 0h280v630H790z" fill="#211c30"/>
+  <rect x="80" y="76" width="64" height="64" rx="17" fill="#a78be8"/>
+  <g transform="translate(92 88) scale(1.67)" fill="#121116">
+    <path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="164" y="123" fill="#f5f3fa" font-size="48" font-weight="700">SpawnKit</text>
+    <text x="80" y="292" fill="#f5f3fa" font-size="78" font-weight="700">Play browser games.</text>
+    <text x="80" y="391" fill="#a78be8" font-size="78" font-weight="700">Make your own.</text>
+    <text x="84" y="528" fill="#c7bfda" font-size="30">Games, starter kits, and hosting.</text>
+  </g>
+</svg>

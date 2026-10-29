@@ -219,7 +219,7 @@ export async function runTerminal(
           progress: (message) => p.log.step(message)
         }
       })
-      p.outro("Use status and logs to follow platform operations.")
+      p.outro("SpawnKit")
       return
     }
     if (

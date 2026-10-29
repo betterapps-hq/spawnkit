@@ -13,6 +13,7 @@ import {
 import { PROJECT_STALE_MS, projectRefreshInterval } from "./project-refresh"
 
 interface CloudProject {
+  lifecycle?: "active" | "deleting"
   id: string
   name: string
   configuration: Record<string, unknown>
@@ -43,7 +44,7 @@ function payload(project: LocalProject) {
   return {
     id: project.id,
     name: project.name,
-    configuration: project.configuration ?? { ...defaultProjectDraft, name: project.name },
+    configuration: project.configuration,
     metadata: { productionBranch: project.productionBranch, domainConfigurations: project.domainConfigurations }
   }
 }
@@ -70,23 +71,13 @@ export function useCloudProjects(userId: string, selectedProjectId?: string) {
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      let result = await api<Listing>("/projects?summary=true")
-      const key = `spawn:workspaces:v1:${userId}`
-      // The browser copy is a migration backup. Never remove it or overwrite cloud records.
-      let old: LocalProject[] = []
-      try {
-        old = readProjectRecords(window.localStorage.getItem(key))
-      } catch {
-        /* Cloud access does not depend on browser storage. */
-      }
-      const missing = old.filter((project) => !result.projects.some((row) => row.id === project.id))
-      for (const project of missing) await api("/projects", "POST", payload(project))
-      if (missing.length) result = await api<Listing>("/projects?summary=true")
+      const result = await api<Listing>("/projects?summary=true")
       return result.projects.map((project) => {
         const rows = (result.summaries ?? []).filter((row) => row.projectId === project.id)
         return {
           ...project,
           state: {
+            lifecycle: project.lifecycle,
             environments: rows,
             releases: rows
               .filter((row) => row.id)
@@ -102,13 +93,16 @@ export function useCloudProjects(userId: string, selectedProjectId?: string) {
       })
     },
     staleTime: PROJECT_STALE_MS,
-    refetchInterval: false,
+    refetchInterval: (query) => (query.state.data?.some((project) => project.lifecycle === "deleting") ? 5000 : false),
     refetchIntervalInBackground: false,
     retry: (count, error) => !(error instanceof ProjectInputError) && count < 1
   })
   const detail = useQuery({
     queryKey: [...queryKey, "state", selectedProjectId],
-    enabled: Boolean(selectedProjectId && query.data?.some((project) => project.id === selectedProjectId)),
+    enabled: Boolean(
+      selectedProjectId &&
+      query.data?.some((project) => project.id === selectedProjectId && project.lifecycle !== "deleting")
+    ),
     queryFn: () => api<ProjectState>(`/projects/${selectedProjectId}/state`),
     staleTime: PROJECT_STALE_MS,
     refetchInterval: (query) =>
@@ -220,7 +214,11 @@ export function useCloudProjects(userId: string, selectedProjectId?: string) {
     projects: (query.data ?? []).map(local),
     states: {
       ...Object.fromEntries((query.data ?? []).map((project) => [project.id, project.state])),
-      ...(selectedProjectId && detail.data ? { [selectedProjectId]: detail.data } : {})
+      ...(selectedProjectId &&
+      detail.data &&
+      query.data?.find((project) => project.id === selectedProjectId)?.lifecycle !== "deleting"
+        ? { [selectedProjectId]: detail.data }
+        : {})
     },
     ready: !query.isPending && !(selectedProjectId && detail.isLoading),
     error: query.error?.message ?? detail.error?.message ?? "",

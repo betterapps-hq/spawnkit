@@ -1,8 +1,24 @@
 {
-  "production": [],
+  "production": [
+    "github-verification.spawnkit.cloud",
+    "github-verification.spawnkit.games",
+    "prism-break.spawnkit.cloud",
+    "prism-break.spawnkit.games",
+    "spawn-snake.spawnkit.cloud",
+    "spawn-snake.spawnkit.games",
+    "starfall-squadron.spawnkit.cloud",
+    "starfall-squadron.spawnkit.games",
+    "the-art-of-the-steal.spawnkit.cloud",
+    "the-art-of-the-steal.spawnkit.games"
+  ],
   "staging": [
+    "domain-rollout-check.staging.spawnkit.cloud",
+    "domain-rollout-check.staging.spawnkit.games",
     "game-telemetry-verification.staging.spawnkit.cloud",
+    "game-telemetry-verification.staging.spawnkit.games",
     "platform-verification.staging.spawnkit.cloud",
-    "test.staging.spawnkit.cloud"
+    "platform-verification.staging.spawnkit.games",
+    "test.staging.spawnkit.cloud",
+    "test.staging.spawnkit.games"
   ]
 }

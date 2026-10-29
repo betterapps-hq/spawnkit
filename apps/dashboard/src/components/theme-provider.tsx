@@ -4,7 +4,7 @@ type Theme = "light" | "dark" | "system"
 const storageKey = "spawn:theme"
 const ThemeContext = createContext<{ theme: Theme; setTheme: (theme: Theme) => void } | null>(null)
 function parseTheme(value: string | null): Theme {
-  return value === "light" || value === "dark" ? value : "system"
+  return value === "light" || value === "dark" || value === "system" ? value : "dark"
 }
 function applyTheme(theme: Theme) {
   const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
@@ -13,12 +13,12 @@ function applyTheme(theme: Theme) {
 }
 
 // Runs before the first paint; the provider takes over after hydration.
-export const themeScript = `(function(){var t='system';try{t=localStorage.getItem('${storageKey}')||'system'}catch{}var d=t==='dark'||(t!=='light'&&t!=='dark'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light'})()`
+export const themeScript = `(function(){var t='dark';try{var s=localStorage.getItem('${storageKey}');if(s==='light'||s==='dark'||s==='system')t=s}catch{}var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light'})()`
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setCurrentTheme] = useState<Theme>("system")
+  const [theme, setCurrentTheme] = useState<Theme>("dark")
   useEffect(() => {
-    let current: Theme = "system"
+    let current: Theme = "dark"
     try {
       current = parseTheme(localStorage.getItem(storageKey))
     } catch {

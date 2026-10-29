@@ -1,201 +1,150 @@
-import { ArrowRight, Check, ChevronDown, Globe2, Layers3, Server } from "lucide-react"
-import { useState } from "react"
+import { ArrowRight, Check, ChevronDown, GitBranch, Globe2, Layers3, Server, CloudDownload, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { SelectItem } from "@/components/ui/select"
-import { estimateProject } from "@/lib/pricing"
-import { FieldSelect } from "./field-select"
+import { multiplayerBundleFee, singlePlayerAddonFee } from "@/lib/pricing"
+import { CloudComputePricing } from "./cloud-compute-pricing"
+import "./cloud-scenes.css"
 
-const plans = [
-  {
-    title: "Frontend hosting",
-    icon: Globe2,
-    price: "0",
-    suffix: "frontend-only production",
-    description: "A home for a frontend-only single-player browser game.",
-    features: [
-      "All four web starter kits",
-      "Your own standalone source code",
-      "Frontend-only production hosting",
-      "Optional testing & quality tools"
-    ],
-    button: "Build a starter kit",
-    href: "/templates",
-    label: "Start with a free starter kit"
-  },
-  {
-    title: "Game services",
-    icon: Layers3,
-    price: "5",
-    suffix: "per game / month",
-    description: "Add accounts, cloud saves, and leaderboards to a single-player game.",
-    features: [
-      "Frontend production hosting",
-      "Colyseus player services",
-      "Cloud saves & leaderboards",
-      "Service usage included"
-    ],
-    button: "Explore game services",
-    href: "#services",
-    label: "Coming soon"
-  },
-  {
-    title: "Multiplayer",
-    icon: Server,
-    price: "5",
-    suffix: "per game / month + runtime usage",
-    description: "Run real-time game rooms with managed Colyseus servers.",
-    features: [
-      "Frontend production hosting",
-      "Managed Colyseus servers",
-      "Room-based state synchronization",
-      "Runtime billed for allocated hours"
-    ],
-    button: "Explore multiplayer",
-    href: "#multiplayer",
-    label: "Coming soon"
-  }
-]
 const faqs = [
-  ["Is playing a game really free?", "Yes. Browser games on Discover are free to play, with no account or download."],
   [
-    "Do I own the games I make?",
-    "Your starter kit is a standalone project. You can edit it, use your favorite AI coding tools, and host it yourself. Each engine and dependency retains its own open-source license."
+    "What’s included for free?",
+    "Host a single-player web game with a production address. Starter kits, CLI tooling, managed builds and deployment workflows, version history, and platform telemetry are part of the basics. You can add Sandbox or game services for $5 each per month."
   ],
   [
-    "What does the $5 multiplayer fee include?",
-    "The $5 monthly game fee covers multiplayer management. Provisioned runtime is billed separately, including idle allocated time. The optional Sandbox adds $5/month plus usage. Paid activation and the complete usage schedule are coming soon."
+    "What does the multiplayer price cover?",
+    "The $10 monthly bundle includes multiplayer management, Sandbox, and game services. Machines are billed separately for allocated hours, including idle time. Add multiple regions to the estimate, each with its own machine and production and Sandbox hours. The bundle is charged once across all regions. Other metered resources, such as a custom database, are separate."
   ],
   [
-    "How do staging and previews work?",
-    "The optional Sandbox is a separate staging environment for $5/month plus usage. Multiple Sandbox regions do not multiply that base fee. Customer pull request previews are planned; their complete publishing flow and pricing are still being verified."
+    "Does Sandbox cost extra with multiplayer?",
+    "No. Sandbox is included in the $10 multiplayer bundle. You pay for any machines allocated to it. For a single-player game, Sandbox is a $5 monthly add-on, plus any metered resources."
   ],
   [
-    "What kind of game can I host?",
-    "The current build path expects a static web game with package.json, game.config.json and a frozen pnpm-lock.yaml. It runs pnpm run build and serves dist. Arbitrary backend servers and custom output directories are not supported."
+    "Can I host an existing game?",
+    "The current build path supports static web games with package.json, game.config.json, and a frozen pnpm-lock.yaml. It runs pnpm run build and serves dist. You can keep your own source and tools; arbitrary backend servers are not supported."
   ],
   [
-    "Can I use my own domain?",
-    "Projects use SpawnKit game addresses. Customer-owned domain verification exists, but custom-domain TLS activation is not generally available yet."
+    "What happens when I roll back?",
+    "Production serves an earlier saved build. Rollback does not undo database changes or player data, so your code and data still need to be compatible."
   ],
   [
-    "Can I build for desktop or mobile?",
-    "The starter kits currently target the web. Native desktop and mobile project templates are coming soon. Browser games can support mobile play when you design touch controls and responsive gameplay."
+    "Can I connect GitHub?",
+    "Connect your repository to deploy configured production and Sandbox branches. Enable previews to try changes from pull requests within that repository before merging. You can also publish through a generated GitHub Actions workflow."
   ],
   [
-    "What does the monthly estimate include?",
-    "The estimate includes your game fee and optional Sandbox fee. Multiplayer runtime and other metered resources are billed separately based on usage."
+    "Are the paid plans available yet?",
+    "Managed multiplayer and game services are coming soon. Machine rates shown here are estimates from the current SpawnKit catalog. Hosting allowances, service quotas, and the final usage schedule will be published before paid activation."
   ]
 ]
+
 export function CloudPricing() {
-  const [mode, setMode] = useState("free")
-  const [sandbox, setSandbox] = useState(false)
-  const estimate = estimateProject({
-    multiplayer: mode === "multiplayer",
-    services: mode === "services",
-    sandbox,
-    locations: []
-  })
   return (
     <section id="pricing" className="p-cloud-pricing" aria-labelledby="pricing-title">
-      <section className="p-pricing-heading">
+      <div className="p-pricing-heading">
         <h2 id="pricing-title">Cloud pricing</h2>
-        <p>Start with a browser game. Add what your game needs.</p>
-      </section>
-      <div className="p-pricing-grid">
-        {plans.map((plan, index) => (
-          <article key={plan.title} className={`p-price-card ${index === 0 ? "p-price-featured" : ""}`}>
-            <plan.icon size={25} />
-            <h3>{plan.title}</h3>
-            <span className="mk-plan-status">{plan.label}</span>
-
-            <div className="p-price">
-              <span>$</span>
-              {plan.price}
-              <small>{plan.suffix}</small>
-            </div>
-            <p>{plan.description}</p>
-            <Button asChild>
-              <a href={plan.href} className={`p-button ${index === 0 ? "" : "p-button-outline"}`}>
-                {plan.button}
-                <ArrowRight size={17} />
-              </a>
-            </Button>
-            <ul>
-              {plan.features.map((feature) => (
+        <p>
+          The basics are free. Pay for extra environments, game services, or multiplayer machines when you need them.
+        </p>
+      </div>
+      <div className="p-pricing-grid mk-plan-grid">
+        <article className="p-price-card p-price-featured">
+          <Globe2 size={25} />
+          <h3>Single-player</h3>
+          <div className="p-price">
+            <span>$</span>0<small>Free hosting for your web game</small>
+          </div>
+          <ul>
+            {[
+              "Game templates and CLI",
+              "Managed builds and CI/CD workflows",
+              "Production hosting",
+              "Version history and rollback",
+              "Errors, logs, and game events"
+            ].map((feature) => (
+              <li key={feature}>
+                <Check size={16} />
+                {feature}
+              </li>
+            ))}
+          </ul>
+          <div className="mk-addon-list">
+            <a href="/cloud#release-heading">
+              <GitBranch size={17} />
+              <span>
+                Sandbox<small>A separate environment to test updates</small>
+              </span>
+              <b>
+                +${singlePlayerAddonFee}
+                <small>/ month</small>
+              </b>
+            </a>
+            <a href="/cloud#services">
+              <Layers3 size={17} />
+              <span>
+                Managed game services<small>Cloud saves, leaderboards, and player accounts. Coming soon.</small>
+              </span>
+              <b>
+                +${singlePlayerAddonFee}
+                <small>/ month</small>
+              </b>
+            </a>
+          </div>
+          <Button asChild>
+            <a href="/templates" className="p-button">
+              Start with a kit
+            </a>
+          </Button>
+        </article>
+        <article className="p-price-card">
+          <Server size={25} />
+          <h3>Multiplayer</h3>
+          <span className="mk-plan-status">Coming soon</span>
+          <div className="p-price">
+            <span>$</span>
+            {multiplayerBundleFee}
+            <small>per game / month + machine usage</small>
+          </div>
+          <p>Everything in single-player, with the infrastructure for a connected game.</p>
+          <ul>
+            {["Managed Colyseus multiplayer servers", "Rooms, matchmaking, and state synchronization"].map(
+              (feature) => (
                 <li key={feature}>
                   <Check size={16} />
                   {feature}
                 </li>
-              ))}
-            </ul>
-          </article>
-        ))}
+              )
+            )}
+          </ul>
+          <div className="mk-bundle-inclusions" aria-label="Included in the multiplayer bundle">
+            <a href="/cloud#release-heading">
+              <GitBranch size={24} />
+              <strong>Sandbox</strong>
+              <small>Test updates in a separate staging environment.</small>
+              <span>
+                <Check size={12} />
+                Sandbox included
+              </span>
+            </a>
+            <a href="/cloud#services">
+              <span className="mk-bundle-service-icons">
+                <CloudDownload size={20} />
+                <Trophy size={20} />
+              </span>
+              <strong>Managed game services</strong>
+              <small>Cloud saves, leaderboards, player accounts, and more.</small>
+              <span>
+                <Check size={12} />
+                Services included
+              </span>
+            </a>
+          </div>
+          <a href="#compute-pricing" className="mk-secondary mk-compute-link">
+            Choose your machine below <ArrowRight size={16} />
+          </a>
+        </article>
       </div>
-      <p className="mk-pricing-note">
-        <Layers3 size={16} />
-        <strong>Optional Sandbox</strong>
-        <span>+$5/month plus usage</span>
-        <span>One staging environment per game</span>
-      </p>
-      <p className="mk-pricing-limit">
-        Free hosting does not include Sandbox. Hosting allowances and paid service quotas are being finalized. Paid
-        services and multiplayer activation are coming soon.
-      </p>
-      <section className="p-cost-builder">
-        <div>
-          <h2>Understand your fixed fees.</h2>
-          <p>See your fixed monthly fees. Runtime and other metered resources are added separately.</p>
-          <label className="p-field" htmlFor="game-type">
-            Game type
-            <FieldSelect id="game-type" value={mode} onValueChange={(value) => setMode(value)}>
-              <SelectItem value="free">Frontend-only game</SelectItem>
-              <SelectItem value="services">Single-player + services</SelectItem>
-              <SelectItem value="multiplayer">Multiplayer</SelectItem>
-            </FieldSelect>
-          </label>
-          <label htmlFor="pricing-sandbox" className="p-checkbox-line" aria-label="Add a Sandbox">
-            <Checkbox
-              id="pricing-sandbox"
-              aria-label="Add a Sandbox"
-              checked={sandbox}
-              onCheckedChange={(checked) => setSandbox(checked === true)}
-            />
-            <div>
-              <b>Add a Sandbox</b>
-              <span>A separate staging environment for $5/month + usage</span>
-            </div>
-          </label>
-        </div>
-        <div className="p-cost-result">
-          <span>YOUR FIXED MONTHLY FEES</span>
-          <div className="p-estimate-total" aria-live="polite">
-            ${estimate.total}
-            <small>/ month</small>
-          </div>
-          <div>
-            <span>Game fee</span>
-            <b>${estimate.gameFee}</b>
-          </div>
-          <div>
-            <span>Sandbox</span>
-            <b>${estimate.sandboxFee}</b>
-          </div>
-          <hr />
-          <p>
-            {mode === "multiplayer"
-              ? "Plus allocated runtime (including idle hours) and other metered usage."
-              : sandbox
-                ? "Plus Sandbox usage and any separately metered resources."
-                : mode === "services"
-                  ? "Service usage included. Custom databases are billed separately."
-                  : "Frontend-only production hosting included."}
-          </p>
-        </div>
-      </section>
+      <CloudComputePricing />
       <section className="p-faq">
         <div>
-          <h2>Questions about pricing</h2>
+          <h2>Questions about hosting</h2>
         </div>
         <div>
           {faqs.map(([question, answer]) => (

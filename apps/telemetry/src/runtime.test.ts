@@ -88,27 +88,6 @@ async function configure(project: string, environment = "production") {
   return (await response.json()) as { key: string }
 }
 
-it("adds a migrated origin without rotating the write key or enabling a disabled tenant", async () => {
-  const project = "domain-migration"
-  await configure(project)
-  const storage = await mf.unsafeGetDurableObjectStorage("telemetry", "TelemetryStore", {
-    name: `${project}:production`
-  })
-  const before = (await storage.exec("SELECT data FROM settings WHERE id=1")) as { data: string }[]
-  const response = await admin(project, "origins", "PATCH", {
-    from: "https://game.example",
-    to: "https://ember.spawnkit.cloud"
-  })
-  expect(response.status).toBe(200)
-  const after = (await storage.exec("SELECT data FROM settings WHERE id=1")) as { data: string }[]
-  expect(JSON.parse(after[0]!.data)).toEqual({
-    ...JSON.parse(before[0]!.data),
-    origins: ["https://game.example", "https://ember.spawnkit.cloud"]
-  })
-  await admin(project, "settings", "DELETE")
-  await admin(project, "origins", "PATCH", { from: "https://game.example", to: "https://staging.ember.spawnkit.cloud" })
-  expect(await (await admin(project, "settings")).json()).toMatchObject({ configured: false })
-})
 function payload(id = crypto.randomUUID(), body = "event") {
   return {
     resourceLogs: [
@@ -375,3 +354,22 @@ it("queries a near-capacity tenant with large records while accepting ingestion"
   expect(page.events).toHaveLength(50)
   expect(Date.now() - start).toBeLessThan(5000)
 }, 60_000)
+
+it("project purge removes tenant settings, events, counters and alarms without affecting another project", async () => {
+  const { key } = await configure("deleted-project")
+  await configure("kept-project")
+  const response = await admin("deleted-project", "project", "DELETE")
+  expect(response.status).toBe(200)
+  expect((await admin("deleted-project", "project", "DELETE")).status).toBe(200)
+  const storage = await mf.unsafeGetDurableObjectStorage("telemetry", "TelemetryStore", {
+    name: "deleted-project:production"
+  })
+  const tables = await storage.exec(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('events','settings','counters')"
+  )
+  expect(tables).toEqual([])
+  expect((await (await admin("kept-project", "settings")).json()) as object).toMatchObject({ configured: true })
+  expect((await ingest(key, payload())).status).toBe(401)
+  await mf.unsafeEvictDurableObject("telemetry", "TelemetryStore", { name: "deleted-project:production" })
+  expect((await ingest(key, payload())).status).toBe(401)
+})

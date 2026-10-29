@@ -6,7 +6,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./catalog": "./src/catalog.ts",
-    "./composition": "./src/composition.ts"
+    "./composition": "./src/composition.ts",
+    "./listing": "./src/listing.ts",
+    "./kits": "./src/kits.ts"
   },
   "scripts": {
     "check:types": "tsc --noEmit",

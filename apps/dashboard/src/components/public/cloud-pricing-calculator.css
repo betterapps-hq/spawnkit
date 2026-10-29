@@ -1,0 +1,341 @@
+.mk-calculator-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 30px;
+  align-items: start;
+}
+.mk-region-configurations {
+  min-width: 0;
+}
+.mk-region-count {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.mk-region-count > svg {
+  color: var(--primary);
+}
+.mk-region-count > span {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.mk-region-cards {
+  display: grid;
+  gap: 16px;
+}
+.mk-region-card {
+  border: 1px solid var(--border);
+  background: var(--background);
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 0;
+}
+.mk-region-card > header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.mk-region-country {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: 11px;
+  background: var(--mk-lilac);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 650;
+}
+.mk-region-card h4 {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.mk-region-card header div > span {
+  display: block;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.mk-region-price {
+  margin-left: auto;
+  font-size: 18px;
+  text-align: right;
+  white-space: nowrap;
+}
+.mk-region-price small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+.mk-region-machine {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 12px;
+  align-items: center;
+  padding: 20px 0;
+}
+.mk-region-machine > label {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 12px;
+}
+.mk-region-machine .p-field-select {
+  width: 100%;
+  font-size: 12px;
+}
+.mk-region-runtime {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.mk-region-runtime label {
+  min-width: 0;
+  font-size: 11px;
+}
+.mk-region-runtime small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  margin: 4px 0 8px;
+}
+.mk-region-runtime input {
+  font-size: 13px;
+}
+.mk-add-region {
+  padding: 22px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-radius: 14px;
+  margin-top: 16px;
+  background: var(--mk-lilac);
+}
+.mk-add-region-heading {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+}
+.mk-add-region-heading > span {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  width: 34px;
+  background: var(--background);
+  border-radius: 9px;
+  color: var(--primary);
+}
+.mk-add-region-heading h4 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.mk-add-region-heading p {
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 3px;
+}
+.mk-add-region-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0 14px;
+}
+.mk-add-region-fields label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  font-size: 11px;
+}
+.mk-add-region-fields .p-field-select {
+  width: 100%;
+  font-size: 12px;
+  background: var(--background);
+}
+.mk-add-region > button {
+  width: 100%;
+  gap: 8px;
+  height: auto;
+  min-height: 40px;
+  padding-block: 10px;
+  white-space: normal;
+  font-size: 12px;
+  background: var(--card);
+}
+.mk-add-region > button > span {
+  margin-left: auto;
+  color: var(--primary);
+  font-size: 11px;
+}
+.mk-compute-pricing .mk-region-hours-note {
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 16px;
+}
+.mk-calculator-summary {
+  background: var(--mk-lilac);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 25px;
+  position: sticky;
+  top: 110px;
+}
+.mk-estimate-label {
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.mk-estimate-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 14px 0 8px;
+}
+.mk-estimate-amount > strong {
+  font-size: 22px;
+  line-height: 1.2;
+}
+.mk-estimate-amount .p-estimate-total {
+  font-size: 42px;
+  letter-spacing: -0.04em;
+  color: var(--primary);
+}
+.mk-estimate-amount > span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.mk-calculator-summary > p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.mk-calculator-summary dl {
+  margin: 22px 0;
+}
+.mk-calculator-summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 15px;
+  padding: 13px 0;
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+}
+.mk-calculator-summary dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mk-calculator-summary .mk-estimate-bundle dt {
+  display: block;
+}
+.mk-calculator-summary dt small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin-top: 5px;
+}
+.mk-calculator-summary dd {
+  white-space: nowrap;
+}
+.mk-estimate-included {
+  display: grid;
+  gap: 9px;
+  padding: 15px 0;
+  border-top: 1px solid var(--border);
+}
+.mk-estimate-included > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.mk-estimate-included svg {
+  color: #69bda3;
+}
+.mk-estimate-included > small {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.mk-calculator-summary .mk-estimate-note {
+  font-size: 10px;
+  line-height: 1.8;
+  margin-top: 12px;
+}
+.mk-calculator-summary [role="alert"] {
+  color: var(--destructive);
+}
+.mk-page .mk-compute-heading h3 {
+  line-height: 1.25;
+}
+.mk-page .mk-compute-heading p {
+  margin-top: 14px;
+}
+@media (max-width: 1100px) {
+  .mk-calculator-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+  }
+  .mk-calculator-summary {
+    padding: 20px;
+  }
+}
+@media (max-width: 900px) {
+  .mk-calculator-layout {
+    grid-template-columns: 1fr;
+  }
+  .mk-calculator-summary {
+    position: static;
+  }
+}
+@media (max-width: 540px) {
+  .mk-region-card,
+  .mk-add-region {
+    padding: 16px;
+  }
+  .mk-region-card > header {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .mk-region-country {
+    width: 32px;
+    height: 36px;
+    font-size: 10px;
+  }
+  .mk-region-card h4 {
+    font-size: 13px;
+  }
+  .mk-region-price {
+    font-size: 15px;
+  }
+  .mk-region-card > header button {
+    height: 25px;
+    width: 22px;
+  }
+  .mk-region-count > span {
+    display: none;
+  }
+  .mk-region-machine,
+  .mk-add-region-fields {
+    grid-template-columns: 1fr;
+  }
+  .mk-region-runtime {
+    gap: 12px;
+  }
+  .mk-region-runtime label {
+    font-size: 10px;
+  }
+  .mk-add-region > button {
+    flex-wrap: wrap;
+  }
+  .mk-add-region > button > span {
+    margin-left: 0;
+  }
+}

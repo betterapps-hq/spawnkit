@@ -36,7 +36,7 @@ Files served by a public game deployment can be accessed by its visitors. Avoid 
 
 ### Cookies and local storage
 
-We use cookies and similar storage for authentication, security and remembering interface preferences. Your browser may also store project migration backups and local interface drafts. You can clear browser storage or restrict cookies in your browser settings, although doing so may sign you out or prevent features from working. Clearing browser storage does not delete information already stored by SpawnKit or its providers.
+We use cookies and similar storage for authentication, security and remembering interface preferences. Your browser may also store local interface drafts. You can clear browser storage or restrict cookies in your browser settings, although doing so may sign you out or prevent features from working. Clearing browser storage does not delete information already stored by SpawnKit or its providers.
 
 ### Retention and deletion
 

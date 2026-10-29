@@ -9,12 +9,12 @@ it("separates platform and customer environments without database IDs in the URL
   )
   expect(new Set(hosts).size).toBe(hosts.length)
   for (const host of hosts) {
-    expect(host).toMatch(/^[a-z0-9.-]+\.spawnkit\.cloud$/)
+    expect(host).toMatch(/^[a-z0-9.-]+\.spawnkit\.games$/)
     expect(host.split(".")[0]!.length).toBeLessThanOrEqual(63)
   }
-  expect(projectHostname("emberfall", "production", false)).toBe("emberfall.spawnkit.cloud")
-  expect(projectHostname("emberfall", "sandbox", true)).toBe("staging.emberfall.staging.spawnkit.cloud")
-  expect(projectHostname("emberfall", "preview-42", true)).toBe("pr-42.emberfall.staging.spawnkit.cloud")
+  expect(projectHostname("emberfall", "production", false)).toBe("emberfall.spawnkit.games")
+  expect(projectHostname("emberfall", "sandbox", true)).toBe("staging.emberfall.staging.spawnkit.games")
+  expect(projectHostname("emberfall", "preview-42", true)).toBe("pr-42.emberfall.staging.spawnkit.games")
   expect(() => projectHostname("p", "../../production", false)).toThrow("Unsupported hosting environment")
 })
 

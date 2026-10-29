@@ -16,9 +16,9 @@ const { values } = parseArgs({
 })
 if (!["production", "staging", "preview"].includes(values.environment))
   throw new Error("Choose production, staging, or preview")
-if (!["all", "dashboard", "frontend", "control-api", "services", "stories"].includes(values.component))
-  throw new Error("Choose all, dashboard, frontend, control-api, services, or stories")
-if (values.environment === "preview" && ["all", "services", "control-api"].includes(values.component))
+if (!["all", "dashboard", "frontend", "control-api", "game-host", "services", "stories"].includes(values.component))
+  throw new Error("Choose all, dashboard, frontend, control-api, game-host, services, or stories")
+if (values.environment === "preview" && ["all", "services", "control-api", "game-host"].includes(values.component))
   throw new Error("Preview releases deploy frontend or stories; shared services must use trusted staging code")
 if (!/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(values.preview)) throw new Error("Invalid preview name")
 const production = values.environment === "production"
@@ -56,9 +56,9 @@ const env = {
   ...process.env,
   ...credentials,
   SPAWN_ENABLE_GITHUB: String(github.enabled),
+  SPAWN_EMAIL_ENABLED: String(Boolean(credentials.RESEND_API_KEY)),
   SPAWN_DASHBOARD_ENVIRONMENT: values.environment,
   SPAWN_CONTROL_ENVIRONMENT: production ? "production" : "staging",
-  SPAWN_DYNAMIC_HOSTING: "true",
   SPAWN_HOSTING_PROVISIONER: hostingToken ? "true" : "false",
   SPAWN_PREVIEW_NAME: values.preview,
   SPAWN_CONTROL_API_URL: production ? "https://api.spawnkit.cloud" : "https://api.staging.spawnkit.cloud",
@@ -114,12 +114,14 @@ try {
   if (["all", "services"].includes(values.component)) {
     // Existing telemetry signing keys are retained, never regenerated during deployment.
     deploy("telemetry")
-    deploy("game-host")
   }
+  if (["all", "services", "game-host"].includes(values.component)) deploy("game-host")
   if (deployControl) {
     deploy("control-api", {
       CLERK_SECRET_KEY: credentials.CLERK_SECRET_KEY,
       CLERK_OAUTH_CLIENT_ID: credentials.CLERK_OAUTH_CLIENT_ID,
+      ...(credentials.AGENT_AUTH_SIGNING_KEY ? { AGENT_AUTH_SIGNING_KEY: credentials.AGENT_AUTH_SIGNING_KEY } : {}),
+      ...(credentials.RESEND_API_KEY ? { RESEND_API_KEY: credentials.RESEND_API_KEY } : {}),
       ...github.secrets,
       ...(hostingToken ? { HOSTING_API_TOKEN: hostingToken } : {})
     })

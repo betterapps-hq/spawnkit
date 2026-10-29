@@ -1,9 +1,11 @@
 import { createClerkClient, verifyToken } from "@clerk/backend"
+import { authenticateAgent } from "./agent-credentials"
 import { HttpError } from "./http"
 
 export async function authenticate(request: Request, env: Env): Promise<string> {
   const token = request.headers.get("authorization")?.match(/^Bearer ([^\s]+)$/)?.[1]
   if (!token) throw new HttpError(401, "unauthorized", "Sign in to continue.")
+  if (token.startsWith("sat_")) return authenticateAgent(request, env, token)
   const clerk = createClerkClient({ secretKey: env.CLERK_SECRET_KEY })
   try {
     const session = await verifyToken(token, {

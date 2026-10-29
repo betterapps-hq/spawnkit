@@ -1,49 +1,58 @@
-import { ArrowRight, Box, Check, Code2, ExternalLink, GitBranch, Globe2, PackageCheck, RotateCcw } from "lucide-react"
+import { Activity, ArrowRight, Code2, GitBranch, ShieldCheck } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CreateIllustration, ChecksIllustration, DeployIllustration, MonitorIllustration } from "./cloud-illustrations"
 
 const steps = [
   {
-    id: "build",
-    name: "Build",
+    id: "create",
+    name: "Create",
     icon: Code2,
-    title: "Your source. One inspectable release.",
-    text: "Upload supported source for an isolated build. Keep the output tied to the source that produced it, with build logs available when the process finishes.",
-    detail: ["Source", "Isolated build", "Artifact"],
-    status: "Build complete"
+    visual: CreateIllustration,
+    title: "Give your idea a working foundation.",
+    text: "Choose a game engine and get a standalone TypeScript project with playable code. The CLI handles project setup and adds compatible tools as your game grows, so you and your preferred AI agent can spend your time on gameplay.",
+    href: "/templates",
+    link: "Explore the starter kits"
   },
   {
-    id: "check",
-    name: "Check",
-    icon: PackageCheck,
-    title: "Open the exact game you built.",
-    text: "Every retained release has its own URL. Play through the change and check the result before moving an environment to that version.",
-    detail: ["One version with its own URL"],
-    status: "Ready to inspect"
+    id: "test",
+    name: "Test",
+    icon: ShieldCheck,
+    visual: ChecksIllustration,
+    title: "Catch regressions before your players do.",
+    text: "Start with type checking, linting, and formatting already configured. Add Vitest with unit testing baselines for movement, world boundaries, and independent game sessions, plus Playwright for browser checks. Repeatable checks give your AI agent a way to verify a change instead of guessing whether it works.",
+    href: "/create",
+    link: "See the development tools"
   },
   {
-    id: "release",
-    name: "Release",
-    icon: Globe2,
-    title: "Same build. New destination.",
-    text: "Promote a tested artifact into the intended environment. The optional Sandbox keeps staging separate from the game your players open.",
-    detail: ["Promote the artifact without rebuilding"],
-    status: "Production release"
+    id: "deploy",
+    name: "Deploy",
+    icon: GitBranch,
+    visual: DeployIllustration,
+    title: "Keep building the game. We’ll handle delivery.",
+    text: "Publish source with the CLI or a GitHub Actions workflow. SpawnKit builds it, keeps each version, and hosts the result. Try an update in Sandbox, promote the tested build to production, or roll back when you need to. You don’t have to assemble a hosting stack to ship your next fix.",
+    href: "/dashboard",
+    link: "Explore deployments"
   },
   {
-    id: "improve",
-    name: "Improve",
-    icon: RotateCcw,
-    title: "Know what changed. Choose what comes next.",
-    text: "Use release history and configured telemetry to investigate problems. Return to a previous artifact when you need to; rollback does not undo database changes or player data.",
-    detail: ["Release history, logs and rollback"],
-    status: "Release history"
+    id: "monitor",
+    name: "Monitor",
+    icon: Activity,
+    visual: MonitorIllustration,
+    title: "Find out what happened during play.",
+    text: "Track game events to understand player activity, and investigate errors with the surrounding logs. Filter by version or environment to find the affected sessions, then bring that context to your preferred AI agent to investigate the problem and test a fix.",
+    href: "/templates",
+    link: "Add telemetry to your starter"
   }
 ]
 
-export function ReleaseWalkthrough() {
+export function ReleaseWalkthrough({
+  defaultStep = "create"
+}: {
+  defaultStep?: "create" | "test" | "deploy" | "monitor"
+}) {
   return (
-    <Tabs defaultValue="build" className="mk-release-walkthrough">
-      <TabsList className="mk-release-tabs" aria-label="Release walkthrough">
+    <Tabs defaultValue={defaultStep} className="mk-release-walkthrough">
+      <TabsList className="mk-release-tabs" aria-label="Game development workflow">
         {steps.map(({ id, name, icon: Icon }) => (
           <TabsTrigger key={id} value={id}>
             <Icon size={18} />
@@ -51,86 +60,16 @@ export function ReleaseWalkthrough() {
           </TabsTrigger>
         ))}
       </TabsList>
-      {steps.map(({ id, title, text, detail, status, icon: Icon }) => (
+      {steps.map(({ id, title, text, href, link, visual: Visual }) => (
         <TabsContent value={id} key={id} className="mk-release-panel">
           <div className="mk-release-copy">
-            <span className="mk-feature-label">
-              <Icon size={17} /> {status}
-            </span>
             <h3>{title}</h3>
             <p>{text}</p>
-            <span className="mk-release-detail mk-inline-flow">
-              {detail.map((label, index) => (
-                <span className="mk-inline-flow" key={label}>
-                  {index > 0 && <ArrowRight size={12} aria-hidden="true" />}
-                  {label}
-                </span>
-              ))}
-            </span>
+            <a className="mk-secondary" href={href}>
+              {link} <ArrowRight size={16} />
+            </a>
           </div>
-          <div className="mk-release-visual" aria-label={`Example ${id} stage for release v1.2`}>
-            <div className="mk-release-art">
-              <img src="/examples/snake.webp" alt="Orchard Trail game artwork" loading="lazy" />
-              <span>
-                <Box size={15} /> Orchard Trail <b>v1.2</b>
-              </span>
-            </div>
-            {id === "build" && (
-              <div className="mk-release-log">
-                <p>
-                  <Check size={14} /> Source received
-                </p>
-                <p>
-                  <Check size={14} /> Build completed
-                </p>
-                <p>
-                  <Check size={14} /> Artifact saved <code>v1.2</code>
-                </p>
-              </div>
-            )}
-            {id === "check" && (
-              <div className="mk-release-destinations">
-                <span>
-                  <ExternalLink size={17} />
-                  <b>Release URL</b>
-                  <small>Always opens v1.2</small>
-                </span>
-                <span>
-                  <Globe2 size={17} />
-                  <b>Production URL</b>
-                  <small>Still opens v1.1</small>
-                </span>
-              </div>
-            )}
-            {id === "release" && (
-              <div className="mk-release-destinations">
-                <span>
-                  <GitBranch size={17} />
-                  <b>Sandbox</b>
-                  <small>v1.2 tested</small>
-                </span>
-                <ArrowRight className="mk-promote-arrow" size={20} />
-                <span>
-                  <Globe2 size={17} />
-                  <b>Production</b>
-                  <small>v1.2 same artifact</small>
-                </span>
-              </div>
-            )}
-            {id === "improve" && (
-              <div className="mk-release-log">
-                <p>
-                  <Check size={14} /> v1.2 <span>Current release</span>
-                </p>
-                <p>
-                  <RotateCcw size={14} /> v1.1 <span>Retained artifact</span>
-                </p>
-                <p>
-                  <Box size={14} /> v1.0 <span>Retained artifact</span>
-                </p>
-              </div>
-            )}
-          </div>
+          <Visual />
         </TabsContent>
       ))}
     </Tabs>

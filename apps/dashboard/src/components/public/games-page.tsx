@@ -1,63 +1,52 @@
-import { ArrowRight, ArrowUpRight, Dices, Play, Search, Trophy, Zap } from "lucide-react"
+import { ArrowRight, Dices, Play, Search, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { monthlyPodium } from "@/lib/community-preview"
-import { discoverGames, publicGames, type GamesSearch, type PublicGame } from "@/lib/game-discovery"
+import { discoverGames, gameCatalog, gameHref, type GamesSearch, type DiscoveryGame } from "@/lib/game-discovery"
+import type { PublishedGame } from "@/lib/publishing"
 import { DiscoveryFilters } from "./discovery-filters"
-import { DiscoveryRail, GenreCollections } from "./discovery-navigation"
+import { DiscoveryRail } from "./discovery-navigation"
+import { GameCover } from "./game-cover"
 import { GameSignals } from "./game-signals"
+import { MonthlyGames } from "./monthly-games"
+import "./publishing.css"
 import { CreatorBanner, PublicShell } from "./shell"
 import "./discovery.css"
 
-export function GameCard({ game, arcade = false }: { game: PublicGame; arcade?: boolean }) {
-  if (arcade)
-    return (
-      <a
-        className="p-game-card d-game-card"
-        href={`/games/${game.id}`}
-        aria-label={`${game.playable ? "Play" : "Explore"} ${game.name}`}
-      >
-        <div className="p-game-art">
-          <img src={`/examples/${game.id}.webp`} alt="" loading="lazy" width="960" height="540" />
-          <div className="d-game-title">
-            <span>{game.genre}</span>
-            <h3>{game.name}</h3>
-          </div>
-          <span className="d-card-action" aria-hidden="true">
-            {game.playable ? <Play size={15} fill="currentColor" /> : <ArrowUpRight size={17} />}
-          </span>
-        </div>
-        <GameSignals gameId={game.id} playable={game.playable} />
-      </a>
-    )
+function GameCard({ game }: { game: DiscoveryGame }) {
   return (
-    <a
-      className="p-game-card"
-      href={`/games/${game.id}`}
-      aria-label={`${game.playable ? "Play" : "Explore"} ${game.name}`}
-    >
-      <div className="p-game-art">
-        <img src={`/examples/${game.id}.webp`} alt="" loading="lazy" width="960" height="540" />
-        <span className="p-card-play" aria-hidden="true">
-          {game.playable ? <Play fill="currentColor" size={22} /> : <ArrowRight size={24} />}
-        </span>
-      </div>
-      <div className="p-game-info">
-        <div>
+    <article className="p-game-card d-game-card" aria-label={game.name}>
+      <GameCover game={game.published} className="published-art p-game-art">
+        <div className="d-game-title">
           <h3>{game.name}</h3>
-          <p className="p-game-genre">
-            <span>{game.genre}</span>
-            <span>{game.dimension}</span>
-          </p>
         </div>
-        <ArrowRight size={17} />
+        <span className="d-card-action" aria-hidden="true">
+          <Play size={15} fill="currentColor" />
+        </span>
+      </GameCover>
+      <div className="p-game-tags">
+        {[game.genre, game.dimension].filter(Boolean).map((tag) => (
+          <span key={tag}>{tag}</span>
+        ))}
       </div>
-      <GameSignals gameId={game.id} playable={game.playable} />
-    </a>
+      <GameSignals
+        feedback={game.published}
+        activity={{ views: game.published.views ?? 0, plays: game.published.plays ?? 0 }}
+      />
+    </article>
   )
 }
-export function GamesPage({ search, onSearch }: { search: GamesSearch; onSearch: (search: GamesSearch) => void }) {
-  const games = discoverGames(search)
+export function GamesPage({
+  search,
+  onSearch,
+  published = [],
+  unavailable = false
+}: {
+  search: GamesSearch
+  onSearch: (search: GamesSearch) => void
+  published?: PublishedGame[]
+  unavailable?: boolean
+}) {
+  const games = discoverGames(search, published)
   const browse = (next: GamesSearch) => {
     onSearch(next)
     document.getElementById("games")?.scrollIntoView({
@@ -66,9 +55,9 @@ export function GamesPage({ search, onSearch }: { search: GamesSearch; onSearch:
     })
   }
   const surprise = () => {
-    const playable = publicGames.filter((game) => game.playable)
+    const playable = gameCatalog(published).filter((game) => game.playable)
     const game = playable[Math.floor(Math.random() * playable.length)]!
-    window.location.assign(`/games/${game.id}`)
+    if (game) window.location.assign(gameHref(game))
   }
   return (
     <PublicShell active="/">
@@ -78,6 +67,7 @@ export function GamesPage({ search, onSearch }: { search: GamesSearch; onSearch:
           <section className="p-discovery-heading">
             <div>
               <h1>Free browser games</h1>
+              <p>Discover games to play in your browser, with no download required.</p>
             </div>
             <div className="d-top-actions">
               <search className="p-quick-search" aria-label="Quick game search">
@@ -96,93 +86,52 @@ export function GamesPage({ search, onSearch }: { search: GamesSearch; onSearch:
                   </Button>
                 </form>
               </search>
-              <Button className="d-surprise" variant="outline" onClick={surprise} aria-label="Play a random game">
+              <Button
+                className="d-surprise"
+                variant="outline"
+                onClick={surprise}
+                disabled={!published.length}
+                aria-label="Play a random game"
+              >
                 <Dices size={18} />
                 <span>Surprise me</span>
               </Button>
             </div>
           </section>
-          <section className="p-monthly" aria-labelledby="monthly-title">
-            <div className="p-monthly-heading">
-              <h2 id="monthly-title">
-                <Trophy size={18} /> This month’s most played
-              </h2>
-              <Button variant="ghost" className="d-ranking-link" onClick={() => browse({ sort: "popular" })}>
-                All popular games <ArrowRight size={14} />
-              </Button>
-            </div>
-            <div className="p-podium">
-              {monthlyPodium.map((id, index) => {
-                const game = publicGames.find((entry) => entry.id === id)!
-                const medal = ["Gold", "Silver", "Bronze"][index]!
-                const [titleLead, ...titleRest] = game.name.split(" ")
-                return (
-                  <a
-                    href={`/games/${id}`}
-                    key={id}
-                    className={`p-podium-game podium-${index}`}
-                    aria-label={`Play ${game.name}, ${medal} place`}
-                  >
-                    <img
-                      src={`/examples/${id}.webp`}
-                      alt=""
-                      width="960"
-                      height="540"
-                      fetchPriority={index === 0 ? "high" : "auto"}
-                    />
-                    <div className="p-podium-shade" />
-                    <span className="d-rank-number" aria-hidden="true">
-                      0{index + 1}
-                    </span>
-                    <span className="p-medal" aria-label={`${medal} place`}>
-                      <Trophy size={17} />
-                      <b>{index + 1}</b>
-                      <span>{medal}</span>
-                    </span>
-                    <div className="p-podium-copy">
-                      <span className="p-podium-genre">{game.genre}</span>
-                      <h3>
-                        {index === 0 ? (
-                          <>
-                            {titleLead} <span>{titleRest.join(" ")}</span>
-                          </>
-                        ) : (
-                          game.name
-                        )}
-                      </h3>
-                      {index === 0 && <p className="d-winner-description">Dodge enemy fire. Chase your high score.</p>}
-                      <GameSignals gameId={id} playable />
-                      <span className="p-podium-play">
-                        <Play size={13} fill="currentColor" />
-                        {index === 0 && "Play free"}
-                      </span>
-                    </div>
-                  </a>
-                )
-              })}
-            </div>
-          </section>
-          <GenreCollections browse={browse} />
+          <MonthlyGames published={published} />
           <section id="games" className="p-games-section">
             <div className="p-section-heading">
               <h2>
                 <Zap size={20} fill="currentColor" /> Browse games
               </h2>
             </div>
+            <a className="p-text-link" href="/browse">
+              Browse the complete catalog <ArrowRight size={16} />
+            </a>
             <DiscoveryFilters search={search} onSearch={onSearch} count={games.length} />
             <div className="p-games-grid">
               {games.map((game) => (
-                <GameCard key={game.id} game={game} arcade />
+                <GameCard key={game.id} game={game} />
               ))}
             </div>
             {games.length === 0 && (
               <div className="p-empty">
                 <Search size={32} />
-                <h3>No games found</h3>
-                <p>Try a different title, genre, or engine.</p>
-                <Button className="p-button" onClick={() => onSearch({})}>
-                  Reset filters <ArrowRight size={17} />
-                </Button>
+                <h3>{unavailable ? "Games are temporarily unavailable" : "No games found"}</h3>
+                <p>
+                  {unavailable
+                    ? "Please try again shortly. You can still explore starter kits and learn how to make your own game."
+                    : "Try a different title or clear your filters."}
+                </p>
+                {unavailable ? (
+                  <a href="/templates" className="p-text-link">
+                    Explore starter kits <ArrowRight size={17} />
+                  </a>
+                ) : (
+                  <Button className="p-button" onClick={() => onSearch({})}>
+                    Reset filters <ArrowRight size={17} />
+                  </Button>
+                )}
               </div>
             )}
           </section>

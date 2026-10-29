@@ -14,7 +14,6 @@ import {
   Package,
   RotateCcw,
   ShieldCheck,
-  Terminal,
   X
 } from "lucide-react"
 import { useState } from "react"
@@ -24,7 +23,9 @@ import { SelectField } from "../select-field"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
+import { BuildOutput } from "./build-output"
 import { CommitLink } from "./commit-link"
+import { MediaWarnings } from "./media-warnings"
 import type { ProjectModel, Release } from "./model"
 import { Notice, StatusBadge } from "./primitives"
 import { releaseLabel } from "./release-label"
@@ -107,12 +108,13 @@ export function VersionDetail({
           </Button>
         </div>
       </div>
-      {!version.retained && (
+      <MediaWarnings warnings={version.build.mediaWarnings} />
+      {!version.retained && version.status !== "building" && version.status !== "queued" && (
         <Notice>
           This version's artifact is unavailable. Its history remains visible, but it cannot be deployed or restored.
         </Notice>
       )}
-      {!version.compatible && (
+      {!version.compatible && version.status !== "building" && version.status !== "queued" && (
         <Notice>
           This version expects a different database schema. Resolve compatibility before deploying it; code rollback
           does not reverse database changes.
@@ -286,29 +288,7 @@ export function VersionDetail({
           </div>
         </TabsContent>
         <TabsContent value="logs" className="space-y-5">
-          <section className="overflow-hidden rounded-xl border bg-[#17161c] text-slate-200">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-              <span className="flex items-center gap-2 text-xs">
-                <Terminal className="size-4 text-violet-300" />
-                Build output / {releaseLabel(version)}
-              </span>
-              <CopyButton label="Copy build logs" value={version.build.logs.join("\n")} compact />
-            </div>
-            <pre className="min-h-80 overflow-auto p-5 text-xs leading-8">
-              {version.build.logs.map((line, index) => (
-                <span
-                  key={`${index}-${line}`}
-                  className={cn(
-                    "block",
-                    line.includes("error") || line.includes("exited") ? "text-rose-300" : "text-slate-300"
-                  )}
-                >
-                  <span className="mr-5 inline-block w-4 select-none text-right text-slate-400">{index + 1}</span>
-                  {line}
-                </span>
-              ))}
-            </pre>
-          </section>
+          <BuildOutput version={version} />
         </TabsContent>
         <TabsContent value="checks" className="space-y-5">
           <div className="overflow-hidden rounded-xl border bg-card">

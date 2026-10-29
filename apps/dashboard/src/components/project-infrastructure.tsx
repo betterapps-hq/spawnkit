@@ -4,12 +4,14 @@ import { IncludedTool } from "./included-tool"
 import { Checkbox } from "./ui/checkbox"
 import { Label } from "./ui/label"
 export function Environments({
+  multiplayer,
   sandbox,
   onChange,
   github,
   previews,
   onPreviews
 }: {
+  multiplayer: boolean
   sandbox: boolean
   onChange: (enabled: boolean) => void
   github: boolean
@@ -42,14 +44,16 @@ export function Environments({
             />
             <span>
               <span className="block text-xs font-medium">Sandbox</span>
-              <span className="mt-1 block text-xs font-normal text-muted-foreground">$5/month + usage</span>
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                {multiplayer ? "Included in your bundle; compute is separate" : "$5/month + usage"}
+              </span>
             </span>
           </Label>
           <OptionInfo
             name="Sandbox"
             what="A separate staging version for testing before players see an update."
             why="Try changes safely, then promote a tested build to production."
-            includes="One Sandbox per game, with multiple regions for multiplayer. Adds $5/month plus usage; single-player uses static hosting without a game server."
+            includes="One Sandbox per game. Single-player adds $5/month plus usage; the multiplayer bundle includes Sandbox with regional machine usage billed separately."
           />
         </div>
         {github && (

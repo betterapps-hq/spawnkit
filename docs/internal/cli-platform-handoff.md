@@ -1,6 +1,6 @@
 # CLI platform handoff
 
-Status: CLI implemented; backend owner accepted `/api/platform/v1` and `spawn-source-v1` on 2026-10-14. Backend integration pending. Dashboard will proxy same-origin requests to the control Worker, verify Clerk OAuth tokens with its supported backend verifier, and enforce owner access. CLI owner edits `packages/cli/**` and this file only. No published package or live deployment.
+Status: CLI and backend integration implemented. `/api/platform/v1` and `spawn-source-v1` are the current contracts. The dashboard proxies same-origin requests to the control Worker, which verifies credentials and enforces project access. The public package is `@spawnkit/cli`; see the [release and remote-agent verification](../../specs/seo/cli-release-and-remote-agents.md).
 
 ## Authentication
 
@@ -8,7 +8,7 @@ Reuse `~/.spawn/credentials.json` from Clerk PKCE login. Windows storage is curr
 
 ## Proposed API
 
-All responses JSON; errors use HTTP status with `{error:{code,message}}` (redacted). IDs use `[A-Za-z0-9_-]`, maximum 128 characters. Environment enum `sandbox | production`; CLI accepts `staging` as an alias only.
+All responses JSON; errors use HTTP status with `{error:{code,message}}` (redacted). IDs use `[A-Za-z0-9_-]`, maximum 128 characters. Environment enum: `sandbox | production`.
 
 * `GET /projects/:projectId` → `{id,name,environments:{production:{enabled:true,currentReleaseId:string|null},sandbox:{enabled:boolean,currentReleaseId:string|null}}}`.
 * `POST /projects/:projectId/uploads` body `{format:"spawn-source-v1",sha256,sizeBytes}` → `{id}`. Authenticated, short-lived, project-scoped upload; no cross-origin signed URL is required for this first contract.
@@ -36,7 +36,7 @@ Endpoint/source format accepted by backend owner. Upload auth may later move to 
 
 ## Exact response shapes
 
-CLI review follow-up: added authenticated `spawn link --project <id>` using the existing `GET /projects/:id` contract, plus local-only `spawn unlink`. All local project commands now infer the nearest ancestor game root. Legacy `project set/show/clear` remain available. Failed/cancelled deployment status returns exit code 1; environment validation occurs before API calls. See `cli-judge-review.md` for findings and validation (69 CLI tests passing). The interactive New/Existing/Skip flow still needs list/create endpoints.
+CLI review follow-up: added authenticated `spawn link --project <id>` using the existing `GET /projects/:id` contract, plus local-only `spawn unlink`. All local project commands now infer the nearest ancestor game root. Failed/cancelled deployment status returns exit code 1; environment validation occurs before API calls. See `cli-judge-review.md` for findings and validation (69 CLI tests passing). The interactive New/Existing/Skip flow still needs list/create endpoints.
 
 These are the CLI's local types in `packages/cli/src/platform-api.ts` (no shared package was edited):
 
@@ -95,7 +95,7 @@ Implementation details to preserve during integration:
 * `.spawnignore` is additive glob syntax, not Git ignore syntax. `.gitignore` is not interpreted. Its negate rules cannot accidentally reinclude env files. Current scan is a defense for common credential signatures, not proof that arbitrary source content contains no secret; hosted secrets must use a separate configuration API.
 * Current source schema is gzip JSON, NOT tar/zip. Confirm backend support or explicitly negotiate a replacement format before connecting real uploads.
 * Listing/log commands return one page and expose continuation cursors. No watch/tail/reconnect support yet. Deployment acceptance returns durable IDs for later status/log commands.
-* Existing `project set/show/clear` selection is consumed. `spawn link`, account project picker, create-project prompt and post-login New/Existing/Skip remain pending the authenticated project-list/create API; they were not falsely simulated in this deployment slice.
+* `spawn link` verifies access and saves the selected project. Interactive linking supports creating a project, selecting an existing project, or skipping.
 * Authentication has no refresh token flow. API must accept and verify Clerk OAuth access tokens (not session cookies), enforce allowed OAuth client and project membership, and decide any additional deployment scopes before production.
 
 ## Project picker integration (October 14)
