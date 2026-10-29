@@ -135,6 +135,11 @@ function run(label, executable, args, cwd, log) {
     const timer = setTimeout(() => {
       timedOut = true
       child.kill()
+      // A process the command started can hold its output open after the command exits, so this doesn't wait for close.
+      child.stdout.destroy()
+      child.stderr.destroy()
+      log.push(`$ ${label}\n${output}`)
+      fail(new Error(`${label} timed out:\n${output}`))
     }, 180_000)
     child.on("error", (error) => {
       clearTimeout(timer)
@@ -142,9 +147,10 @@ function run(label, executable, args, cwd, log) {
     })
     child.on("close", (status) => {
       clearTimeout(timer)
+      if (timedOut) return
       log.push(`$ ${label}\n${output}`)
-      if (status === 0 && !timedOut) done(output)
-      else fail(new Error(`${label} ${timedOut ? "timed out" : "failed"}:\n${output}`))
+      if (status === 0) done(output)
+      else fail(new Error(`${label} failed:\n${output}`))
     })
   })
 }
