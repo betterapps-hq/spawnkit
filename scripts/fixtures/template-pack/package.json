@@ -1,0 +1,8 @@
+{
+  "name": "@spawn-fixture/tower",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A template package for SpawnKit's catalog, which pnpm test:templates serves from a local npm registry.",
+  "type": "module",
+  "exports": "./index.js"
+}

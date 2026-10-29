@@ -1,4 +1,4 @@
-import { requestArgv, type Answers } from "@buildkitgg/scaffolder"
+import { definePreset, requestArgv, type Answers, type PresetManifest } from "@buildkitgg/scaffolder"
 import {
   isAddonId,
   physicsOptions,
@@ -104,10 +104,18 @@ export function kitProjectName(kit: Pick<StarterKit, "id">): string {
   return `${kit.id}-game`
 }
 
-/**
- * The `spawn` arguments that create a kit: `init --preset <kit> <name>`. The engine renders requests, not presets, so
- * this is the one command written by hand. Tests check it plans the same files as the kit's answers.
- */
-export function kitArgv(kit: Pick<StarterKit, "id">): string[] {
-  return ["init", "--preset", kit.id, kitProjectName(kit)]
+type KitPreset = Pick<StarterKit, "id" | "name" | "template" | "physics">
+
+/** A kit as the catalog's preset of the same id. */
+export function kitPreset(kit: KitPreset): PresetManifest {
+  return definePreset({ id: kit.id, title: kit.name, answers: kitAnswers(kit) })
+}
+
+/** The `spawn` arguments that create a kit, as the engine writes them from its preset: `init --preset <kit> <name>`. */
+export function kitArgv(kit: KitPreset): string[] {
+  const preset = kitPreset(kit)
+  return requestArgv(
+    { intent: { command: "init", answers: { ...preset.answers, name: kitProjectName(kit) } } },
+    { preset }
+  )
 }

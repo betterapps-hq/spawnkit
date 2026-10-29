@@ -2,14 +2,18 @@ import { createHash } from "node:crypto"
 import { describeCatalog, memoryTree, pairwiseAnswers, plan, requestArgv } from "@buildkitgg/scaffolder"
 import { catalog, settings } from "@spawn/templates/scaffold"
 
-const init = (answers) => requestArgv({ intent: { command: "init", answers } })
+const init = (answers) => requestArgv({ intent: { command: "init", answers } }, { catalog })
 const add = (addons, replace = []) => requestArgv({ intent: { command: "add", addons, replace, options: {} } })
 
-// Each kit as `spawn init --preset` makes it. Kits add Vitest so their tests and coverage gate run too.
+// Each kit as `spawn init --preset` makes it, in the command the engine writes for its preset. Kits include Vitest, so
+// their tests and coverage gate run too.
 const kits = (catalog.presets ?? []).map((preset) => ({
   name: `kit-${preset.id}`,
   kind: "kit",
-  argv: ["init", "--preset", preset.id, `kit-${preset.id}`, "--with", "vitest"],
+  argv: requestArgv(
+    { intent: { command: "init", answers: { ...preset.answers, name: `kit-${preset.id}` } } },
+    { preset, catalog }
+  ),
   after: []
 }))
 
@@ -32,6 +36,17 @@ const flows = [
       optional: ["@spawnkit/vitest"]
     }),
     after: [add(["@spawnkit/matter"], ["@spawnkit/arcade"])]
+  }
+]
+
+// A template from a template package, which `spawn init <package>` installs from npm. The smoke script serves the one in
+// scripts/fixtures/template-pack from a local registry.
+const packs = [
+  {
+    name: "pack-tower",
+    kind: "pack",
+    argv: ["init", "@spawn-fixture/tower", "pack-tower", "--with", "vitest"],
+    after: []
   }
 ]
 
@@ -117,17 +132,20 @@ function sample(cases, count) {
 }
 
 /**
- * The smoke cases, in a stable order: each kit, the flows, then the generated games. `matrix` picks those games:
- * `sample`, a few of each template's pairwise games, for pull requests; `pairwise`, the whole pairwise set, weekly; or
- * `all`, every combination, run by hand. `argv` is the CLI command without `--yes --json`; the game's folder is the case
- * name.
+ * The smoke cases, in a stable order: each kit, the flows, the template package, then the generated games. `matrix`
+ * picks those games: `sample`, a few of each template's pairwise games, for pull requests; `pairwise`, the whole
+ * pairwise set, weekly; or `all`, every combination, run by hand. `argv` is the CLI command without `--yes --json`; the
+ * game's folder is the case name.
  */
 export async function templateCases({ matrix = "sample" } = {}) {
   if (!["sample", "pairwise", "all"].includes(matrix)) {
     throw new Error(`--matrix takes sample, pairwise or all, not ${matrix}`)
   }
   const { cases, rejected } = await generated(matrix === "all")
-  return { cases: [...kits, ...flows, ...(matrix === "sample" ? sample(cases, samplePerTemplate) : cases)], rejected }
+  return {
+    cases: [...kits, ...flows, ...packs, ...(matrix === "sample" ? sample(cases, samplePerTemplate) : cases)],
+    rejected
+  }
 }
 
 /**

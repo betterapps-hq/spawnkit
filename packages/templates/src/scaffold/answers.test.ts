@@ -2,7 +2,7 @@ import { describeCatalog, requestArgv, templateQuestions } from "@buildkitgg/sca
 import { describe, expect, it } from "vitest"
 import { addons, physicsOptions, telemetryOptions, templates, uiOptions } from "../catalog"
 import { starterKits } from "../kits"
-import { gameAnswers, initArgv, kitAnswers, kitArgv, kitProjectName } from "./answers"
+import { gameAnswers, initArgv, kitAnswers, kitArgv, kitPreset, kitProjectName } from "./answers"
 import { catalog, gameFiles } from "./index"
 
 const questions = (template: string) =>
@@ -84,11 +84,21 @@ describe("commands", () => {
     expect(initArgv(answers)).toEqual(requestArgv({ intent: { command: "init", answers } }))
     expect(gameAnswers({ template: "pixi" })).not.toHaveProperty("optional")
   })
+  it("writes the same command without the catalog, because no template selects a tool by default", () => {
+    // With a default, a game without that tool would need --without, which only the catalog can say.
+    const defaults = catalog.templates.flatMap((template) =>
+      Object.entries(template.optional ?? {}).filter(([, tool]) => tool.default)
+    )
+    expect(defaults).toEqual([])
+    const answers = gameAnswers({ name: "quiet-pond", template: "pixi", addons: ["storybook"] })
+    expect(initArgv(answers)).toEqual(requestArgv({ intent: { command: "init", answers } }, { catalog }))
+  })
   it("creates each kit from its preset", () => {
     const presets = describeCatalog(catalog).presets
     expect(presets.map((preset) => preset.id)).toEqual(starterKits.map((kit) => kit.id))
     for (const kit of starterKits) {
-      expect(catalog.presets!.find((preset) => preset.id === kit.id)!.answers).toEqual(kitAnswers(kit))
+      expect(catalog.presets!.find((preset) => preset.id === kit.id)).toEqual(kitPreset(kit))
+      expect(kitPreset(kit).answers).toEqual(kitAnswers(kit))
       expect(kitArgv(kit)).toEqual(["init", "--preset", kit.id, kitProjectName(kit)])
     }
   })

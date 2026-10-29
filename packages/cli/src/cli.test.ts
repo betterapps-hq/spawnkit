@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { basename, dirname, join, relative, resolve } from "node:path"
+import type { Prompter } from "@buildkitgg/scaffolder/cli"
 import { gameAnswers, initArgv, kitAnswers, kitArgv, kitProjectName } from "@spawn/templates/answers"
 import { starterKits } from "@spawn/templates/kits"
 import { gameFiles } from "@spawn/templates/scaffold"
@@ -109,6 +110,31 @@ describe("project commands", () => {
     await runCli([...initArgv(answers), "--yes", "--json"], directory, write)
     expect(json().status).toBe("applied")
     expect(await readTree(join(directory, "moon-jump"))).toEqual(await gameFiles(answers))
+  })
+  it("asks for the Sentry DSN when init runs in a terminal, and writes it to .env", async () => {
+    const dsn = "https://public@o0.ingest.sentry.io/0"
+    const asked: string[] = []
+    const answer = <T>(message: string, value: T) => {
+      asked.push(message)
+      return value
+    }
+    // Takes every default, and answers the DSN question.
+    const prompter: Prompter = {
+      select: async ({ message, options, initialValue }) => answer(message, initialValue ?? options[0]!.value),
+      multiselect: async ({ message, initialValues }) => answer(message, initialValues),
+      confirm: async ({ message }) => answer(message, true),
+      text: async ({ message, initialValue }) =>
+        answer(message, message.startsWith("VITE_SENTRY_DSN") ? dsn : (initialValue ?? "")),
+      password: async ({ message }) => {
+        throw new Error(`Nothing SpawnKit asks for is a secret, but it asked: ${message}`)
+      },
+      note: () => {}
+    }
+    await runCli(["init", "pixi", "demo", "--telemetry", "sentry"], directory, write, {
+      project: { isTTY: true, prompter }
+    })
+    expect(asked.filter((message) => message.startsWith("VITE_SENTRY_DSN"))).toHaveLength(1)
+    expect(await readFile(join(directory, "demo/.env"), "utf8")).toContain(`VITE_SENTRY_DSN=${dsn}`)
   })
   it("never prompts without a terminal", async () => {
     await runCli(["init", "pixi", "demo"], directory, write)

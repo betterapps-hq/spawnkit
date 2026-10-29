@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process"
-import { copyFile, mkdir, mkdtemp, readFile, unlink, writeFile } from "node:fs/promises"
+import { createHash } from "node:crypto"
+import { copyFile, mkdir, mkdtemp, readFile, readdir, unlink, writeFile } from "node:fs/promises"
 import { createServer } from "node:http"
 import { availableParallelism } from "node:os"
 import { extname, join, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
+import { gzipSync } from "node:zlib"
 import { findAddon, lockPath } from "@buildkitgg/scaffolder"
 import { chromium } from "@playwright/test"
 import { catalog, settings } from "@spawn/templates/scaffold"
@@ -73,17 +75,19 @@ if (flags.list) {
   const started = performance.now()
   const results = []
   const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] })
+  const registry = selected.some((entry) => entry.kind === "pack") ? await fixtureRegistry() : undefined
   try {
     const queue = [...selected]
     await Promise.all(
       Array.from({ length: workers }, async () => {
         for (let entry = queue.shift(); entry; entry = queue.shift()) {
-          results.push(await check(entry, { directory, cli, pnpm, browser }))
+          results.push(await check(entry, { directory, cli, pnpm, browser, registry }))
         }
       })
     )
   } finally {
     await browser.close()
+    await registry?.close()
     results.sort((left, right) => selected.indexOf(left.entry) - selected.indexOf(right.entry))
     await writeFile(
       join(directory, "results.json"),
@@ -124,10 +128,68 @@ function originCheck(expected) {
   `
 }
 
+/**
+ * Serves the template package in scripts/fixtures/template-pack as an npm registry would, so `spawn init <package>`
+ * fetches it with npm as it does from the real one.
+ */
+async function fixtureRegistry() {
+  const folder = join(root, "scripts/fixtures/template-pack")
+  const manifest = JSON.parse(await readFile(join(folder, "package.json"), "utf8"))
+  const files = await Promise.all(
+    (await readdir(folder)).map(async (file) => ({ path: `package/${file}`, data: await readFile(join(folder, file)) }))
+  )
+  const archive = tarball(files)
+  const integrity = `sha512-${createHash("sha512").update(archive).digest("base64")}`
+  const shasum = createHash("sha1").update(archive).digest("hex")
+  let packument = ""
+  const server = createServer((request, response) => {
+    const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname)
+    if (pathname === `/${manifest.name}`) response.writeHead(200, { "Content-Type": "application/json" }).end(packument)
+    else if (pathname === "/package.tgz")
+      response.writeHead(200, { "Content-Type": "application/octet-stream" }).end(archive)
+    else response.writeHead(404, { "Content-Type": "application/json" }).end('{"error":"Not found"}')
+  })
+  await new Promise((done) => server.listen(0, "127.0.0.1", done))
+  const url = `http://127.0.0.1:${server.address().port}/`
+  packument = JSON.stringify({
+    name: manifest.name,
+    "dist-tags": { latest: manifest.version },
+    versions: { [manifest.version]: { ...manifest, dist: { tarball: `${url}package.tgz`, integrity, shasum } } }
+  })
+  return { url, close: () => new Promise((done) => server.close(done)) }
+}
+
+/** A gzipped tar of the files, as `npm pack` writes one: ustar headers, contents padded to 512 bytes, two empty blocks. */
+function tarball(files) {
+  const blocks = files.flatMap(({ path, data }) => {
+    const header = Buffer.alloc(512)
+    const octal = (value, length) => value.toString(8).padStart(length - 1, "0") + "\0"
+    header.write(path, 0, 100)
+    header.write(octal(0o644, 8), 100)
+    header.write(octal(0, 8), 108)
+    header.write(octal(0, 8), 116)
+    header.write(octal(data.length, 12), 124)
+    header.write(octal(0, 12), 136)
+    header.write("0", 156)
+    header.write("ustar\0" + "00", 257)
+    // The checksum counts its own field as spaces.
+    header.fill(" ", 148, 156)
+    header.write(
+      octal(
+        header.reduce((sum, byte) => sum + byte, 0),
+        7
+      ) + " ",
+      148
+    )
+    return [header, data, Buffer.alloc((512 - (data.length % 512)) % 512)]
+  })
+  return gzipSync(Buffer.concat([...blocks, Buffer.alloc(1024)]))
+}
+
 /** Runs a command and resolves with its output. Its errors start with `label` and include the output. */
-function run(label, executable, args, cwd, log) {
+function run(label, executable, args, cwd, log, env) {
   return new Promise((done, fail) => {
-    const child = spawn(executable, args, { cwd, windowsHide: true })
+    const child = spawn(executable, args, { cwd, windowsHide: true, env: { ...process.env, ...env } })
     let output = ""
     let timedOut = false
     child.stdout.setEncoding("utf8").on("data", (chunk) => (output += chunk))
@@ -156,13 +218,19 @@ function run(label, executable, args, cwd, log) {
 }
 
 /** Generates one case through the CLI, then installs, lints, tests, builds and plays it. */
-async function check(entry, { directory, cli, pnpm, browser }) {
+async function check(entry, { directory, cli, pnpm, browser, registry }) {
   const { name } = entry
   const project = join(directory, name)
   const log = []
   const started = performance.now()
+  // A template package comes from the fixture registry, and the CLI and npm cache it in the case's own folder.
+  const cache = join(directory, `${name}-cache`)
+  const env =
+    entry.kind === "pack"
+      ? { npm_config_registry: registry.url, npm_config_cache: join(cache, "npm"), XDG_CACHE_HOME: cache }
+      : {}
   const spawnkit = (argv, cwd) =>
-    run(`spawn ${argv.join(" ")}`, process.execPath, [cli, ...argv, "--json", "--yes"], cwd, log)
+    run(`spawn ${argv.join(" ")}`, process.execPath, [cli, ...argv, "--json", "--yes"], cwd, log, env)
   const packageCommand = (args) =>
     /\.[cm]?js$/.test(pnpm)
       ? run(`pnpm ${args.join(" ")}`, process.execPath, [pnpm, ...args], project, log)
