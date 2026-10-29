@@ -7,15 +7,12 @@ export const getStarterKitDetails = createServerFn({ method: "GET" })
     return id
   })
   .handler(async ({ data }) => {
-    const [{ starterKitPlan }, { describeProjectPlan }] = await Promise.all([
-      import("./kit-plan"),
-      import("@spawn/templates")
-    ])
-    const plan = starterKitPlan(data)
+    const { starterKitPlan, projectSetup } = await import("./kit-plan")
+    const plan = await starterKitPlan(data)
     return {
       files: Object.keys(plan.files),
-      setup: describeProjectPlan(plan),
+      setup: projectSetup(plan.files),
       source: plan.files["src/main.ts"] ?? "",
-      modules: plan.modules
+      command: `pnpm dlx @spawnkit/cli ${plan.argv.join(" ")}`
     }
   })

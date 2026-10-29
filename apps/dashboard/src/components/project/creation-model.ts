@@ -1,4 +1,4 @@
-import { selectedComponents } from "@spawn/templates"
+import { gameAnswers, initArgv, type Answers } from "@spawn/templates/answers"
 import type { TemplateId, AddonId, PhysicsId, UiId, TelemetryId, ServiceId } from "@spawn/templates/catalog"
 import type { GitHubSelection } from "@/lib/github-selection"
 import type { ComputeLocation } from "../compute-regions"
@@ -44,6 +44,21 @@ export function projectSlug(name: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
 }
+/** The engine answers for a draft's game. Throws when its choices don't make a game. */
+export function draftAnswers(draft: ProjectDraft): Answers {
+  return gameAnswers({ ...draft, name: projectSlug(draft.name) || "my-game" })
+}
+/**
+ * `spawn init` for a draft, from the engine's rendering of its request. A saved configuration that no longer makes a
+ * game falls back to the wizard, which asks for everything.
+ */
 export function scaffoldCommand(draft: ProjectDraft) {
-  return `npx @spawnkit/cli init ${projectSlug(draft.name) || "my-game"} --add ${selectedComponents(draft).join(",")}`
+  return `npx @spawnkit/cli ${scaffoldArgv(draft).join(" ")}`
+}
+function scaffoldArgv(draft: ProjectDraft) {
+  try {
+    return initArgv(draftAnswers(draft))
+  } catch {
+    return ["init"]
+  }
 }

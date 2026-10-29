@@ -1,6 +1,5 @@
-import { createProjectPlan } from "@spawn/templates"
-import { colyseusServices, hostingPlans, hostingRegions } from "@spawn/templates/catalog"
-import { defaultProjectDraft, projectSlug, type ProjectDraft } from "@/components/project/creation-model"
+import { colyseusServices, hostingPlans, hostingRegions, validateProjectName } from "@spawn/templates/catalog"
+import { defaultProjectDraft, draftAnswers, projectSlug, type ProjectDraft } from "@/components/project/creation-model"
 import type { ProjectModel, Region } from "@/components/project/model"
 import { readDomainConfigurations, type DomainConfiguration } from "./domain-config"
 import { githubError } from "./github-selection"
@@ -40,14 +39,9 @@ export function readProjectDraft(value: unknown): ProjectDraft {
   )
     throw new Error("Check your project configuration.")
   const draft = value as unknown as ProjectDraft
-  createProjectPlan({
-    name: projectSlug(draft.name),
-    template: draft.template,
-    addons: draft.addons,
-    physics: draft.physics,
-    ui: draft.ui,
-    telemetry: draft.telemetry
-  })
+  const nameError = validateProjectName(projectSlug(draft.name))
+  if (nameError) throw new Error(nameError)
+  draftAnswers(draft)
   const sourceError = githubError(draft.github)
   if (sourceError) throw new Error(sourceError)
   for (const locations of [draft.productionLocations, draft.sandboxLocations]) {

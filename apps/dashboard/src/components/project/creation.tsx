@@ -1,4 +1,3 @@
-import { createProjectPlan } from "@spawn/templates"
 import {
   templates,
   platformOptions,
@@ -40,7 +39,7 @@ import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { defaultProjectDraft, projectSlug, scaffoldCommand, type ProjectDraft } from "./creation-model"
+import { defaultProjectDraft, draftAnswers, projectSlug, scaffoldCommand, type ProjectDraft } from "./creation-model"
 import type { ActionHandler } from "./model"
 import { Notice } from "./primitives"
 
@@ -119,14 +118,7 @@ export function ProjectCreation({
       return
     }
     try {
-      createProjectPlan({
-        name: slug,
-        template: draft.template,
-        addons: draft.addons,
-        physics: draft.physics,
-        ui: draft.ui,
-        telemetry: draft.telemetry
-      })
+      draftAnswers(draft)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "This combination cannot be generated.")
       return

@@ -1,3 +1,4 @@
+import { gameAnswers, initArgv } from "@spawn/templates/answers"
 import {
   addons,
   physicsOptions,
@@ -11,7 +12,6 @@ import {
   type TemplateId,
   type UiId
 } from "@spawn/templates/catalog"
-import { resolveComposition, selectedComponents } from "@spawn/templates/composition"
 import { starterKits } from "@spawn/templates/kits"
 import {
   ArrowDownToLine,
@@ -52,31 +52,18 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
   const [tools, setTools] = useState<AddonId[]>(["vitest"])
   const [notice, setNotice] = useState("")
   const [busy, setBusy] = useState(false)
-  const options = useMemo(
-    () => ({
-      name,
-      template: engine,
-      physics,
-      ui,
-      telemetry,
-      addons: [...tools, ...(ecs === "none" ? [] : [ecs as AddonId])]
-    }),
-    [name, engine, physics, ui, telemetry, ecs, tools]
-  )
-  const selection = selectedComponents(options)
   const nameError = validateProjectName(name)
   const result = useMemo(() => {
-    if (validateProjectName(options.name)) return { error: "Choose a valid project name to preview your files." }
+    if (validateProjectName(name)) return { error: "Choose a valid project name to preview your files." }
     try {
-      const resolved = resolveComposition(options.name, selectedComponents(options))
-      if ("issue" in resolved) return { error: resolved.issue.message }
-      return { plan: resolved.plan }
+      const addons = [...tools, ...(ecs === "none" ? [] : [ecs as AddonId])]
+      return { answers: { ...gameAnswers({ template: engine, physics, ui, telemetry, addons }), name } }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "This combination is not available." }
     }
-  }, [options])
+  }, [name, engine, physics, ui, telemetry, ecs, tools])
   const engineInfo = templates.find((item) => item.id === engine)!
-  const command = `pnpm dlx @spawnkit/cli init ${name} --add ${selection.join(",")}`
+  const command = result.answers ? `pnpm dlx @spawnkit/cli ${initArgv(result.answers).join(" ")}` : ""
   function selectEngine(next: TemplateId) {
     setEngine(next)
     setPhysics("none")
@@ -84,12 +71,12 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
     setNotice("")
   }
   async function download() {
-    if (!result.plan || busy) return
+    if (!result.answers || busy) return
     setBusy(true)
     setNotice("")
     try {
       const { projectArchive } = await import("@/lib/project-archive")
-      const archive = projectArchive(result.plan.options)
+      const archive = await projectArchive(result.answers)
       const url = URL.createObjectURL(new Blob([new Uint8Array(archive)], { type: "application/zip" }))
       const link = document.createElement("a")
       link.href = url
@@ -346,7 +333,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                 <br />
                 <Check size={15} /> Standalone. Ready for your AI editor.
               </div>
-              <Button className="p-button" disabled={!result.plan || busy} onClick={() => void download()}>
+              <Button className="p-button" disabled={!result.answers || busy} onClick={() => void download()}>
                 <ArrowDownToLine size={18} />
                 {busy ? "Preparing your kit…" : "Download starter kit"}
               </Button>
@@ -357,7 +344,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                   {result.error}
                 </p>
               )}
-              <ProjectFilePreview options={result.plan?.options} />
+              <ProjectFilePreview answers={result.answers} />
               <div className="p-included-steps">
                 <b>Run your project</b>
                 <ol>
@@ -376,15 +363,15 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
           <div>
             <Terminal size={24} />
             <h2>Create with the CLI</h2>
-            <p>Run the same setup from the SpawnKit repository.</p>
+            <p>This command writes exactly the files in the download.</p>
           </div>
           <div>
-            <code>{nameError ? "Choose a valid project name above." : command}</code>
+            <code>{nameError ? "Choose a valid project name above." : command || result.error}</code>
             <CopyButton
               className="p-button p-button-outline"
               value={command}
               label="Copy CLI command"
-              disabled={!!nameError || !result.plan}
+              disabled={!result.answers}
             />
           </div>
         </section>
