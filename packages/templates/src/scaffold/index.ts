@@ -1,4 +1,11 @@
-import { memoryTree, plan, type Answers, type Plan } from "@buildkitgg/scaffolder"
+import {
+  describeCatalog,
+  memoryTree,
+  plan,
+  type Answers,
+  type CatalogDescription,
+  type Plan
+} from "@buildkitgg/scaffolder"
 import { catalog, settings } from "./catalog"
 
 export { catalog, settings } from "./catalog"
@@ -31,4 +38,9 @@ export async function gameFiles(answers: Answers): Promise<Record<string, string
       operation.content === undefined ? [] : [[operation.path, operation.content]]
     )
   )
+}
+
+/** Every question `spawn init` can ask, as `spawn catalog --json` prints it. */
+export function catalogQuestions(): CatalogDescription {
+  return describeCatalog(catalog)
 }

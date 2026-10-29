@@ -1,6 +1,9 @@
 import { templates, type PhysicsId, type TemplateId } from "./catalog"
 
-/** Deliberately curated public kits; configuration still resolves through composition. */
+/**
+ * Deliberately curated public kits: display data for the kit pages and the agent catalog. Each kit is also the engine
+ * preset of the same id in `@spawn/templates/scaffold`, with the answers `kitAnswers` gives it.
+ */
 export const starterKits = [
   ...templates.map((template) => ({
     id: template.id as string,
