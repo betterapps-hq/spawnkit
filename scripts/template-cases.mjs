@@ -118,7 +118,7 @@ function sample(cases, count) {
 
 /**
  * The smoke cases, in a stable order: each kit, the flows, then the generated games. `matrix` picks those games:
- * `sample`, a few of each template's pairwise games, for pull requests; `pairwise`, the whole pairwise set, nightly; or
+ * `sample`, a few of each template's pairwise games, for pull requests; `pairwise`, the whole pairwise set, weekly; or
  * `all`, every combination, run by hand. `argv` is the CLI command without `--yes --json`; the game's folder is the case
  * name.
  */

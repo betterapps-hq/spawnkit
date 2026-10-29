@@ -1,9 +1,9 @@
 name: Template matrix
 on:
-  # Each kit, the flows and the engine's whole pairwise set of template answers, every night. Pull requests run a sample
+  # Each kit, the flows and the engine's whole pairwise set of template answers, every Monday. Pull requests run a sample
   # of the pairwise set. Run it by hand with matrix "all" for every combination, which is about 1,600 games.
   schedule:
-    - cron: "0 7 * * *"
+    - cron: "0 7 * * 1"
   workflow_dispatch:
     inputs:
       matrix:
