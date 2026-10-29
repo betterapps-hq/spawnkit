@@ -1,26 +1,24 @@
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
-import { addons, templates, physicsOptions, uiOptions, telemetryOptions } from "@spawn/templates/catalog"
+import type { CliIo } from "@buildkitgg/scaffolder/cli"
 import { version } from "../package.json"
 import { authenticationStatus, login, logout, readCredentials } from "./auth"
 import { remoteLogin } from "./auth-remote"
 import { openBrowser } from "./browser"
-import { runComposition, type CompositionPrompts } from "./composition"
 import { guidedLink } from "./link"
 import type { LinkPrompts } from "./link"
 import { platformCommands, runPlatform } from "./platform"
 import type { PlatformOptions } from "./platform"
 import { createPlatformApi, identifier } from "./platform-api"
 import { projectSelection } from "./project"
+import { isProjectCommand, projectCommandHelp, projectHelp, runProjectCommand } from "./project-commands"
 import { findGameRoot } from "./source"
 
 const help = `SPAWNKIT  /  Build your next world
 
-Usage:
-  spawn addons [--json]
-  spawn templates [--json]
-  spawn init [directory] [options]
-  spawn add <module...> [--directory <path>] [--yes] [--dry-run] [--json]
+${projectHelp()}
+
+Publish a game:
   spawn login --site <website-url>
   spawn login --remote --email <account-email> --project <id>
   spawn logout [--json]
@@ -33,12 +31,9 @@ Usage:
   spawn rollback <release-id> --env <environment> [--yes]
 
 Options:
-  --add <names>       Add-ons, comma-separated; repeatable (see spawn addons)
-  --name <name>       Package name (defaults to directory name)
-  --replace <names>   Explicitly replace incompatible add-ons in an existing game
-  --dry-run           Show the plan and unresolved decisions without writing files
-  --directory <path>  Existing project for add (defaults to current directory)
-  --yes              Accept a resolved plan; never overwrite edits
+  --dry-run           Show the plan without writing files
+  --yes               Apply a plan without asking; it never makes a decision for you
+  --directory <path>  Game folder for login, link and unlink (defaults to current directory)
   --site <url>        SpawnKit website for login (or SPAWN_SITE_URL)
   --no-browser        Print the login link without opening a browser
   --json             Machine-readable output
@@ -46,11 +41,11 @@ Options:
   --version          Show CLI version
 
 Examples:
-  spawn init my-game --add pixi
-  spawn init my-world --add babylon,bitecs,vitest
+  spawn init pixi my-game --physics rapier2d --ui pixi-ui --with vitest
+  spawn init --preset three-rapier my-world
+  spawn add sentry
 
-Run pnpm install in the generated project, then pnpm dev.
-Run spawn init with no directory for guided setup in a terminal.
+Run pnpm install in the new game, then pnpm dev.
 `
 
 export async function runCli(
@@ -58,14 +53,20 @@ export async function runCli(
   cwd: string,
   write: (text: string) => void,
   setup: {
-    sentryDsn?: string
     platform?: PlatformOptions
     linkPrompts?: LinkPrompts
-    composition?: CompositionPrompts
+    /** Prompts and terminal detection for project commands. Without them, project commands never prompt. */
+    project?: Partial<CliIo>
   } = {}
 ): Promise<void> {
-  if (args[0] === "add" || args[0] === "addons" || args[0] === "init") {
-    await runComposition(args, cwd, write, setup)
+  if (isProjectCommand(args, cwd)) {
+    if (args.includes("--help") || args.includes("-h")) {
+      const content = projectCommandHelp(args[0]!)
+      write(args.includes("--json") ? JSON.stringify({ status: "help", content }) + "\n" : content)
+      return
+    }
+    const code = await runProjectCommand(args, { cwd, stdout: write, stderr: write, isTTY: false, ...setup.project })
+    if (code !== 0) process.exitCode = code
     return
   }
   if (args[0] && platformCommands.includes(args[0])) {
@@ -173,9 +174,7 @@ export async function runCli(
         ? "SPAWNKIT  /  Connect your CLI\n\nUsage:\n  spawn login [--site <website-url>] [--directory <game-folder>] [--no-browser] [--json]\n\nOpens your browser to sign in and review access. The link is also printed as a fallback.\nUse --no-browser to open the link yourself. JSON mode never opens a browser.\nAfter sign-in inside a game, choose New project, Existing project, or Skip.\nUse --directory to link a game from elsewhere.\nFor a remote agent: spawn login --remote --email <account-email> --project <id>.\nThe owner approves a six-digit code in their browser. Access is limited to that project for one hour.\nSPAWN_SITE_URL can supply the website. No browser password is entered in the CLI.\n"
         : command === "logout"
           ? "SPAWNKIT  /  Sign out\n\nUsage:\n  spawn logout [--json]\n\nRevokes remote-agent access on the server, then removes credentials on this computer. Local OAuth and browser sessions are unchanged. If revocation fails, credentials are kept so you can retry.\n"
-          : command === "templates"
-            ? "SPAWNKIT  /  Template catalog\n\nUsage:\n  spawn templates [--json]\n\nLists supported renderers, add-ons, and option compatibility.\n\nNext:\n  spawn init\n"
-            : help
+          : help
     write(values.json ? JSON.stringify({ status: "help", content }) + "\n" : content)
     return
   }
@@ -252,20 +251,5 @@ export async function runCli(
   }
   if (values.site) throw new Error("--site is only supported by login")
   if (values["no-browser"]) throw new Error("--no-browser is only supported by login")
-  if (command === "templates") {
-    if (directory || values["dry-run"] || values.directory || values.yes)
-      throw new Error("templates accepts only --json")
-    write(
-      values.json
-        ? JSON.stringify({ templates, addons, physicsOptions, uiOptions, telemetryOptions }, null, 2) + "\n"
-        : templates
-            .map((entry) => `${entry.id.padEnd(10)} ${entry.dimension.toUpperCase()} single-player / ${entry.name}`)
-            .join("\n") +
-            "\nAdd-ons: " +
-            addons.map((entry) => entry.id).join(", ") +
-            "\n"
-    )
-    return
-  }
   throw new Error(`Unknown command: ${command}. Run spawn --help.`)
 }

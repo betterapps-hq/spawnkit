@@ -24,11 +24,12 @@ test.describe("Scaffolded game telemetry", () => {
       [
         resolve("packages/cli/dist/main.mjs"),
         "init",
+        "pixi",
         gamePath,
         "--name",
         "telemetry-acceptance",
-        "--add",
-        "pixi,platform-telemetry",
+        "--telemetry",
+        "platform-telemetry",
         "--yes"
       ],
       { stdio: "pipe" }
