@@ -96,6 +96,7 @@ export async function createPhysicsWorld(host: HTMLElement, onSettled: () => voi
     return { ...item, body, mesh }
   })
   let frame = 0
+  let released = 0
   let last = 0
   let accumulator = 0
   let elapsed = 0
@@ -118,7 +119,10 @@ export async function createPhysicsWorld(host: HTMLElement, onSettled: () => voi
       elapsed += 1 / 60
     }
     sync()
-    if (elapsed < 12 && !objects.every(({ body }) => body.isSleeping())) frame = requestAnimationFrame(step)
+    // A slow device steps at most 0.1 s per frame and would replay the course in slow motion, so finish it at once
+    // after 10 real seconds.
+    if (now - released > 10_000) settle()
+    else if (elapsed < 12 && !objects.every(({ body }) => body.isSleeping())) frame = requestAnimationFrame(step)
     else {
       frame = 0
       onSettled()
@@ -145,7 +149,7 @@ export async function createPhysicsWorld(host: HTMLElement, onSettled: () => voi
     })
     elapsed = 0
     accumulator = 0
-    last = performance.now()
+    released = last = performance.now()
     if (motion.matches) settle()
     else frame = requestAnimationFrame(step)
   }

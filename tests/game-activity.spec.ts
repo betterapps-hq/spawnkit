@@ -20,7 +20,7 @@ test("views survive refreshes and plays are distinct from viewing or restarting"
     }
     await route.fulfill({ json: { counted, views, plays } })
   })
-  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.cloud/**", (route) =>
+  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.games/**", (route) =>
     route.fulfill({
       contentType: "text/html",
       body: `<button onclick="parent.postMessage({type:'spawnkit:play'},'*')">Start game</button>`
@@ -62,7 +62,7 @@ test("activity failures and unavailable browser storage never block the game or 
     requests++
     return route.fulfill({ status: 503, json: { error: { code: "unavailable" } } })
   })
-  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.cloud/**", (route) =>
+  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.games/**", (route) =>
     route.fulfill({
       contentType: "text/html",
       body: `<button onclick="parent.postMessage({type:'spawnkit:play'},'*')">Start game</button>`

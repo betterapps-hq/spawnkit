@@ -29,7 +29,7 @@ test("saves, edits and removes ratings/comments with live totals and preserved f
     else text = method === "DELETE" ? "" : route.request().postDataJSON().body
     return route.fulfill({ json: { totals: totals() } })
   })
-  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.cloud/**", (route) =>
+  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.games/**", (route) =>
     route.fulfill({ contentType: "text/html", body: "<button>Start game</button>" })
   )
   await page.goto(player)
@@ -72,7 +72,7 @@ test("signed-out readers see public feedback and a sign-in prompt, not posting c
         : { json: { totals: { rating: 0, reviews: 0, comments: 0 }, comments: [], nextCursor: null } }
     )
   )
-  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.cloud/**", (route) =>
+  await page.route("https://d-b2a727d1.spawn-snake.spawnkit.games/**", (route) =>
     route.fulfill({ contentType: "text/html", body: "Game" })
   )
   await page.goto(player)

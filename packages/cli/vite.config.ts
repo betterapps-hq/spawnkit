@@ -11,7 +11,8 @@ export default defineConfig({
     license: { fileName: "THIRD-PARTY-LICENSES.md" },
     rolldownOptions: {
       input: "src/main.ts",
-      output: { format: "es", entryFileNames: "main.mjs", banner: "#!/usr/bin/env node" }
+      // The bin is one file, so it runs wherever it is copied.
+      output: { format: "es", entryFileNames: "main.mjs", banner: "#!/usr/bin/env node", codeSplitting: false }
     }
   }
 })
