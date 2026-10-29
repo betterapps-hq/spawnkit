@@ -1,16 +1,22 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { catalog } from "@spawn/templates/scaffold"
+import { checkCatalog, memoryTree, mergePacks, plan } from "@buildkitgg/scaffolder"
+import { catalog, settings } from "@spawn/templates/scaffold"
+import fixturePack from "./fixtures/template-pack/index.js"
 import { selectCases, templateCases } from "./template-cases.mjs"
 
 const { cases, rejected } = await templateCases({ matrix: "pairwise" })
 
-test("cases cover each kit, the flows and every game in the pairwise set once", () => {
+test("cases cover each kit, the flows, the template package and every game in the pairwise set once", () => {
   assert.deepEqual(
-    cases.filter((entry) => entry.kind === "kit").map((entry) => entry.argv.slice(0, 3)),
-    catalog.presets.map((preset) => ["init", "--preset", preset.id])
+    cases.filter((entry) => entry.kind === "kit").map((entry) => entry.argv),
+    catalog.presets.map((preset) => ["init", "--preset", preset.id, `kit-${preset.id}`])
   )
   assert.ok(cases.some((entry) => entry.kind === "flow" && entry.after.length > 0))
+  assert.deepEqual(
+    cases.filter((entry) => entry.kind === "pack").map((entry) => entry.argv.slice(0, 2)),
+    [["init", "@spawn-fixture/tower"]]
+  )
   assert.equal(new Set(cases.map((entry) => entry.name)).size, cases.length)
   assert.deepEqual(rejected, [])
   for (const template of catalog.templates) {
@@ -19,6 +25,24 @@ test("cases cover each kit, the flows and every game in the pairwise set once", 
     // Every case names its own folder, which is also its package name and local hostname.
     for (const entry of pairwise) assert.equal(entry.argv[2], entry.name)
   }
+})
+
+test("the fixture template package extends the catalog and plans its game", async () => {
+  const merged = mergePacks(catalog, [{ name: "@spawn-fixture/tower", version: "1.0.0", pack: fixturePack }])
+  assert.deepEqual(checkCatalog(merged), [])
+  const planned = await plan({
+    catalog: merged,
+    settings,
+    request: {
+      intent: {
+        command: "init",
+        answers: { template: "@spawn-fixture/tower#tower", name: "pack-tower", optional: ["@spawnkit/vitest"] }
+      }
+    },
+    tree: memoryTree({})
+  })
+  assert.equal(planned.status, "planned", planned.error?.message)
+  assert.ok("@spawn-fixture/tower/waves" in planned.lock.addons)
 })
 
 test("shards split the selected cases without overlap", () => {

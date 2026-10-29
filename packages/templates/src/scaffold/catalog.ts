@@ -1,8 +1,8 @@
-import { defineCatalog, definePreset, defineSettings, defineSlot, defineTemplate } from "@buildkitgg/scaffolder"
+import { defineCatalog, defineSettings, defineSlot, defineTemplate } from "@buildkitgg/scaffolder"
 import { templates } from "../catalog"
 import { starterKits } from "../kits"
 import { addons } from "./addons"
-import { kitAnswers } from "./answers"
+import { kitPreset } from "./answers"
 import { spawnkitTarget } from "./target"
 
 /**
@@ -76,5 +76,5 @@ export const catalog = defineCatalog({
   ),
   addons,
   // Each starter kit is a preset of the same id, so a kit download is what `spawn init --preset <kit>` writes.
-  presets: starterKits.map((kit) => definePreset({ id: kit.id, title: kit.name, answers: kitAnswers(kit) }))
+  presets: starterKits.map(kitPreset)
 })
