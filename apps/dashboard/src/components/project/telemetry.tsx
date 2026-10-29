@@ -475,8 +475,9 @@ function TelemetrySetup({
       <div className="mt-4 space-y-3">
         <p className="text-sm text-muted-foreground">
           Create the game with <code>--telemetry platform-telemetry</code>, or run{" "}
-          <code>spawn add platform-telemetry</code> in an existing one. Add your game origins, then copy the public
-          configuration into the game's .env file and redeploy. Capture starts only after your game calls{" "}
+          <code>spawn add platform-telemetry</code> in an existing one and then <code>pnpm install</code>, committing
+          the updated <code>pnpm-lock.yaml</code>. Add your game origins, then copy the public configuration into the
+          game&apos;s .env file and redeploy. Capture starts only after your game calls{" "}
           <code>setTelemetryConsent(true)</code> according to its collection policy.
         </p>
         <Label htmlFor="telemetry-origins">Allowed game origins (comma separated)</Label>

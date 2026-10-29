@@ -10,7 +10,7 @@ Future work: [self-hosted analytics architecture and regional routing](telemetry
 pnpm cli init pixi ../my-game --telemetry platform-telemetry --with vitest
 ```
 
-This creates a standalone local dependency at `vendor/spawn-telemetry`; it does not require a registry release or this monorepo at runtime. Other supported renderers use the same adapter. For an existing application, build and pack `packages/telemetry`, then install the resulting tarball with your package manager. In an existing generated project, `spawn add platform-telemetry` adds it.
+This creates a standalone local dependency at `vendor/spawn-telemetry`; it does not require a registry release or this monorepo at runtime. Other supported renderers use the same adapter. For an existing application, build and pack `packages/telemetry`, then install the resulting tarball with your package manager. In an existing generated project, `spawn add platform-telemetry` adds it; then run `pnpm install` and commit the updated `pnpm-lock.yaml` before building or deploying.
 
 Open the project's dashboard Analytics → Telemetry setup. Enter exact origins, including protocol and port; localhost HTTP is accepted for development. Configure ingestion and copy the returned public environment values into the game's ignored `.env`. Keys are shown only once. They are signed write-only configuration scoped to that project and environment. Rotation immediately invalidates the previous key; update all clients and rebuild/redeploy. Origin checks constrain browsers but cannot authenticate a server client holding the public key.
 

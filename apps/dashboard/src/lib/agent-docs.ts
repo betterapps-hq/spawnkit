@@ -733,7 +733,7 @@ export const agentDocuments: AgentDocument[] = [
           },
           {
             type: "paragraph",
-            text: "Catalog v1 changes are additive. Clients should ignore unknown fields; breaking changes require a new versioned path. Prefer the URLs returned by the catalog over constructing download paths."
+            text: "SpawnKit hasn't launched, so the catalog's shape can still change at this path. Clients should ignore unknown fields and update when the documented shape changes. Prefer the URLs returned by the catalog over constructing download paths."
           }
         ]
       },
