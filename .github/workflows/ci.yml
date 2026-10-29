@@ -29,7 +29,6 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: pnpm verify
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:templates
       - run: pnpm test:telemetry-package
       - run: pnpm test:cli-package
 
@@ -64,9 +63,39 @@ jobs:
             test-results/
           retention-days: 7
 
+  # Each kit, the flows and a sample of the pairwise set of answers, generated, installed, tested and built.
+  # template-matrix.yml runs the whole pairwise set weekly.
+  templates:
+    name: Templates (${{ matrix.shard }}/2)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    concurrency:
+      group: templates-${{ matrix.shard }}-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:templates --shard ${{ matrix.shard }}/2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: template-failures-${{ matrix.shard }}
+          path: |
+            work/templates-*/*.log
+            work/templates-*/*.png
+            work/templates-*/results.json
+          retention-days: 7
+
   staging:
     name: Staging
-    needs: [verify, browser]
+    needs: [verify, browser, templates]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -80,7 +109,7 @@ jobs:
 
   preview:
     name: PR preview
-    needs: [verify, browser]
+    needs: [verify, browser, templates]
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft && github.actor != 'dependabot[bot]'
     permissions:
       contents: read
