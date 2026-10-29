@@ -9,6 +9,7 @@
     ".": {
       "ignoreDependencies": ["cf"],
       "entry": [
+        "dev-domains.config.ts",
         "tests/**/*.ts",
         "playwright.community.config.ts",
         "playwright.seo.config.ts",

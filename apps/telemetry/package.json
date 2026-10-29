@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "cf dev",
+    "dev": "dev-domains run telemetry",
     "build": "cf build",
     "deploy": "cf deploy",
     "check:types": "cf workers types && tsc --noEmit",

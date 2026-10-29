@@ -25,6 +25,7 @@ An AI-native web-game hosting platform: “Vercel meets PlayFab” for developer
 | [Community safety design](community-safety-design.md) | Implemented reports, team permissions and listing settings; Storybook proposals for storage cleanup |
 | [Game services](game-services.md) | Supported official Colyseus capabilities and their configuration/persistence lifecycle |
 | [Project templates](project-templates.md) | Presets, composable stack selection, generation, import, install, and add |
+| [Domains](domains.md) | Environment mappings, typed local configuration, authentication and webhook migration |
 | [Development](development.md) | Current workspace, local commands, template implementation, and next steps |
 | [Performance and usage controls](internal/performance-and-limits.md) | Polling, cache behavior, build allowances, rate limits, CPU bounds and billing alerts |
 | [Game upload security audit](internal/game-upload-security-audit.md) | Upload/build boundaries, iframe and CSP controls, verified risks and remediation priorities |

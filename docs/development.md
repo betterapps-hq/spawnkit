@@ -22,7 +22,7 @@ React is used by the dashboard only. Generated game projects do not include Reac
 
 Local services share the existing Portless proxy on port 443. `pnpm dev:setup` starts it if needed; trust its local CA once on a new machine. `pnpm dev:database` applies migrations only to the checkout's local database. Use `pnpm dev:api` and `pnpm dev:telemetry` in separate terminals. The dashboard defaults to staging services; set `SPAWN_CONTROL_API_URL=https://api.local.spawnkit.cloud` to use the local API. Local Workers have isolated local storage and development credentials.
 
-`pnpm dev:urls` prints all checkout origins. Worktrees get a stable directory-derived name; `SPAWN_LOCAL_NAME` can supply an explicit name. Use `pnpm dev:register` followed by a staging-services deployment to add that checkout's exact origins to the staging API allowlist. Production never accepts these origins. Browser tests start separate app and Storybook instances. CI uses loopback origins; `SPAWN_E2E_LOOPBACK=1` also selects that mode explicitly.
+`pnpm dev:urls` prints all checkout origins. The typed `dev-domains.config.ts` defines all endpoints through `@buildkitgg/dev-domains`. Primary checkout names stay unchanged. Linked worktrees use their normalized directory name without a hash; branches do not affect domains. Configure endpoint `name` templates to override them. Complete-hostname collisions fail instead of taking over another server. Use `pnpm dev:register` followed by a staging-services deployment to add that checkout's exact origins to the staging API allowlist. Production never accepts these origins. Browser tests start separate app and Storybook instances. CI uses loopback origins; `SPAWN_E2E_LOOPBACK=1` also selects that mode explicitly.
 
 `pnpm dev:hooks:setup` reserves a named public tunnel; `--slot`, `--target`, and `--path` select a slot, local service, and exact webhook path. Deploy staging services for the shared webhook certificate and production services for the slot routing registry. Restart the API, then run `pnpm dev:hooks`. Only the selected path is exposed; other paths return 404. The tunnel validates Portless TLS. Tunnel credentials and the local signing secret remain in ignored local files. Register the printed URL with the provider. Signed GitHub ping checks work before App authorization; processing repository events requires GitHub App credentials.
 
@@ -44,7 +44,7 @@ pnpm test:e2e
 pnpm test:templates
 ```
 
-`verify` runs formatting, lint, types, unused-code checks, unit coverage, and production builds. Browser acceptance runs separately. `pnpm format` applies formatting. The dashboard uses trusted HTTPS at `https://local.spawnkit.cloud`; Portless assigns a private backend port. See [domains](domains.md) for the complete contract.
+`verify` runs formatting, lint, types, unused-code checks, unit coverage, and production builds. Browser acceptance runs separately. `pnpm format` applies formatting. The dashboard uses trusted HTTPS at `https://local.spawnkit.cloud`; Buildkit reserves a private backend port and registers its complete hostname with Portless. See [domains](domains.md) for the complete contract.
 
 Media processor acceptance tests require `ffmpeg` and `ffprobe` on PATH. CI installs FFmpeg, and the hosted build Dockerfile owns its production installation; game projects do not need this dependency. These tests encode real MP4/WebM inputs and verify the size, format, duration and fail-closed listing behavior.
 
