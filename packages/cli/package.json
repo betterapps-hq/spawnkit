@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@babel/parser": "7.29.9",
+    "@buildkitgg/scaffolder": "catalog:",
     "@clack/prompts": "1.8.1",
     "@spawn/templates": "workspace:*",
     "picocolors": "^1.1.1",
