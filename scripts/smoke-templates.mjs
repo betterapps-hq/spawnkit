@@ -10,6 +10,7 @@ import { gzipSync } from "node:zlib"
 import { findAddon, lockPath } from "@buildkitgg/scaffolder"
 import { chromium } from "@playwright/test"
 import { catalog, settings } from "@spawn/templates/scaffold"
+import fixturePack from "./fixtures/template-pack/index.js"
 import { selectCases, templateCases } from "./template-cases.mjs"
 
 // pnpm test:templates [--matrix sample|pairwise|all] [--all] [--case <filter>,...] [--shard <index>/<count>] [--jobs <count>]
@@ -128,6 +129,17 @@ function originCheck(expected) {
   `
 }
 
+/** Fails unless the game locks each of the fixture template package's add-ons and has the files they write. */
+async function packAddons(project, lock) {
+  for (const addon of fixturePack.addons) {
+    if (!(addon.id in lock.addons)) throw new Error(`The lock has no ${addon.id} from the template package`)
+    for (const file of addon.contribute()) {
+      const content = await readFile(join(project, file.path), "utf8").catch(() => undefined)
+      if (content !== file.content) throw new Error(`${addon.id} didn't write ${file.path}`)
+    }
+  }
+}
+
 /**
  * Serves the template package in scripts/fixtures/template-pack as an npm registry would, so `spawn init <package>`
  * fetches it with npm as it does from the real one.
@@ -186,10 +198,20 @@ function tarball(files) {
   return gzipSync(Buffer.concat([...blocks, Buffer.alloc(1024)]))
 }
 
+/**
+ * This process's environment with `env` over it. An inherited variable goes whatever the case of its name: Windows
+ * gives a child the first of two names that differ only in case, and npm reads its settings in either case.
+ */
+function withEnv(env) {
+  const names = new Set(Object.keys(env).map((name) => name.toLowerCase()))
+  const inherited = Object.entries(process.env).filter(([name]) => !names.has(name.toLowerCase()))
+  return { ...Object.fromEntries(inherited), ...env }
+}
+
 /** Runs a command and resolves with its output. Its errors start with `label` and include the output. */
-function run(label, executable, args, cwd, log, env) {
+function run(label, executable, args, cwd, log, env = {}) {
   return new Promise((done, fail) => {
-    const child = spawn(executable, args, { cwd, windowsHide: true, env: { ...process.env, ...env } })
+    const child = spawn(executable, args, { cwd, windowsHide: true, env: withEnv(env) })
     let output = ""
     let timedOut = false
     child.stdout.setEncoding("utf8").on("data", (chunk) => (output += chunk))
@@ -262,6 +284,7 @@ async function check(entry, { directory, cli, pnpm, browser, registry }) {
     // The checks follow what the game has: its scripts, and a UI that shows the score.
     const { scripts = {}, devDependencies = {} } = JSON.parse(await readFile(join(project, "package.json"), "utf8"))
     const lock = JSON.parse(await readFile(join(project, lockPath(settings)), "utf8"))
+    if (entry.kind === "pack") await packAddons(project, lock)
     const collects = Object.keys(lock.addons).some((id) => findAddon(catalog, id)?.slot === "ui")
     if (process.env.CI && scripts["test:setup"]) await packageCommand(["test:setup"])
     await packageCommand(["lint"])
