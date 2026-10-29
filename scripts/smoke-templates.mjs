@@ -129,8 +129,17 @@ function originCheck(expected) {
   `
 }
 
-/** Fails unless the game locks each of the fixture template package's add-ons and has the files they write. */
-async function packAddons(project, lock) {
+/**
+ * Fails unless the game locks the fixture template package at the version and integrity the registry served, and each
+ * of its add-ons, with the files they write.
+ */
+async function packAddons(project, lock, registry) {
+  const locked = lock.catalog.packs?.[registry.name]
+  if (locked?.version !== registry.version || locked?.integrity !== registry.integrity) {
+    throw new Error(
+      `The lock has ${JSON.stringify(locked)} for ${registry.name}, not ${registry.version} at ${registry.integrity}`
+    )
+  }
   for (const addon of fixturePack.addons) {
     if (!(addon.id in lock.addons)) throw new Error(`The lock has no ${addon.id} from the template package`)
     for (const file of addon.contribute()) {
@@ -168,7 +177,13 @@ async function fixtureRegistry() {
     "dist-tags": { latest: manifest.version },
     versions: { [manifest.version]: { ...manifest, dist: { tarball: `${url}package.tgz`, integrity, shasum } } }
   })
-  return { url, close: () => new Promise((done) => server.close(done)) }
+  return {
+    url,
+    name: manifest.name,
+    version: manifest.version,
+    integrity,
+    close: () => new Promise((done) => server.close(done))
+  }
 }
 
 /** A gzipped tar of the files, as `npm pack` writes one: ustar headers, contents padded to 512 bytes, two empty blocks. */
@@ -284,7 +299,7 @@ async function check(entry, { directory, cli, pnpm, browser, registry }) {
     // The checks follow what the game has: its scripts, and a UI that shows the score.
     const { scripts = {}, devDependencies = {} } = JSON.parse(await readFile(join(project, "package.json"), "utf8"))
     const lock = JSON.parse(await readFile(join(project, lockPath(settings)), "utf8"))
-    if (entry.kind === "pack") await packAddons(project, lock)
+    if (entry.kind === "pack") await packAddons(project, lock, registry)
     const collects = Object.keys(lock.addons).some((id) => findAddon(catalog, id)?.slot === "ui")
     if (process.env.CI && scripts["test:setup"]) await packageCommand(["test:setup"])
     await packageCommand(["lint"])
