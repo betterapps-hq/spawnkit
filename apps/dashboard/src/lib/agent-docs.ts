@@ -223,7 +223,7 @@ export const agentDocuments: AgentDocument[] = [
             items: [
               "Read `AGENTS.md` for the project's instructions.",
               "Check `package.json` for the installed engine, dependencies, and scripts.",
-              "Read `game.config.json` for the original kit configuration.",
+              "Read `spawn.jsonc` for the template and add-ons the game was created with.",
               "Start at `src/main.ts`, then follow its imports into the game logic."
             ],
             ordered: false
@@ -315,7 +315,7 @@ export const agentDocuments: AgentDocument[] = [
           {
             type: "code",
             label: "Terminal · inspect and preview",
-            code: "pnpm dlx @spawnkit/cli add --help\npnpm dlx @spawnkit/cli addons --json\npnpm dlx @spawnkit/cli add vitest --dry-run --json",
+            code: "pnpm dlx @spawnkit/cli add --help\npnpm dlx @spawnkit/cli catalog --json\npnpm dlx @spawnkit/cli add vitest --dry-run --json",
             language: "sh"
           },
           {
@@ -324,7 +324,7 @@ export const agentDocuments: AgentDocument[] = [
           },
           {
             type: "paragraph",
-            text: "Keep `.spawn/state.json`. It records the generator's file baseline; deleting it or replacing edited files to force an update removes that protection. Existing `AGENTS.md` instructions are preserved during module additions."
+            text: "Keep `spawn.jsonc` and `.spawn/lock.json`. They record the add-ons you chose and what SpawnKit generated; deleting them or replacing edited files to force an update removes that protection. `AGENTS.md` and `README.md` are yours after the first generation: additions never change them, and a deletion stays deleted."
           }
         ]
       }
@@ -643,7 +643,7 @@ export const agentDocuments: AgentDocument[] = [
               ["[llms.txt](/llms.txt)", "An index of the maintained guides and discovery files."],
               [
                 "[Kit catalog](/catalog/v1.json)",
-                "Kit IDs, supported combinations, dependencies, scripts, and download URLs."
+                "Every question `spawn init` asks and its choices, plus kit presets, commands, dependencies, scripts, and download URLs."
               ],
               ["[OpenAPI document](/openapi.json)", "The public catalog and curated download endpoint contracts."],
               ["[auth.md](/auth.md)", "Supported sign-in behavior and current limitations."],
@@ -671,16 +671,16 @@ export const agentDocuments: AgentDocument[] = [
           },
           {
             type: "paragraph",
-            text: "The response uses `schemaVersion: 1` and describes rendering engines, physics, UI, telemetry, component requirements, and curated kits. Each kit includes its ID, download URL, and resolved scripts and dependencies."
+            text: "The response is the questionnaire `pnpm dlx @spawnkit/cli catalog --json` prints, with `schemaVersion: 1` and SpawnKit's curated kits added. `templates` lists each template's questions by mode: physics, UI, simulation and telemetry, with the add-ons that answer each one for that renderer, and the optional tools. `addons`, `slots` and `presets` describe the rest. Each kit names its preset and the `init --preset` command that creates the same files as its download, with its download URL and resolved scripts and dependencies."
           },
           {
             type: "paragraph",
-            text: "Resolve supported combinations before generating or changing a project. Use IDs returned by the catalog; do not assume that any arbitrary combination of engines and modules is supported."
+            text: "Choose answers from a template's own questions before generating or changing a project. Use the add-on IDs the catalog returns, or their short names in commands (`@spawnkit/rapier2d` is `--physics rapier2d`); do not assume that any arbitrary combination of engines and add-ons is supported."
           },
           {
             type: "code",
             label: "JavaScript · find a kit download",
-            code: "const response = await fetch('https://spawnkit.cloud/catalog/v1.json')\nif (!response.ok) throw new Error(`Catalog request failed: ${response.status}`)\n\nconst catalog = await response.json()\nconst kit = catalog.kits.find((kit) => kit.id === 'phaser')\nif (!kit) throw new Error('Kit unavailable')\n\nconsole.log(kit.downloadUrl)\nconsole.log(kit.scripts)",
+            code: "const response = await fetch('https://spawnkit.cloud/catalog/v1.json')\nif (!response.ok) throw new Error(`Catalog request failed: ${response.status}`)\n\nconst catalog = await response.json()\nconst kit = catalog.kits.find((kit) => kit.id === 'phaser')\nif (!kit) throw new Error('Kit unavailable')\n\nconsole.log(kit.downloadUrl)\nconsole.log(kit.command)\nconsole.log(kit.scripts)",
             language: "js"
           },
           {
@@ -820,7 +820,7 @@ export function documentMarkdown(doc: AgentDocument) {
 
 export function skillFiles() {
   return {
-    "SKILL.md": `---\nname: spawnkit\ndescription: Create, extend and publish standalone SpawnKit browser games from supported kits. Use when working with SpawnKit kits or an existing SpawnKit game project.\n---\n\n# SpawnKit\n\nUse the user's chosen engine and project scope. Local development needs no account. Use pnpm dlx @spawnkit/cli to create and extend games, or download an official kit. Read the project's AGENTS.md and preserve existing files.\n\n- Creating a game: read [Create](references/create.md).\n- Modifying a game: read [Extend](references/extend.md).\n- Publishing or recovering a build: read [Publish](references/publish.md) and [Authentication](references/authentication.md). Deployment requires the user's authorization and target-project access.\n\nThe current catalog is https://spawnkit.cloud/catalog/v1.json. Resolve compatibility before generating or changing modules. Verify the game with its actual package scripts and browser behavior. Report observed results; do not equate downloads with successful setup.\n`,
+    "SKILL.md": `---\nname: spawnkit\ndescription: Create, extend and publish standalone SpawnKit browser games from supported kits. Use when working with SpawnKit kits or an existing SpawnKit game project.\n---\n\n# SpawnKit\n\nUse the user's chosen engine and project scope. Local development needs no account. Use pnpm dlx @spawnkit/cli to create and extend games, or download an official kit. Read the project's AGENTS.md and preserve existing files.\n\n- Creating a game: read [Create](references/create.md).\n- Modifying a game: read [Extend](references/extend.md).\n- Publishing or recovering a build: read [Publish](references/publish.md) and [Authentication](references/authentication.md). Deployment requires the user's authorization and target-project access.\n\nThe current catalog is https://spawnkit.cloud/catalog/v1.json: every question \`spawn init\` asks, the add-ons that answer it for each renderer, and the kit presets. Choose from those before generating or changing add-ons. Verify the game with its actual package scripts and browser behavior. Report observed results; do not equate downloads with successful setup.\n`,
     "references/create.md": documentMarkdown(agentDocuments.find((doc) => doc.id === "getting-started")!),
     "references/extend.md": documentMarkdown(agentDocuments.find((doc) => doc.id === "extend")!),
     "references/publish.md": documentMarkdown(agentDocuments.find((doc) => doc.id === "publishing")!),

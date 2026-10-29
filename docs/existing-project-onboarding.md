@@ -9,7 +9,7 @@ A developer should be able to connect an existing game without generating a new 
 ## Current gaps
 
 - `spawn link` calls `findGameRoot`, which requires `game.config.json`. It links an existing SpawnKit-shaped project; it does not adopt an arbitrary repository.
-- `spawn add` requires `.spawn/state.json`, the generated-file ownership record. Handwritten games and other starters cannot use it; upload their static build instead.
+- `spawn add` requires `spawn.jsonc` and `.spawn/lock.json`, the engine's record of the add-ons and generated files that `spawn init` writes. Handwritten games and other starters cannot use it; upload their static build instead.
 - Hosted source deployment requires `game.config.json`, `package.json` and `pnpm-lock.yaml`. The runner installs with pnpm and executes the build script. This excludes many existing toolchains and prebuilt browser exports.
 - The backend supports GitHub connections and pull-request preview jobs, but the CLI platform client has no guided GitHub-connection or preview-configuration commands.
 - `spawnkit.config.ts` currently describes listing data and exports it through a Vite plugin. It is not a general integration configuration, and its strict validator rejects unrelated keys.
