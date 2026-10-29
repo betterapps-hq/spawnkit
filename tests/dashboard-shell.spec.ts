@@ -70,12 +70,16 @@ test("sidebar keeps an icon rail on small screens and remembers the desktop pref
   await page.screenshot({ path: `work/sidebar-${testInfo.project.name}.png`, animations: "disabled" })
 })
 
-test("theme defaults to System, follows OS changes and persists an explicit choice", async ({ page, context }) => {
-  await page.emulateMedia({ colorScheme: "dark" })
+test("theme defaults to Dark, supports System and persists an explicit choice", async ({ page, context }) => {
+  await page.emulateMedia({ colorScheme: "light" })
   await page.goto(`${story}expanded&viewMode=story`)
   await expect(page.locator("html")).toHaveClass(/dark/)
   await openAccount(page)
-  await expect(page.getByRole("menuitemradio", { name: "System", exact: true })).toBeChecked()
+  await expect(page.getByRole("menuitemradio", { name: "Dark", exact: true })).toBeChecked()
+  await page.getByRole("menuitemradio", { name: "System", exact: true }).click()
+  await expect(page.locator("html")).not.toHaveClass(/dark/)
+  await page.emulateMedia({ colorScheme: "dark" })
+  await expect(page.locator("html")).toHaveClass(/dark/)
   await page.emulateMedia({ colorScheme: "light" })
   await expect(page.locator("html")).not.toHaveClass(/dark/)
   await page.getByRole("menuitemradio", { name: "Dark", exact: true }).click()

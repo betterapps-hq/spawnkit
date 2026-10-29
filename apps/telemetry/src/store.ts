@@ -24,6 +24,13 @@ export function allowedOrigin(value: unknown): value is string {
 }
 
 export class TelemetryStore extends DurableObject<Env> {
+  private purged = false
+  async purge() {
+    this.purged = true
+    await this.ctx.storage.deleteAlarm()
+    await this.ctx.storage.deleteAll()
+    return Response.json({ deleted: true })
+  }
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
     ctx.storage.sql.exec(`
@@ -104,6 +111,7 @@ export class TelemetryStore extends DurableObject<Env> {
     })
   }
   async alarm() {
+    if (this.purged) return
     this.cleanup()
     const first = this.ctx.storage.sql
       .exec<{ received: number }>("SELECT received FROM events ORDER BY received LIMIT 1")
@@ -111,6 +119,7 @@ export class TelemetryStore extends DurableObject<Env> {
     if (first) await this.ctx.storage.setAlarm(Math.max(Date.now() + 1000, first.received + LIMITS.retentionMs + 1000))
   }
   async ingest(events: StoredEvent[], generation: string, origin: string | null): Promise<Response> {
+    if (this.purged) return Response.json({ message: "Write key is disabled." }, { status: 401 })
     try {
       const settings = this.settings()
       if (!settings || !settings.enabled || settings.generation !== generation)
@@ -169,20 +178,9 @@ export class TelemetryStore extends DurableObject<Env> {
     }
   }
   async manage(action: string, input: Record<string, unknown>): Promise<Response> {
+    if (this.purged) return Response.json({ message: "Project was deleted." }, { status: 410 })
     try {
       this.throttle("admin", 30)
-      if (action === "migrate-origin") {
-        requireValue(allowedOrigin(input.from) && allowedOrigin(input.to), "Provide exact game origins.")
-        const settings = this.settings()
-        if (settings?.origins.includes(input.from as string) && !settings.origins.includes(input.to as string)) {
-          requireValue(settings.origins.length < 20, "Origin migration requires review of the existing allowlist.")
-          this.ctx.storage.sql.exec(
-            "UPDATE settings SET data=? WHERE id=1",
-            JSON.stringify({ ...settings, origins: [...settings.origins, input.to] })
-          )
-        }
-        return Response.json({ migrated: true })
-      }
       if (action === "configure") {
         requireValue(
           Array.isArray(input.origins) && input.origins.length <= 10 && input.origins.every(allowedOrigin),

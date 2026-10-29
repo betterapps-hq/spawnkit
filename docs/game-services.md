@@ -4,7 +4,7 @@
 
 Agreed: expose capabilities provided by Colyseus and its official packages; do not build an additional custom game-services platform at launch. The free single-player preset is frontend-only and has no hosted player accounts, cloud saves, or leaderboard backend.
 
-Single-player games may add official game services for $5/month including service usage. Included quotas and abuse limits remain open. Adding Sandbox costs a separate $5/month plus usage. Developer login for the hosting platform is required independently of game player authentication.
+Single-player games may add official game services for $5/month including service usage. Included quotas and abuse limits remain open. Single-player Sandbox costs a separate $5/month plus usage. The $10/month multiplayer bundle includes game services and Sandbox, with machine usage billed separately. Developer login for the hosting platform is required independently of game player authentication.
 
 ## Capability inventory
 

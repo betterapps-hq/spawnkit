@@ -35,7 +35,7 @@ export function ComputeRegions({
             why="Each region has its own server size and estimated runtime hours. More regions add compute costs."
             includes={
               environment === "sandbox"
-                ? "All regions belong to one Sandbox. Its $5 monthly fee is charged once, plus regional usage."
+                ? "All regions belong to one Sandbox, included in the multiplayer bundle. Regional machine usage is billed separately."
                 : "Each region runs your production build. Availability is checked at deployment."
             }
           />

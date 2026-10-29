@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./community": "./src/community.ts",
+    "./moderation": "./src/moderation.ts",
     "./not-found": "./src/not-found.ts",
     "./not-found.css": "./src/not-found.css",
     "./releases": "./src/releases.ts"

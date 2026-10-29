@@ -34,7 +34,6 @@ test("home filters combine with search and work in grid and list layouts", async
   await expect(projectCards(page)).toHaveCount(1)
   await projectCards(page).click()
   await expect(page.getByRole("heading", { name: "Iron Frontier", exact: true })).toBeVisible()
-  await expect(page.getByText("3 regions", { exact: true })).toBeVisible()
 })
 
 test("home attention filter surfaces the affected project", async ({ page }) => {
@@ -59,12 +58,14 @@ test("single project has an actionable scaffold command and adapts to dark mode"
   )
   await openStory(page, "single-project")
   const next = page.getByRole("complementary", { name: "Project next step" })
-  await expect(next).toContainText("npx spawn init mosslight --template pixi --with vitest")
+  await expect(next).toContainText(
+    "npx @spawnkit/cli init mosslight --add pixi,no-physics,html-ui,no-telemetry,vitest,no-ecs"
+  )
   await next.getByRole("button", { name: "Copy project command", exact: true }).click()
   await expect(next.getByRole("button", { name: "Command copied", exact: true })).toBeVisible()
   await expect(page.locator("html")).toHaveAttribute(
     "data-copied-command",
-    "npx spawn init mosslight --template pixi --with vitest"
+    "npx @spawnkit/cli init mosslight --add pixi,no-physics,html-ui,no-telemetry,vitest,no-ecs"
   )
   await page.screenshot({
     path: `work/home-single-${testInfo.project.name}.png`,

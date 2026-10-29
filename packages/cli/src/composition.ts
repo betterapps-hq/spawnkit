@@ -27,7 +27,7 @@ const help = `SPAWNKIT / Compose your game
 Interactive commands ask you to review the complete plan before applying it.
 Without a terminal, preview is the default. Use --yes to apply.
 Dependencies are listed in the plan. Run pnpm install after applying.
-Renderer migrations are not supported.
+The renderer cannot be changed with add.
 
   spawn init my-game --add pixi,rapier2d,pixi-ui --add vitest
   spawn add koota --replace bitecs --dry-run
@@ -91,8 +91,7 @@ export async function runComposition(
   if (command === "init") await validateDestination(destination)
   else {
     const state = await readSafe(destination, ".spawn/state.json")
-    if (!state)
-      throw new Error("No ownership record found. This game needs an explicit migration before adding modules.")
+    if (!state) throw new Error("No ownership record found. Run add from a SpawnKit-generated project root.")
     planAddition(state, {}, [])
     current = (JSON.parse(state) as { options: ProjectOptions }).options
   }

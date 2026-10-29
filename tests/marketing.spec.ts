@@ -15,8 +15,8 @@ test("creator page keeps its content and actions when WebGL is unavailable", asy
   await expect(page.locator(".physics-demo")).toHaveAttribute("data-state", "unavailable", { timeout: 30000 })
   await expect(page.locator(".mk-physics-fallback")).toBeVisible()
   await expect(page.getByText("Static physics preview", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Drop objects", exact: true })).toBeDisabled()
-  await page.getByRole("link", { name: "Build your starter kit", exact: true }).first().click()
+  await expect(page.getByRole("button", { name: "Release marbles", exact: true })).toBeDisabled()
+  await page.getByRole("link", { name: "Start with a kit", exact: true }).first().click()
   await expect(page).toHaveURL(/\/templates\?engine=pixi/)
 })
 
@@ -25,15 +25,17 @@ test("marketing pages and interactions are available in Storybook", async ({ pag
   await page.goto(`${stories}/iframe.html?id=public-site-marketing--creators&viewMode=story`)
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Start with a playable game. Make it yours.")
   await page.getByRole("tab", { name: /Babylon/ }).click()
-  await expect(page.getByRole("link", { name: "Build your starter kit", exact: true }).first()).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Start with a kit", exact: true }).first()).toHaveAttribute(
     "href",
     "/templates?engine=babylon"
   )
   await page.goto(`${stories}/iframe.html?id=public-site-marketing--cloud&viewMode=story`)
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bring your game to players.")
-  await page.getByRole("tab", { name: /Release/ }).click()
-  await expect(page.getByRole("tabpanel")).toContainText("same artifact")
-  await expect(page.locator(".p-price-card").filter({ hasText: "Game services" })).toContainText("Coming soon")
+  await page.getByRole("tab", { name: "Deploy", exact: true }).click()
+  await page.getByRole("button", { name: "Promote", exact: true }).click()
+  await expect(page.locator(".mk-release-walkthrough").getByRole("tabpanel")).toContainText("same tested build")
+  await expect(page.locator("#services")).toContainText("Coming soon")
+  await expect(page.locator(".p-estimate-total")).toHaveText("$30.44")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 

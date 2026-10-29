@@ -1,10 +1,10 @@
 import { templates, type TemplateId } from "@spawn/templates/catalog"
-import { ArrowRight, Check, Code2, FileCode2, FlaskConical, Layers3, Play, Terminal, Zap } from "lucide-react"
+import { ArrowRight, Check, Code2, Play, Terminal, Zap } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { CopyButton } from "../copy-button"
-import { PhysicsDemo } from "./physics-demo"
+import { CreatorTools } from "./creator-tools"
 import { PlatformShowcase } from "./platform-showcase"
 import { PublicShell } from "./shell"
 import "./marketing.css"
@@ -12,25 +12,12 @@ import "./marketing.css"
 const engineArt: Record<TemplateId, { image: string; title: string }> = {
   pixi: { image: "snake", title: "Orchard Trail" },
   phaser: { image: "platformer", title: "Clockwork Courier" },
-  babylon: { image: "platformer-3d", title: "Tiny Treasures" },
+  babylon: { image: "dungeon-crawler", title: "Hollow Lantern" },
   three: { image: "racing", title: "Alpine Rally" }
 }
 const engines = templates.map((template) => ({ ...template, ...engineArt[template.id] }))
-const checks = {
-  unit: {
-    title: "Game logic",
-    tool: "Vitest",
-    files: ["Movement stays within bounds", "Simulation behaves consistently", "Game state changes as expected"]
-  },
-  browser: {
-    title: "Player interactions",
-    tool: "Playwright",
-    files: ["Open game in Chromium", "Move with keyboard input", "Verify the player collects an item"]
-  }
-}
 export function CreatePage() {
   const [engineId, setEngineId] = useState<TemplateId>("pixi")
-  const [check, setCheck] = useState<"unit" | "browser">("unit")
   const engine = engines.find((item) => item.id === engineId)!
   const starter = "/templates?engine=" + engine.id
   const command = "pnpm install\npnpm dev:setup\npnpm dev"
@@ -47,26 +34,16 @@ export function CreatePage() {
                 Start with a playable game. <em>Make it yours.</em>
               </h1>
               <p>
-                Choose your engine, add the tools your game needs, and download a standalone TypeScript project. Build
-                in your own editor, with your own ideas.
+                Make a browser game with a free TypeScript starter. Choose an engine and compatible tools, then build
+                locally in your preferred editor with AI coding assistance.
               </p>
               <div className="mk-actions">
                 <Button asChild size="lg">
-                  <a href={starter}>
-                    Build your starter kit <ArrowRight size={17} />
-                  </a>
+                  <a href={starter}>Start with a kit</a>
                 </Button>
-                <a className="mk-secondary" href="/?availability=playable#games">
+                <a className="mk-secondary" href="/#games">
                   <Play size={15} /> Explore games
                 </a>
-              </div>
-              <div className="mk-reassurance">
-                <span>
-                  <Check size={14} /> Free to start
-                </span>
-                <span>
-                  <Check size={14} /> Editable source
-                </span>
               </div>
             </div>
             <div className="mk-game-cover">
@@ -76,7 +53,6 @@ export function CreatePage() {
                 alt={engine.title + " concept artwork"}
                 fetchPriority="high"
               />
-              <span className="mk-art-label">Imagine what you could make</span>
               <div className="mk-cover-title">
                 <span>
                   {engine.dimension.toUpperCase()} {engine.name}
@@ -88,8 +64,8 @@ export function CreatePage() {
                   <Code2 size={22} />
                 </span>
                 <div>
-                  <strong>Ready for your ideas</strong>
-                  <small>TypeScript project with source included</small>
+                  <strong>Playable source included</strong>
+                  <small>Open it in your editor and build from there</small>
                 </div>
                 <Check size={18} />
               </div>
@@ -99,13 +75,10 @@ export function CreatePage() {
           <section className="mk-engine-section" aria-labelledby="engine-heading">
             <div className="mk-section-heading">
               <div>
-                <span className="mk-eyebrow">CHOOSE YOUR ENGINE</span>
-                <h2 id="engine-heading">Your game, your starting point.</h2>
+                <span className="mk-eyebrow">START YOUR ENGINES</span>
+                <h2 id="engine-heading">Spawn your game with a great engine.</h2>
               </div>
-              <p>
-                Pick the tools that fit your idea. <br />
-                We’ll handle getting them connected.
-              </p>
+              <p>Choose a proven engine for your 2D or 3D game. We connect the compatible tools around it.</p>
             </div>
             <Tabs value={engineId} onValueChange={(value) => setEngineId(value as TemplateId)}>
               <TabsList className="mk-engine-tabs" aria-label="Preview engine">
@@ -136,106 +109,7 @@ export function CreatePage() {
             </Tabs>
           </section>
 
-          <section className="mk-toolkit" id="creator-tools">
-            <div className="mk-section-heading">
-              <div>
-                <span className="mk-eyebrow">MAKE IT YOURS</span>
-                <h2>The fun part starts sooner.</h2>
-              </div>
-              <p>
-                Less setup between your idea <br />
-                and that first “it works!” moment.
-              </p>
-            </div>
-            <div className="mk-tool-grid">
-              <article className="mk-physics-card c-physics-card">
-                <div className="mk-card-copy">
-                  <span className="mk-feature-label">
-                    <Layers3 size={17} /> A world with a little weight
-                  </span>
-                  <h3>Give your game a feel.</h3>
-                  <p>
-                    Bounce, tumble, collide. Add compatible physics to your starter, then shape how your world behaves.
-                  </p>
-                </div>
-                <PhysicsDemo />
-              </article>
-              <article className="mk-source-card">
-                <div className="mk-card-copy">
-                  <span className="mk-feature-label">
-                    <Code2 size={17} /> Built to be yours
-                  </span>
-                  <h3>A real project. All yours to edit.</h3>
-                  <p>
-                    Read the source, change the rules, and keep building. Use your favorite editor and AI coding tools.
-                    Hosting is optional.
-                  </p>
-                </div>
-                <div className="mk-source-tree">
-                  <div>
-                    <FileCode2 size={16} />
-                    <strong>my-game</strong>
-                    <span>YOUR PROJECT</span>
-                  </div>
-                  <code>
-                    src/
-                    <br />
-                    　main.ts
-                    <br />
-                    　input.ts
-                    <br />
-                    　simulation.ts
-                  </code>
-                  <footer>
-                    <span>TypeScript</span>
-                    <span>Vite</span>
-                    <span>Oxlint + Oxfmt</span>
-                  </footer>
-                </div>
-              </article>
-              <article className="mk-checks-card">
-                <div className="mk-card-copy">
-                  <span className="mk-feature-label">
-                    <FlaskConical size={17} /> Keep the good bits working
-                  </span>
-                  <h3>
-                    Try things.
-                    <br />
-                    Then test them.
-                  </h3>
-                  <p>
-                    Add repeatable checks for your game logic and real player interactions. Give each change a way to
-                    prove itself.
-                  </p>
-                </div>
-                <Tabs
-                  value={check}
-                  onValueChange={(value) => setCheck(value as "unit" | "browser")}
-                  className="mk-test-panel"
-                >
-                  <TabsList aria-label="Testing layers">
-                    <TabsTrigger value="unit">Unit tests</TabsTrigger>
-                    <TabsTrigger value="browser">Browser tests</TabsTrigger>
-                  </TabsList>
-                  {Object.entries(checks).map(([id, item]) => (
-                    <TabsContent value={id} key={id}>
-                      <div className="mk-test-heading">
-                        <strong>{item.title}</strong>
-                        <span>{item.tool}</span>
-                      </div>
-                      {item.files.map((file) => (
-                        <p key={file}>
-                          <span className="mk-test-dot" />
-                          {file}
-                        </p>
-                      ))}
-                      <small>Checks included when you add the testing tools.</small>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              </article>
-            </div>
-          </section>
+          <CreatorTools />
 
           <section className="mk-start-section">
             <div>
@@ -251,13 +125,9 @@ export function CreatePage() {
             </div>
             <div className="mk-terminal">
               <header>
-                <span>
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <span>my-game / terminal</span>
                 <Terminal size={16} />
+                <span>my-game / terminal</span>
+                <CopyButton value={command} label="Copy setup commands" variant="ghost" size="sm" />
               </header>
               <div className="c-command-line">
                 <span>$</span>
@@ -274,22 +144,18 @@ export function CreatePage() {
                   SOURCE<strong>Standalone</strong>
                 </span>
               </div>
-              <footer>
-                <span>Requires Node.js 24+ and pnpm 12</span>
-                <CopyButton value={command} label="Copy setup commands" variant="outline" size="sm" />
-              </footer>
             </div>
           </section>
           <PlatformShowcase />
           <section className="mk-finale">
             <div>
-              <span className="mk-eyebrow">YOUR NEXT ADVENTURE</span>
-              <h2>Make your first move.</h2>
-              <p>Start with something playable. Build something only you could make.</p>
+              <span className="mk-eyebrow">YOUR GAME STARTS HERE</span>
+              <h2>Choose a kit. Build your game.</h2>
+              <p>
+                Get playable source, a configured toolchain, and room to make it yours. No hosting commitment required.
+              </p>
               <Button asChild size="lg">
-                <a href={starter}>
-                  Build your starter kit <ArrowRight size={17} />
-                </a>
+                <a href={starter}>Start with a kit</a>
               </Button>
               <a href="/cloud" className="mk-secondary mk-finale-cloud-link">
                 Ready to share? Explore Cloud <ArrowRight size={16} />

@@ -471,13 +471,6 @@
   margin: 10px 0;
   font-size: 11px;
 }
-.mk-test-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #66ad91;
-  flex-shrink: 0;
-}
 .mk-test-panel small {
   display: block;
   margin-top: 20px;
@@ -859,19 +852,6 @@
   }
   .mk-page .p-platform-showcase h2 {
     font-size: 29px;
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .mk-game-cover > img {
-    animation: mk-art-in 300ms ease-out;
-  }
-  @keyframes mk-art-in {
-    from {
-      opacity: 0.5;
-    }
-    to {
-      opacity: 1;
-    }
   }
 }
 @media (prefers-reduced-motion: reduce) {

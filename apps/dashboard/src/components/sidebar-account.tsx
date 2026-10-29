@@ -1,4 +1,4 @@
-import { ChevronsUpDown, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react"
+import { ChevronsUpDown, KeyRound, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react"
 import { useTheme } from "./theme-provider"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import {
@@ -86,6 +86,12 @@ export function SidebarAccount({ account }: { account: StudioAccount }) {
             >
               <UserRound />
               Account
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="gap-2 rounded-lg py-2.5">
+              <a href="/cli/access">
+                <KeyRound />
+                Agent access
+              </a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <div className="px-2 py-2.5">

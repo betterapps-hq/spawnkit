@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process"
 import { createHash, randomBytes } from "node:crypto"
-import { chmod, lstat, mkdir, readFile, link, unlink, writeFile } from "node:fs/promises"
+import { chmod, lstat, mkdir, readFile, link, rename, unlink, writeFile } from "node:fs/promises"
 import { createServer } from "node:http"
 import { homedir } from "node:os"
 import { join } from "node:path"
@@ -50,8 +50,8 @@ async function jsonRequest(url: string, init?: RequestInit): Promise<Record<stri
     )
   return response.json() as Promise<Record<string, unknown>>
 }
-function credentialDirectory() {
-  return join(homedir(), ".spawn")
+export function credentialDirectory() {
+  return process.env.SPAWN_CREDENTIAL_DIRECTORY || join(homedir(), ".spawn")
 }
 
 async function credentialFile(directory: string) {
@@ -71,6 +71,11 @@ async function credentialFile(directory: string) {
 
 export async function logout(directory = credentialDirectory()) {
   const path = await credentialFile(directory)
+  const stored = await storedCredentials(directory).catch(() => null)
+  if (stored?.remote && stored.remote.expiresAt > Date.now()) {
+    const { revokeRemote } = await import("./auth-remote")
+    await revokeRemote(stored)
+  }
   try {
     await unlink(path)
     return "signed-out"
@@ -80,7 +85,27 @@ export async function logout(directory = credentialDirectory()) {
   }
 }
 
-export async function readCredentials(directory = credentialDirectory()) {
+export type StoredCredentials = {
+  version: 1
+  site: string
+  accessToken: string
+  expiresAt: number
+  remote?: { registrationId: string; assertion: string; expiresAt: number; projectId: string }
+}
+
+export async function saveCredentials(data: StoredCredentials, directory = credentialDirectory(), replace = false) {
+  const path = await credentialFile(directory)
+  const temporary = join(directory, `credentials-${randomBytes(8).toString("hex")}.tmp`)
+  try {
+    await writeFile(temporary, await protectCredentials(JSON.stringify(data) + "\n"), { flag: "wx", mode: 0o600 })
+    if (replace) await rename(temporary, path)
+    else await link(temporary, path)
+  } finally {
+    await unlink(temporary).catch(() => undefined)
+  }
+}
+
+export async function storedCredentials(directory = credentialDirectory()): Promise<StoredCredentials> {
   let content: string
   try {
     content = await readFile(await credentialFile(directory), "utf8")
@@ -122,10 +147,46 @@ export async function readCredentials(directory = credentialDirectory()) {
     )
       throw new Error("Invalid credentials")
     const site = trustedUrl(data.site, true).origin
-    if (data.expiresAt <= Date.now()) throw new Error("Expired credentials")
-    return { site, accessToken: data.accessToken as string }
+    if (
+      data.remote &&
+      (typeof data.remote.registrationId !== "string" ||
+        !/^reg_[a-f0-9-]{36}$/.test(data.remote.registrationId) ||
+        typeof data.remote.assertion !== "string" ||
+        typeof data.remote.projectId !== "string" ||
+        !Number.isFinite(data.remote.expiresAt))
+    )
+      throw new Error("Invalid remote credentials")
+    return {
+      version: 1,
+      site,
+      accessToken: data.accessToken,
+      expiresAt: data.expiresAt,
+      ...(data.remote ? { remote: data.remote } : {})
+    }
   } catch {
     throw new Error("Login credentials are expired or unreadable. Run spawn logout, then spawn login.")
+  }
+}
+
+export async function readCredentials(directory = credentialDirectory(), refresh = true) {
+  let data = await storedCredentials(directory)
+  if (refresh && data.remote && data.remote.expiresAt > Date.now() && data.expiresAt < Date.now() + 30_000) {
+    const { refreshRemote } = await import("./auth-remote")
+    data = await refreshRemote(data)
+    await saveCredentials(data, directory, true)
+  }
+  if (data.expiresAt <= Date.now())
+    throw new Error("Login credentials are expired or unreadable. Run spawn logout, then spawn login.")
+  return { site: data.site, accessToken: data.accessToken }
+}
+
+/** Deliberately local: never returns credentials or claims server-side authorization. */
+export async function authenticationStatus(directory = credentialDirectory()) {
+  try {
+    const { site } = await readCredentials(directory, false)
+    return { status: "signed-in", site, checked: "local", serverVerified: false } as const
+  } catch {
+    return { status: "sign-in-required", checked: "local", serverVerified: false } as const
   }
 }
 

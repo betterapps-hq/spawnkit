@@ -1,0 +1,588 @@
+.dashboard-publishing {
+  color: var(--foreground);
+  display: grid;
+  gap: 24px;
+  font-size: 14px;
+}
+.publishing-page > p {
+  max-width: 720px;
+  color: var(--muted-foreground);
+  line-height: 1.7;
+}
+.publishing-page h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.publishing-page output {
+  display: block;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.publishing-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.publishing-heading .p-game-signals {
+  justify-content: flex-start;
+  gap: 20px;
+  margin-top: 10px;
+}
+.publishing-heading p {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--primary);
+  margin: 0 0 8px;
+}
+.publishing-heading h2 {
+  font-size: 24px;
+  margin: 0;
+}
+.publishing-form {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 720px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.publishing-form label,
+.review-note {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.publishing-form p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.submission-history {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.submission-history > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.submission-history span {
+  text-transform: capitalize;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.submission-history p,
+.submission-history a {
+  font-size: 13px;
+  margin-top: 8px;
+}
+.submission-history a {
+  color: var(--primary);
+}
+.submission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+  max-width: 1200px;
+}
+.submission-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 4px 16px -12px color-mix(in oklab, var(--foreground) 20%, transparent);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+.submission-card:hover,
+.submission-card:focus-within {
+  border-color: color-mix(in oklab, var(--primary) 50%, var(--border));
+  box-shadow: 0 12px 30px -16px color-mix(in oklab, var(--primary) 25%, transparent);
+}
+.submission-game-link {
+  display: block;
+  color: inherit;
+  outline: none;
+}
+.submission-game-link:focus-visible {
+  box-shadow: inset 0 0 0 3px var(--ring);
+  border-radius: 15px 15px 0 0;
+}
+.submission-cover {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--accent);
+  margin: 7px 7px 0;
+  border-radius: 10px;
+  isolation: isolate;
+}
+.submission-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 300ms ease;
+}
+.submission-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 50%, #00000035);
+  pointer-events: none;
+}
+.submission-play {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #ffffff40;
+  border-radius: 50%;
+  background: #16131dcc;
+  color: white;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 12px #00000025;
+  transition:
+    transform 180ms ease,
+    background 180ms ease;
+}
+.submission-play svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+  margin-left: 2px;
+}
+.submission-game-link:hover .submission-play,
+.submission-game-link:focus-visible .submission-play {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transform: scale(1.08);
+}
+.submission-game-link:hover img {
+  transform: scale(1.035);
+}
+.submission-card h2 {
+  margin: 20px 20px 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+  overflow-wrap: anywhere;
+}
+.submission-card-actions {
+  display: flex;
+  gap: 10px;
+  padding: 18px 20px 20px;
+}
+.submission-card-actions button {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.submission-approve {
+  box-shadow:
+    inset 0 1px 0 #ffffff25,
+    0 2px 4px #00000010;
+}
+.submission-reject:hover {
+  border-color: color-mix(in oklab, var(--destructive) 40%, var(--border));
+  color: var(--destructive);
+}
+.submission-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--primary);
+  background:
+    radial-gradient(ellipse at 25% 20%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 75%),
+    linear-gradient(135deg, var(--accent), var(--card));
+}
+.submission-placeholder::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--primary) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--primary) 9%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(135deg, black, transparent 85%);
+}
+.submission-orbit {
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 32px color-mix(in oklab, var(--primary) 4%, transparent),
+    0 0 0 64px color-mix(in oklab, var(--primary) 3%, transparent);
+}
+.submission-game-icon {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 1px solid color-mix(in oklab, var(--primary) 25%, transparent);
+  border-radius: 22px;
+  background: color-mix(in oklab, var(--card) 70%, transparent);
+  box-shadow:
+    0 12px 24px -12px color-mix(in oklab, var(--primary) 30%, transparent),
+    inset 0 1px 0 #ffffff15;
+  transform: rotate(-8deg);
+}
+.submission-game-icon svg {
+  width: 36px;
+  height: 36px;
+  stroke-width: 1.5;
+}
+.submission-monogram {
+  position: absolute;
+  right: -4px;
+  bottom: -45px;
+  font-size: 180px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.06;
+}
+.submission-card:nth-child(even) .submission-game-icon {
+  transform: rotate(8deg);
+}
+.submission-empty {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  color: var(--muted-foreground);
+}
+.submission-empty svg {
+  width: 44px;
+  height: 44px;
+  color: var(--primary);
+  stroke-width: 1.25;
+}
+.submission-skeleton {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 7px 7px 20px;
+  background: var(--card);
+}
+.submission-skeleton div {
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  background: var(--accent);
+}
+.submission-skeleton span {
+  display: block;
+  height: 16px;
+  width: 60%;
+  margin: 20px 13px 0;
+  background: var(--accent);
+  border-radius: 4px;
+}
+.submission-skeleton span:last-child {
+  height: 40px;
+  width: auto;
+  margin-top: 18px;
+}
+@media (max-width: 1100px) {
+  .submission-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+@media (max-width: 640px) {
+  .submission-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .submission-card,
+  .submission-cover img,
+  .submission-play {
+    transition: none;
+  }
+  .submission-game-link:hover img,
+  .submission-game-link:hover .submission-play {
+    transform: none;
+  }
+}
+.hosted-player {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background);
+  color: var(--foreground);
+}
+.hosted-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.hosted-toolbar div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.hosted-toolbar a {
+  font-size: 12px;
+  color: var(--primary);
+}
+.hosted-stage {
+  height: min(70svh, 720px);
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.hosted-stage iframe {
+  border: 0;
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+/* Only the stage enters fullscreen, so platform navigation never overlays the game. */
+.hosted-stage:fullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  background: #070810;
+}
+.publishing-page {
+  padding-top: 28px;
+  padding-bottom: 48px;
+}
+.publishing-page .publishing-heading h1 {
+  font-size: clamp(24px, 4vw, 40px);
+  line-height: 1.15;
+  margin: 0;
+}
+.publishing-page .publishing-heading {
+  align-items: center;
+}
+.publishing-page .publishing-heading > a {
+  flex-shrink: 0;
+}
+.publishing-page .hosted-stage {
+  background: #070810;
+}
+.publishing-page .hosted-stage:fullscreen {
+  height: 100dvh;
+}
+.hosted-error {
+  display: block;
+  padding: 10px 16px;
+  font-size: 12px;
+}
+.published-games {
+  margin: 28px 0 40px;
+}
+.published-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.published-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+}
+.published-card h3 {
+  margin: 16px 18px 8px;
+}
+.published-card p {
+  margin: 0 18px 20px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.published-art {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: var(--accent);
+  color: var(--primary);
+}
+.published-art > a {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.published-art .published-placeholder {
+  font-size: 88px;
+  font-weight: 900;
+}
+.published-art img,
+.published-art video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.published-art video {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.published-art video.preview-ready {
+  opacity: 1;
+}
+.all-games-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.published-card a:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+}
+.submission-media {
+  margin: 24px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.submission-media h2,
+.submission-media p {
+  grid-column: 1/-1;
+  margin: 0;
+}
+.submission-media img,
+.submission-media video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+}
+@media (max-width: 700px) {
+  .published-grid,
+  .submission-media {
+    grid-template-columns: 1fr;
+  }
+  .publishing-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .hosted-toolbar {
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .publishing-form {
+    padding: 18px;
+  }
+}
+
+.d-game-card .published-art > a:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+}
+.d-game-card:focus-within {
+  border-color: var(--primary);
+}
+.p-game-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.p-game-tags span {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted-foreground);
+  background: var(--card);
+}
+.d-game-card > .p-game-tags {
+  padding: 0 14px;
+  margin: 10px 0 0;
+}
+.p-feedback-textarea {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--foreground);
+}
+.p-feedback-textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.p-review > p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.p-review-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.p-review-meta time {
+  margin-right: auto;
+}
+.p-review header {
+  flex-wrap: wrap;
+}
+.p-review header b {
+  overflow-wrap: anywhere;
+}
+.p-comment-delete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.p-comment-empty {
+  color: var(--muted-foreground);
+  padding: 0 0 20px;
+}

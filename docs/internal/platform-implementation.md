@@ -31,11 +31,11 @@ Updated 2026-10-14. Work in progress; provisioning does not establish completion
 - The owner enabled Workers Paid. Staging and production container applications are deployed, each capped at three concurrent builders. This account subscription is shared platform infrastructure, not a subscription per customer.
 - Hosted builds are enabled through `deploy/builds.json`, independently of GitHub enablement. Local development defaults to disabled. Explicit environment-variable overrides remain available for operational disablement.
 - Staging uses `spawn-build`; production uses `spawnkit-build`. Separate Durable Object namespaces prevent one deployment from moving the other environment's builder application.
-- Named game domains and provisioning now use the dedicated hosting token and configuration documented in the operations runbook. Numbered hosts remain compatibility aliases.
+- Named game domains and provisioning now use the dedicated hosting token and configuration documented in the operations runbook.
 
 ## Acceptance checklist
 
-- [x] Authenticated project persistence and migration from browser storage.
+- [x] Authenticated cloud project persistence.
 - [x] Source upload validation, isolated builds, logs and static hosting.
 - [x] Immutable releases, atomic promotion and rollback with concurrent-update protection.
 - [ ] Domain setup before deployment, ownership verification and routing.

@@ -7,7 +7,8 @@ export default defineConfig({
     ssr: true,
     target: "node24",
     minify: false,
-    sourcemap: true,
+    sourcemap: false,
+    license: { fileName: "THIRD-PARTY-LICENSES.md" },
     rolldownOptions: {
       input: "src/main.ts",
       output: { format: "es", entryFileNames: "main.mjs", banner: "#!/usr/bin/env node" }

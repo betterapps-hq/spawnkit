@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
     accountId: "544b5bfd594cd02a5da4b79a2038cc9f",
     worker: {
       name: `spawnkit-dashboard${suffix}`,
-      entrypoint: "@tanstack/react-start/server-entry",
+      entrypoint: "./src/server.ts",
       compatibilityDate: "2026-10-14",
       compatibilityFlags: ["nodejs_compat"],
       limits: { cpuMs: 100 },
@@ -24,6 +24,15 @@ export default defineConfig(({ mode }) => {
           : [],
       observability: { enabled: true, traces: { enabled: true, headSamplingRate: 0.1 } },
       env: {
+        GAME_CATALOG: bindings.worker({ worker: environment === "production" ? "spawnkit-control" : "spawn-control" }),
+        CREATOR_METRICS: bindings.worker<string, "CreatorMetrics">({
+          worker: environment === "production" ? "spawnkit-control" : "spawn-control",
+          exportName: "CreatorMetrics"
+        }),
+        GAME_ACTIVITY: bindings.worker<string, "GameActivity">({
+          worker: environment === "production" ? "spawnkit-control" : "spawn-control",
+          exportName: "GameActivity"
+        }),
         SPAWN_ENVIRONMENT: bindings.text(environment),
         VITE_CLERK_PUBLISHABLE_KEY: bindings.text(process.env.VITE_CLERK_PUBLISHABLE_KEY ?? ""),
         CLERK_SECRET_KEY: bindings.secret(),

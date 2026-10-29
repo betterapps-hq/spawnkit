@@ -42,15 +42,14 @@ GitHub Actions workflows are included at launch. A managed GitHub App, automatic
 
 - Frontend-only single-player production is free.
 - Single-player game services cost $5/month, including their service usage. Included quotas and abuse limits still need definition.
-- Multiplayer costs one $5/month game fee plus provisioned runtime hours, including idle allocated time.
-- Enabling the single Sandbox adds another $5/month for either player mode, plus usage. Multiple Sandbox regions do not multiply that fee.
+- Multiplayer costs $10/month per game, including Sandbox, managed Colyseus, and game services, plus provisioned runtime hours including idle allocated time. This October 14 revision replaces the earlier $5 multiplayer fee with a separately charged Sandbox.
+- Single-player Sandbox is a $5/month add-on plus usage. Multiplayer Sandbox is included in its bundle; regional machine usage is separate. Multiple Sandbox regions do not multiply the base fee.
 - Production Neon/Vultr/D1 usage has 100% markup; Sandbox usage has 50% markup. The single-player service bundle is an explicit inclusion exception; custom databases are separately metered.
 
 For multiplayer, before taxes and any separately defined charges:
 
 ```text
-bill = $5 game fee
-     + ($5 if Sandbox is enabled)
+bill = $10 multiplayer bundle (includes Sandbox and game services)
      + 1.5 × attributable Sandbox Neon/Vultr/D1 costs
      + 2.0 × attributable production Neon/Vultr/D1 costs
 ```

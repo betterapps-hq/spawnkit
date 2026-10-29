@@ -1,6 +1,8 @@
+import { enqueueBuild } from "./build-queue"
 import { githubConfigured } from "./github"
 import { githubSource } from "./github-source"
 import { HttpError } from "./http"
+import { putProjectArtifact } from "./project-lifecycle"
 
 interface GitHubEvent {
   id: string
@@ -12,14 +14,9 @@ interface GitHubEvent {
 
 export async function processGitHubEvents(env: Env) {
   if (env.BUILDS_ENABLED !== "true") return
-  // Recover committed submissions independently of GitHub configuration.
-  const queued = await env.DATABASE.prepare(
-    "SELECT id FROM deployments WHERE status='queued' ORDER BY created_at LIMIT 10"
-  ).all<{ id: string }>()
-  for (const job of queued.results) await env.BUILD_JOBS.getByName(job.id).start(job.id)
   if (!githubConfigured(env)) return
   const events = await env.DATABASE.prepare(
-    "SELECT id,project_id,environment,commit_sha,created_at FROM github_events WHERE status='pending' ORDER BY created_at LIMIT 3"
+    "SELECT id,project_id,environment,commit_sha,created_at FROM github_events WHERE status='pending' AND EXISTS(SELECT 1 FROM projects p WHERE p.id=project_id AND p.lifecycle='active') ORDER BY created_at LIMIT 3"
   ).all<GitHubEvent>()
   for (const event of events.results) {
     const newer = await env.DATABASE.prepare(
@@ -49,7 +46,9 @@ export async function processGitHubEvents(env: Env) {
         releaseId = crypto.randomUUID(),
         deploymentId = crypto.randomUUID()
       const now = new Date().toISOString()
-      await env.ARTIFACTS.put(`sources/${event.project_id}/${uploadId}.gz`, source.bytes, { sha256: source.sha256 })
+      await putProjectArtifact(env, event.project_id, `sources/${event.project_id}/${uploadId}.gz`, source.bytes, {
+        sha256: source.sha256
+      })
       // Conditional event claim and transaction prevent duplicate webhook delivery from creating multiple builds.
       await env.DATABASE.batch([
         env.DATABASE.prepare(
@@ -70,7 +69,7 @@ export async function processGitHubEvents(env: Env) {
           deploymentId
         ),
         env.DATABASE.prepare(
-          "INSERT INTO releases(id,project_id,build_id,status,environment,created_at) SELECT ?,?,?,'building',?,? WHERE EXISTS(SELECT 1 FROM github_events WHERE id=? AND deployment_id=? AND status='preparing')"
+          "INSERT INTO releases(id,project_id,build_id,status,environment,created_at) SELECT ?,?,?,'queued',?,? WHERE EXISTS(SELECT 1 FROM github_events WHERE id=? AND deployment_id=? AND status='preparing')"
         ).bind(releaseId, event.project_id, deploymentId, event.environment, now, event.id, deploymentId),
         env.DATABASE.prepare(
           "INSERT INTO deployments(id,project_id,release_id,upload_id,environment,status,operation,expected_release_id,request_key,request_hash,actor_id,created_at,updated_at) SELECT ?,?,?,?,?, 'queued','deployments',current_release_id,?,?, 'github',?,? FROM environments WHERE project_id=? AND name=? AND enabled=1 AND EXISTS(SELECT 1 FROM github_events WHERE id=? AND deployment_id=? AND status='preparing')"
@@ -93,7 +92,7 @@ export async function processGitHubEvents(env: Env) {
           event.id
         )
       ])
-      await env.BUILD_JOBS.getByName(deploymentId).start(deploymentId)
+      await enqueueBuild(env, deploymentId)
     } catch (error) {
       await env.DATABASE.prepare(
         "UPDATE github_events SET status='failed' WHERE id=? AND status IN ('pending','preparing')"

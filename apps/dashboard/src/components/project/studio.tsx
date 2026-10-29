@@ -1,14 +1,32 @@
+import type { CommunityRole } from "@spawn/platform/community"
 import type { templates, TemplateId } from "@spawn/templates/catalog"
-import { Gauge, LoaderCircle, Plus, RefreshCw, RotateCcw, Save, Settings2, Terminal } from "lucide-react"
+import {
+  Gauge,
+  Flag,
+  Users,
+  Inbox,
+  ShieldCheck,
+  LoaderCircle,
+  Plus,
+  RefreshCw,
+  ArrowUpRight,
+  Save,
+  Settings2,
+  Terminal
+} from "lucide-react"
 import { useState, type ReactNode, type ComponentProps } from "react"
 import { match } from "ts-pattern"
 import { createDashboardStore } from "@/lib/dashboard-store"
 import type { LoadReleaseChanges } from "@/lib/release-changes"
 import { BrandSymbol, BrandWordmark } from "../brand"
 import { CopyButton } from "../copy-button"
+import { LiveManage } from "../moderation/manage-page"
+import { LiveReports } from "../moderation/reports-page"
+import { LiveTeam } from "../moderation/team-page"
 import type { StudioNotification } from "../notifications"
 import { PageHeader } from "../page-header"
 import { ProjectSwitcher } from "../project-switcher"
+import { LiveReviewQueue } from "../public/submissions-page"
 import { SidebarAccount, type StudioAccount } from "../sidebar-account"
 import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
@@ -33,7 +51,8 @@ import { ProjectCreation } from "./creation"
 import type { ProjectDraft } from "./creation-model"
 import { ProjectDeployments } from "./deployment-map/project-deployments"
 import { ReleaseReview } from "./deployment-map/release-review"
-import { Domains } from "./domains"
+import { primaryHostname, Domains } from "./domains"
+import { GameUpload } from "./game-upload"
 import { Logs } from "./logs"
 import type {
   ActionHandler,
@@ -48,6 +67,7 @@ import { projectNavigation as navigation } from "./navigation"
 import { ProjectCollection } from "./overview"
 import { EmptyState, Notice } from "./primitives"
 import { Overview } from "./project-overview"
+import { LiveProjectSettings } from "./settings"
 import { StudioHeader } from "./studio-header"
 import { LiveTelemetry } from "./telemetry"
 import { VersionActionSheet } from "./version-actions"
@@ -55,7 +75,12 @@ import { VersionConsole, type VersionSection } from "./version-console"
 import { VersionDetail } from "./version-detail"
 
 const descriptions: Record<ProjectPage, string> = {
+  upload: "",
   projects: "",
+  submissions: "",
+  manage: "",
+  team: "",
+  reports: "",
   create: "",
   configure: "",
   overview: "",
@@ -100,9 +125,13 @@ function StudioContent({
   notifications,
   banner,
   cloudEnabled = true,
+  publishingEnabled = false,
+  publishingAdmin = false,
+  communityRole = null,
   telemetryEnabled = false,
   analyticsPreview,
   deploymentsPreview,
+  settingsPreview,
   deploymentMapEnabled = false,
   loadReleaseChanges,
   storageReady = true,
@@ -128,10 +157,15 @@ function StudioContent({
   notifications?: StudioNotification[]
   banner?: ReactNode
   cloudEnabled?: boolean
+  publishingEnabled?: boolean
+  publishingAdmin?: boolean
+  communityRole?: CommunityRole | null
   telemetryEnabled?: boolean
   /** Storybook-only design content. Live projects use the tenant telemetry connection. */
   analyticsPreview?: ReactNode
   deploymentsPreview?: ReactNode
+  /** Storybook-only settings proposal. */
+  settingsPreview?: ReactNode
   deploymentMapEnabled?: boolean
   loadReleaseChanges?: LoadReleaseChanges | undefined
   storageReady?: boolean
@@ -144,7 +178,7 @@ function StudioContent({
   const current = location ?? navigationState.location
   const active =
     current.projectId === project.id ? project : (projects.find((item) => item.id === current.projectId) ?? project)
-  const page = current.page
+  const page = active.lifecycle === "deleting" && current.projectId === active.id ? "settings" : current.page
   const [section, setSection] = useState(initialSection)
   const [selectedStarter, setSelectedStarter] = useState<TemplateId>()
   const [configurationEntry, setConfigurationEntry] = useState<"repository" | "sandbox">()
@@ -174,7 +208,12 @@ function StudioContent({
   }
   function navigate(next: ProjectPage) {
     setConfigurationEntry(undefined)
-    go({ page: next, projectId: next === "projects" || next === "create" ? undefined : active.id })
+    go({
+      page: next,
+      projectId: ["projects", "create", "submissions", "manage", "team", "reports"].includes(next)
+        ? undefined
+        : active.id
+    })
   }
   function select(next: ProjectModel) {
     setSection("versions")
@@ -188,15 +227,24 @@ function StudioContent({
     go({ page: "configure", projectId: active.id })
     setConfigurationEntry(target)
   }
+  const isPublishing = page === "submissions"
+  const isManaging = page === "manage" || page === "team" || page === "reports"
+  const teamRole = communityRole ?? (publishingAdmin ? "Admin" : null)
   const isHome = page === "projects"
-  const isCreating = page === "create" || page === "configure"
+  const isCreating = page === "create" || page === "configure" || page === "upload"
   const title = match(page)
+    .with("upload", () => "Upload game")
     .with("projects", () => "Dashboard")
+    .with("submissions", () => "Submissions")
+    .with("manage", () => "Manage")
+    .with("team", () => "Team")
+    .with("reports", () => "Reports")
     .with("create", () => "Create a project")
     .with("configure", () => "Configure project")
     .with("overview", () => active.name)
     .otherwise((value) => navigation.find((item) => item.id === value)!.label)
-  const editable = canEdit && Boolean(onAction) && loadState === "ready" && storageReady
+  const editable =
+    canEdit && active.lifecycle !== "deleting" && Boolean(onAction) && loadState === "ready" && storageReady
   const operable = editable && cloudEnabled
   const sidebar = (
     <Sidebar collapsible="icon" className="border-sidebar-border">
@@ -217,7 +265,11 @@ function StudioContent({
         </SidebarMenu>
         <ProjectSwitcher
           projects={projects}
-          active={isHome || isCreating ? null : { ...active, name: active.name || "Loading project" }}
+          active={
+            isHome || isCreating || isPublishing || isManaging
+              ? null
+              : { ...active, name: active.name || "Loading project" }
+          }
           onSelect={(selected) => {
             const next = projects.find((item) => item.id === selected.id)
             if (next) select(next)
@@ -243,9 +295,47 @@ function StudioContent({
                   <span>Dashboard</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {publishingEnabled && publishingAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => navigate("submissions")}
+                    isActive={isPublishing}
+                    aria-current={isPublishing ? "page" : undefined}
+                    aria-label="Submissions"
+                    tooltip="Submissions"
+                    className="h-9"
+                  >
+                    <Inbox />
+                    <span>Submissions</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {publishingEnabled &&
+                teamRole &&
+                (
+                  [
+                    { id: "manage", label: "Manage", icon: ShieldCheck },
+                    { id: "reports", label: "Reports", icon: Flag },
+                    { id: "team", label: "Team", icon: Users }
+                  ] as const
+                ).map(({ id, label, icon: Icon }) => (
+                  <SidebarMenuItem key={id}>
+                    <SidebarMenuButton
+                      onClick={() => navigate(id)}
+                      isActive={page === id}
+                      aria-current={page === id ? "page" : undefined}
+                      aria-label={label}
+                      tooltip={label}
+                      className="h-9"
+                    >
+                      <Icon />
+                      <span>{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroup>
-          {!isHome && !isCreating && (
+          {!isHome && !isCreating && !isPublishing && !isManaging && (
             <SidebarGroup>
               <SidebarGroupLabel>Project</SidebarGroupLabel>
               <SidebarMenu>
@@ -282,8 +372,8 @@ function StudioContent({
               <PopoverContent side="right" align="end" className="w-64 rounded-xl">
                 <p className="mb-3 text-sm font-medium">Start from your terminal</p>
                 <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2">
-                  <code className="text-xs">npx spawn init</code>
-                  <CopyButton value="npx spawn init" label="Copy init command" compact />
+                  <code className="text-xs">npx @spawnkit/cli init</code>
+                  <CopyButton value="npx @spawnkit/cli init" label="Copy init command" compact />
                 </div>
               </PopoverContent>
             </Popover>
@@ -295,10 +385,17 @@ function StudioContent({
     </Sidebar>
   )
   const actions = isHome ? (
-    <Button onClick={() => beginCreation()} disabled={!editable}>
-      <Plus />
-      Create project
-    </Button>
+    <>
+      {cloudEnabled && (
+        <Button variant="outline" onClick={() => go({ page: "upload" })}>
+          Upload game
+        </Button>
+      )}
+      <Button onClick={() => beginCreation()} disabled={!editable}>
+        <Plus />
+        Create project
+      </Button>
+    </>
   ) : page === "overview" || page === "deployments" ? (
     <>
       {!cloudEnabled && (
@@ -307,10 +404,13 @@ function StudioContent({
           Edit configuration
         </Button>
       )}
-      <Button variant="outline" disabled={!operable || !active.production.release} onClick={() => setPanel("rollback")}>
-        <RotateCcw />
-        Rollback
-      </Button>
+      {active.production.release && primaryHostname(active, "production") && (
+        <Button variant="outline" asChild>
+          <a href={`https://${primaryHostname(active, "production")}`} target="_blank" rel="noreferrer">
+            Visit game <ArrowUpRight />
+          </a>
+        </Button>
+      )}
       <Button disabled={!operable} onClick={() => setPanel("deploy")}>
         <Plus />
         New version
@@ -321,7 +421,7 @@ function StudioContent({
       <Plus />
       Connect domain
     </Button>
-  ) : page === "settings" ? (
+  ) : page === "settings" && !settingsPreview && !publishingEnabled ? (
     <Button type="submit" form="project-settings-form" disabled={!editable}>
       <Save />
       Save changes
@@ -364,6 +464,9 @@ function StudioContent({
         <main id="main" className="mx-auto w-full max-w-[1500px] px-5 py-7 md:px-8 md:py-9">
           {banner && <div className="mb-5">{banner}</div>}
           {!release &&
+            page !== "team" &&
+            page !== "reports" &&
+            !(page === "settings" && (settingsPreview || publishingEnabled)) &&
             !(page === "deployments" && (deploymentsPreview || (deploymentMapEnabled && !current.environmentId))) && (
               <PageHeader
                 title={title}
@@ -426,6 +529,8 @@ function StudioContent({
                   }
                   onAction={setPanel}
                 />
+              ) : page === "upload" ? (
+                <GameUpload />
               ) : isCreating ? (
                 <ProjectCreation
                   projectId={active.id}
@@ -466,6 +571,24 @@ function StudioContent({
                   canCreate={editable}
                   templateCatalog={templateCatalog}
                 />
+              ) : isManaging ? (
+                teamRole ? (
+                  page === "team" ? (
+                    <LiveTeam />
+                  ) : page === "reports" ? (
+                    <LiveReports />
+                  ) : (
+                    <LiveManage role={teamRole} />
+                  )
+                ) : (
+                  <Notice tone="info">Team access is required.</Notice>
+                )
+              ) : isPublishing ? (
+                publishingAdmin ? (
+                  <LiveReviewQueue />
+                ) : (
+                  <Notice>Administrator access is required to review submissions.</Notice>
+                )
               ) : page === "overview" ? (
                 <Overview
                   project={active}
@@ -538,12 +661,19 @@ function StudioContent({
               ) : page === "users" ? (
                 <ProjectUsers project={active} canEdit={operable} onAction={onAction} />
               ) : page === "settings" ? (
-                <ProjectSettings
-                  project={active}
-                  canEdit={editable}
-                  onAction={onAction}
-                  onConfigureSource={editable ? () => configureHosting("repository") : undefined}
-                />
+                (settingsPreview ??
+                (publishingEnabled && active.id ? (
+                  <LiveProjectSettings key={active.id} project={active} onExit={() => navigate("projects")} />
+                ) : (
+                  <>
+                    <ProjectSettings
+                      project={active}
+                      canEdit={editable}
+                      onAction={onAction}
+                      onConfigureSource={editable ? () => configureHosting("repository") : undefined}
+                    />
+                  </>
+                )))
               ) : (
                 <Backend project={active} canEdit={operable} onAction={onAction} />
               )}

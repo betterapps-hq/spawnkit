@@ -1,33 +1,12 @@
-import {
-  ArrowDownWideNarrow,
-  Box,
-  Compass,
-  Flame,
-  Gamepad2,
-  Search,
-  SlidersHorizontal,
-  Sparkles,
-  Star,
-  Swords,
-  X
-} from "lucide-react"
+import { gameGenres } from "@spawn/templates/listing"
+import { ArrowDownWideNarrow, Search, SlidersHorizontal, Star, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SelectItem } from "@/components/ui/select"
 import type { GamesSearch } from "@/lib/game-discovery"
 import { FieldSelect } from "./field-select"
-
-const genres = [
-  { label: "All games", value: undefined, icon: Compass },
-  { label: "Arcade", value: "Arcade", icon: Gamepad2 },
-  { label: "Racing", value: "Racing", icon: Flame },
-  { label: "Adventure", value: "Adventure", icon: Sparkles },
-  { label: "Action", value: "Action", icon: Swords },
-  { label: "Strategy", value: "Strategy", icon: Box }
-]
 
 export function DiscoveryFilters({
   search,
@@ -40,10 +19,10 @@ export function DiscoveryFilters({
 }) {
   const patch = (next: Partial<GamesSearch>) => onSearch({ ...search, ...next })
   const selections = [
+    { key: "genre", label: search.genre },
+    { key: "dimension", label: search.dimension },
     { key: "rating", label: `${search.rating}+ stars` },
-    { key: "reviews", label: `${search.reviews}+ reviews` },
-    { key: "dimension", label: `${search.dimension} games` },
-    { key: "availability", label: search.availability === "playable" ? "Play now" : "In development" }
+    { key: "reviews", label: `${search.reviews}+ reviews` }
   ].filter(({ key }) => search[key as keyof GamesSearch])
   const active = Boolean(search.q || search.genre || selections.length)
   return (
@@ -96,7 +75,13 @@ export function DiscoveryFilters({
               <Button
                 variant="ghost"
                 onClick={() =>
-                  patch({ rating: undefined, reviews: undefined, dimension: undefined, availability: undefined })
+                  patch({
+                    genre: undefined,
+                    rating: undefined,
+                    reviews: undefined,
+                    dimension: undefined,
+                    availability: undefined
+                  })
                 }
               >
                 Reset
@@ -121,6 +106,35 @@ export function DiscoveryFilters({
               </RadioGroup>
             </fieldset>
             <div className="p-filter-options">
+              <label htmlFor="filter-genre">
+                <span>Genre</span>
+                <FieldSelect
+                  id="filter-genre"
+                  aria-label="Genre"
+                  value={search.genre ?? "any"}
+                  onValueChange={(value) => patch({ genre: value === "any" ? undefined : value })}
+                >
+                  <SelectItem value="any">All genres</SelectItem>
+                  {gameGenres.map((genre) => (
+                    <SelectItem key={genre} value={genre}>
+                      {genre}
+                    </SelectItem>
+                  ))}
+                </FieldSelect>
+              </label>
+              <label htmlFor="filter-dimension">
+                <span>Dimension</span>
+                <FieldSelect
+                  id="filter-dimension"
+                  aria-label="Dimension"
+                  value={search.dimension ?? "any"}
+                  onValueChange={(value) => patch({ dimension: value === "any" ? undefined : value })}
+                >
+                  <SelectItem value="any">2D & 3D</SelectItem>
+                  <SelectItem value="2D">2D</SelectItem>
+                  <SelectItem value="3D">3D</SelectItem>
+                </FieldSelect>
+              </label>
               <label htmlFor="filter-reviews">
                 <span>Reviews</span>
                 <FieldSelect
@@ -135,49 +149,12 @@ export function DiscoveryFilters({
                   <SelectItem value="100">100+ reviews</SelectItem>
                 </FieldSelect>
               </label>
-              <label htmlFor="filter-dimension">
-                <span>Style</span>
-                <FieldSelect
-                  id="filter-dimension"
-                  aria-label="Game dimension"
-                  value={search.dimension ?? "all"}
-                  onValueChange={(value) => patch({ dimension: value === "all" ? undefined : value })}
-                >
-                  <SelectItem value="all">2D & 3D</SelectItem>
-                  <SelectItem value="2D">2D</SelectItem>
-                  <SelectItem value="3D">3D</SelectItem>
-                </FieldSelect>
-              </label>
             </div>
-            <label className="p-filter-playable" htmlFor="filter-playable">
-              <Gamepad2 size={17} />
-              <span>Ready to play</span>
-              <Checkbox
-                id="filter-playable"
-                aria-label="Ready to play"
-                checked={search.availability === "playable"}
-                onCheckedChange={(checked) => patch({ availability: checked ? "playable" : undefined })}
-              />
-            </label>
             <p className="p-filter-match-count">
               {count} {count === 1 ? "game" : "games"} match
             </p>
           </PopoverContent>
         </Popover>
-      </div>
-      <div className="p-discovery-genres" aria-label="Popular game genres">
-        {genres.map(({ label, value, icon: Icon }) => (
-          <Button
-            key={label}
-            variant="ghost"
-            className={search.genre === value ? "is-active" : ""}
-            aria-pressed={search.genre === value}
-            onClick={() => patch({ genre: value })}
-          >
-            <Icon size={15} />
-            {label}
-          </Button>
-        ))}
       </div>
       <div className="p-filter-results">
         <output>

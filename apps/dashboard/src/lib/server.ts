@@ -3,6 +3,10 @@ import { templates, addons } from "@spawn/templates/catalog"
 import { createServerFn } from "@tanstack/react-start"
 import { authConfigured } from "./auth-config"
 
+export const getAuthConfiguration = createServerFn({ method: "GET" }).handler(() => ({
+  configured: authConfigured(process.env)
+}))
+
 export const getSession = createServerFn({ method: "GET" }).handler(async () => {
   if (!authConfigured(process.env)) return { configured: false, user: null }
   const { userId } = await auth()

@@ -1,0 +1,144 @@
+.player-preview-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.player-preview-heading .player-preview-back {
+  min-height: 44px;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+}
+.player-preview-heading .player-preview-back:hover {
+  color: var(--foreground);
+}
+.player-preview-heading .player-preview-back:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.player-preview-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  min-width: 0;
+}
+.player-preview-heading h1 {
+  margin: 0;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+.player-preview-identity .p-game-tags {
+  margin: 0;
+}
+.player-preview-stage {
+  isolation: isolate;
+  min-height: 380px;
+}
+.player-preview-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(12px) saturate(0.55);
+  transform: scale(1.07);
+  z-index: -2;
+}
+.player-preview-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #100e1dc7, #100e1deb);
+  z-index: -1;
+}
+.player-preview-content {
+  margin: 32px;
+  text-align: center;
+  color: #f7f4ff;
+  max-width: 420px;
+}
+.player-preview-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  border: 1px solid #b397ef40;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  color: #b397ef;
+  background: #b397ef14;
+  box-shadow: 0 0 80px #b397ef15;
+}
+.player-preview-content h2 {
+  color: inherit;
+  font-size: clamp(23px, 3vw, 30px);
+  letter-spacing: -0.04em;
+  font-weight: 650;
+  margin-bottom: 10px;
+}
+.player-preview-content p {
+  color: #bdb5ce;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.player-preview-title {
+  position: absolute;
+  bottom: 24px;
+  color: #d1c5e77a;
+  letter-spacing: 0.22em;
+  font-size: 10px;
+  font-weight: 600;
+}
+.player-preview-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+.player-preview-spinner {
+  animation: player-preview-spin 1.3s linear infinite;
+}
+.player-preview-about {
+  display: grid;
+  gap: 10px;
+  max-width: 72ch;
+  margin-top: 24px;
+}
+.player-preview-about h2 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+.player-preview-about p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+@keyframes player-preview-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-preview-spinner {
+    animation: none;
+  }
+}
+@media (max-width: 600px) {
+  .player-preview-stage {
+    min-height: 410px;
+    height: 65svh;
+  }
+}

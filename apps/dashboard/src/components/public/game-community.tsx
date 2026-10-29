@@ -1,54 +1,111 @@
-import { MessageSquare, Star, Trash2, ThumbsUp, ThumbsDown } from "lucide-react"
-import { useEffect, useState } from "react"
+import { MessageSquare, Star, Trash2 } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Textarea } from "@/components/ui/textarea"
-import { communityPreview, previewReviews } from "@/lib/community-preview"
-import { emptyFeedback, parseGameFeedback, type GameFeedback } from "@/lib/game-feedback"
+import { feedbackRequest, type FeedbackTotals, type PersonalFeedback, type PublicFeedback } from "@/lib/game-feedback"
+import { PlayerReport } from "./player-report"
 
-export function GameCommunity({ gameId, playable }: { gameId: string; playable: boolean }) {
-  const [saved, setSaved] = useState<GameFeedback>(emptyFeedback)
+export function GameCommunity({
+  projectId,
+  initialTotals,
+  onTotals
+}: {
+  projectId: string
+  initialTotals: FeedbackTotals
+  onTotals: (totals: FeedbackTotals) => void
+}) {
+  const [feed, setFeed] = useState<PublicFeedback>({ totals: initialTotals, comments: [], nextCursor: null })
+  const [personal, setPersonal] = useState<PersonalFeedback | null>(null)
+  const [ready, setReady] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const inFlight = useRef(false)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState("")
-  const [ready, setReady] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
-  const [editing, setEditing] = useState(false)
-  const metrics = communityPreview(gameId)
-  const storageKey = `spawn:game-feedback:v1:${gameId}`
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const load = useCallback(async () => {
+    const [next, mine] = await Promise.all([
+      feedbackRequest<PublicFeedback>(projectId, "feedback"),
+      feedbackRequest<PersonalFeedback | null>(projectId, "feedback/me")
+    ])
+    return { next, mine }
+  }, [projectId])
   useEffect(() => {
-    // Restore a local draft after hydration; unreadable data must not be overwritten.
-    try {
-      const draft = parseGameFeedback(localStorage.getItem(storageKey))
-      if (!draft) throw new Error("Your saved feedback could not be read. It has been left unchanged.")
-      // oxlint-disable-next-line react/set-state-in-effect
-      setSaved(draft)
-      setRating(draft.rating)
-      setComment(draft.comment)
-      setReady(true)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Browser storage is unavailable.")
+    let disposed = false
+    void load()
+      .then(({ next, mine }) => {
+        if (disposed) return
+        setFeed(next)
+        setPersonal(mine)
+        setRating(mine?.rating ?? 0)
+        setComment(mine?.comment?.body ?? "")
+        setReady(true)
+        onTotals(next.totals)
+      })
+      .catch(() => {
+        if (!disposed) setError("Ratings and comments couldn't be loaded. Please refresh to try again.")
+      })
+    return () => {
+      disposed = true
     }
-  }, [storageKey])
-  function persist(next: GameFeedback, message: string) {
-    if (!ready) return false
+  }, [load, onTotals])
+  async function save(path: string, method: string, data: unknown, message: string) {
+    if (inFlight.current) return
+    inFlight.current = true
+    setBusy(true)
+    setError("")
+    setNotice("")
     try {
-      const current = parseGameFeedback(localStorage.getItem(storageKey))
-      if (!current || JSON.stringify(current) !== JSON.stringify(saved)) {
-        setError("This draft changed in another tab. Reload to read it before saving.")
-        setNotice("")
-        return false
-      }
-      localStorage.setItem(storageKey, JSON.stringify(next))
-      setSaved(next)
+      const result = await feedbackRequest<{ totals: FeedbackTotals }>(projectId, path, method, data)
+      onTotals(result.totals)
       setNotice(message)
-      setError("")
-      setEditing(false)
-      return true
+      const { next, mine } = await load()
+      setFeed(next)
+      setPersonal(mine)
+      setRating(mine?.rating ?? 0)
+      if (path.startsWith("comments")) {
+        setComment(mine?.comment?.body ?? "")
+        setEditing(false)
+      }
+      setDeleting(null)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not save feedback. Your text is still here.")
+    } finally {
+      setBusy(false)
+      inFlight.current = false
+    }
+  }
+  async function more() {
+    if (!feed.nextCursor || inFlight.current) return
+    inFlight.current = true
+    setBusy(true)
+    setError("")
+    try {
+      const next = await feedbackRequest<PublicFeedback>(
+        projectId,
+        `feedback?cursor=${encodeURIComponent(feed.nextCursor)}`
+      )
+      setFeed((current) => ({
+        ...next,
+        comments: [
+          ...current.comments,
+          ...next.comments.filter((item) => !current.comments.some((old) => old.id === item.id))
+        ]
+      }))
     } catch {
-      setError("Your feedback could not be saved. Keep this page open and try again.")
-      setNotice("")
-      return false
+      setError("More comments couldn't be loaded. Please try again.")
+    } finally {
+      setBusy(false)
+      inFlight.current = false
+    }
+  }
+  const signIn = () => {
+    try {
+      sessionStorage.setItem("spawn-game-return", `/play/${projectId}#community`)
+    } catch {
+      /* Sign-in still works without storage. */
     }
   }
   return (
@@ -56,52 +113,45 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
       <div className="p-section-heading">
         <h2 id="community-title">Ratings & comments</h2>
       </div>
+      {!ready && !error && <output>Loading community…</output>}
       <div className="p-community-grid">
         <div className="p-rating-panel">
           <div className="p-rating-total">
-            <strong>{metrics.rating.toFixed(1)}</strong>
+            <strong>{feed.totals.reviews ? feed.totals.rating.toFixed(1) : "0"}</strong>
             <span>
               / 5<br />
-              <small>{metrics.reviews} reviews</small>
+              <small>
+                {feed.totals.reviews} {feed.totals.reviews === 1 ? "review" : "reviews"}
+              </small>
             </span>
           </div>
           <form
             onSubmit={(event) => {
               event.preventDefault()
-              persist({ ...saved, rating, updatedAt: new Date().toISOString() }, "Rating saved.")
+              void save("rating", "PUT", { rating }, "Rating saved.")
             }}
           >
-            <fieldset disabled={!ready}>
+            <fieldset disabled={!ready || !personal || busy}>
               <legend>Your rating</legend>
               <RadioGroup
-                orientation="horizontal"
-                onKeyDown={(event) => {
-                  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return
-                  event.preventDefault()
-                  const current = event.target instanceof HTMLButtonElement ? Number(event.target.value) : rating || 1
-                  const next =
-                    event.key === "Home"
-                      ? 1
-                      : event.key === "End"
-                        ? 5
-                        : ((current - 1 + (event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1) + 5) % 5) + 1
-                  setRating(next)
-                  setNotice("")
-                  document.getElementById(`star-${gameId}-${next}`)?.focus()
-                }}
                 className="p-rating-stars"
-                aria-label={playable ? "Your rating" : "Rate this concept"}
+                orientation="horizontal"
+                aria-label="Your rating"
                 value={String(rating)}
-                disabled={!ready}
+                disabled={!ready || !personal || busy}
                 onValueChange={(value) => {
                   setRating(Number(value))
                   setNotice("")
                 }}
               >
                 {[1, 2, 3, 4, 5].map((value) => (
-                  <label key={value} htmlFor={`star-${gameId}-${value}`} className={value <= rating ? "is-filled" : ""}>
+                  <label
+                    key={value}
+                    htmlFor={`rating-${projectId}-${value}`}
+                    className={value <= rating ? "is-filled" : ""}
+                  >
                     <RadioGroupItem
-                      id={`star-${gameId}-${value}`}
+                      id={`rating-${projectId}-${value}`}
                       className="sr-only"
                       value={String(value)}
                       aria-label={`${value} ${value === 1 ? "star" : "stars"}`}
@@ -112,120 +162,152 @@ export function GameCommunity({ gameId, playable }: { gameId: string; playable: 
               </RadioGroup>
             </fieldset>
             <div className="p-rating-value">{rating ? `${rating} out of 5` : "Choose a star rating"}</div>
-            <Button className="p-button p-button-outline" disabled={!ready || !rating || rating === saved.rating}>
-              Save rating
-            </Button>
-            {saved.rating > 0 && (
-              <Button
-                className="p-text-button"
-                type="button"
-                onClick={() => {
-                  const next = { ...saved, rating: 0, updatedAt: new Date().toISOString() }
-                  if (persist(next, "Rating removed.")) setRating(0)
-                }}
-              >
-                Remove rating
-              </Button>
+            {personal && (
+              <>
+                <Button className="p-button p-button-outline" disabled={busy || !rating || rating === personal.rating}>
+                  Save rating
+                </Button>
+                {personal.rating > 0 && (
+                  <Button
+                    type="button"
+                    className="p-text-button"
+                    disabled={busy}
+                    onClick={() => void save("rating", "DELETE", undefined, "Rating removed.")}
+                  >
+                    Remove rating
+                  </Button>
+                )}
+              </>
             )}
           </form>
+          {ready && !personal && (
+            <a className="p-button p-button-outline" href="/sign-in" onClick={signIn}>
+              Sign in to rate
+            </a>
+          )}
         </div>
         <div className="p-comments-panel">
           <div className="p-comments-heading">
             <h3>Comments</h3>
-            <span>{metrics.reviews} reviews</span>
+            <span>{feed.totals.comments}</span>
           </div>
           <div className="p-review-list">
-            {previewReviews(playable).map((review) => (
-              <article className="p-review" key={review.name}>
+            {ready && feed.totals.comments === 0 && (
+              <p className="p-comment-empty">No comments yet. Be the first to share what you think.</p>
+            )}
+            {feed.comments.map((item) => (
+              <article className="p-review" key={item.id}>
                 <header>
-                  <span className="p-review-avatar">{review.name[0]?.toUpperCase()}</span>
-                  <b>{review.name}</b>
-                  <span className="p-review-stars" aria-label={`${review.rating} out of 5`}>
-                    {Array.from({ length: 5 }, (_, index) => (
-                      <Star key={index} size={12} fill={index < review.rating ? "currentColor" : "none"} />
-                    ))}
+                  <span className="p-review-avatar" aria-hidden="true">
+                    {item.author[0]?.toUpperCase()}
                   </span>
+                  <b>{item.author}</b>
+                  {item.rating > 0 && (
+                    <span className="p-review-stars" aria-label={`${item.rating} out of 5`}>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star key={n} size={12} fill={n <= item.rating ? "currentColor" : "none"} />
+                      ))}
+                    </span>
+                  )}
                 </header>
-                <p>{review.text}</p>
+                <p>{item.body}</p>
+                <div className="p-review-meta">
+                  <PlayerReport projectId={projectId} commentId={item.id} title={item.author} />
+                  <time dateTime={item.createdAt} title={new Date(item.updatedAt).toLocaleString()}>
+                    {new Date(item.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric"
+                    })}
+                    {item.updatedAt !== item.createdAt ? " (edited)" : ""}
+                  </time>
+                  {item.id === personal?.comment?.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => {
+                        setEditing(true)
+                        setComment(item.body)
+                      }}
+                    >
+                      Edit comment
+                    </Button>
+                  )}
+                  {item.id === personal?.comment?.id && (
+                    <Button variant="ghost" size="sm" disabled={busy} onClick={() => setDeleting(item.id)}>
+                      <Trash2 size={13} />
+                      Delete comment
+                    </Button>
+                  )}
+                </div>
+                {deleting === item.id && (
+                  <fieldset className="p-comment-delete" aria-label="Confirm comment deletion">
+                    <span>Delete this comment?</span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void save(`comments/${item.id}`, "DELETE", undefined, "Comment deleted.")}
+                    >
+                      Delete
+                    </Button>
+                    <Button variant="ghost" size="sm" disabled={busy} onClick={() => setDeleting(null)}>
+                      Cancel
+                    </Button>
+                  </fieldset>
+                )}
               </article>
             ))}
           </div>
-          <div className="p-vote-preview" aria-label="Community votes">
-            <span>
-              <ThumbsUp size={14} />
-              {metrics.upvotes}
-            </span>
-            <span>
-              <ThumbsDown size={14} />
-              {metrics.downvotes}
-            </span>
-          </div>
-          {saved.comment && !editing ? (
-            <article className="p-comment-draft">
-              <header>
-                <span className="p-comment-avatar">Y</span>
-                <div>
-                  <b>Your comment</b>
-                </div>
-              </header>
-              <p>{saved.comment}</p>
-              <div>
-                <Button className="p-text-button" onClick={() => setEditing(true)}>
-                  Edit comment
-                </Button>
-                <Button
-                  className="p-text-button"
-                  onClick={() => {
-                    if (persist({ ...saved, comment: "", updatedAt: new Date().toISOString() }, "Comment deleted."))
-                      setComment("")
-                  }}
-                >
-                  <Trash2 size={14} />
-                  Delete comment
-                </Button>
-              </div>
-            </article>
-          ) : (
+          {feed.nextCursor && (
+            <Button variant="outline" disabled={busy} onClick={() => void more()}>
+              Load more comments
+            </Button>
+          )}
+          {personal && (!personal.comment || editing) && (
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                persist({ ...saved, comment: comment.trim(), updatedAt: new Date().toISOString() }, "Comment saved.")
+                void save("comments", "PUT", { body: comment }, "Comment saved.")
               }}
             >
-              <label htmlFor={`comment-${gameId}`}>Leave feedback</label>
-              <Textarea
-                id={`comment-${gameId}`}
+              <label htmlFor={`comment-${projectId}`}>{editing ? "Edit your comment" : "Leave feedback"}</label>
+              <textarea
+                className="p-feedback-textarea"
+                id={`comment-${projectId}`}
                 value={comment}
                 onChange={(event) => {
                   setComment(event.target.value)
                   setNotice("")
                 }}
-                placeholder={
-                  playable ? "What did you enjoy? What could be improved?" : "What would you want to play in this game?"
-                }
+                placeholder="What did you enjoy? What could be improved?"
                 maxLength={2000}
                 rows={4}
-                disabled={!ready}
+                disabled={busy}
               />
               <div className="p-comment-actions">
                 <span>{comment.length}/2000</span>
                 {editing && (
-                  <Button
-                    type="button"
-                    className="p-text-button"
-                    onClick={() => {
-                      setComment(saved.comment)
-                      setEditing(false)
-                    }}
-                  >
+                  <Button type="button" variant="ghost" disabled={busy} onClick={() => setEditing(false)}>
                     Cancel
                   </Button>
                 )}
-                <Button className="p-button p-button-small" disabled={!ready || !comment.trim()}>
+                <Button className="p-button p-button-small" disabled={busy || !comment.trim()}>
                   Save comment <MessageSquare size={15} />
                 </Button>
               </div>
             </form>
+          )}
+          {personal?.comment && !editing && !feed.comments.some((item) => item.id === personal.comment?.id) && (
+            <Button variant="outline" disabled={busy} onClick={() => setEditing(true)}>
+              Edit your comment
+            </Button>
+          )}
+          {ready && !personal && (
+            <a className="p-button p-button-outline" href="/sign-in" onClick={signIn}>
+              Sign in to comment
+            </a>
           )}
           <a href="/community-guidelines" className="p-community-guidelines">
             Community guidelines

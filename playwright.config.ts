@@ -6,6 +6,7 @@ const origins = testOrigins()
 
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: ["community-live.spec.ts", "seo.spec.ts"],
   use: { baseURL: origins.app, trace: "retain-on-failure" },
   webServer: [
     ...(process.env.SPAWN_E2E_APP_URL

@@ -61,7 +61,7 @@ The UI uses product language. Compute provider names, costs, and identifiers sta
 
 Provide a platform URL for each environment. Custom domain workflow: add hostname, display verification/DNS instructions, poll validation/TLS status, then activate routing after ownership verification. Show pending and failed states with remediation.
 
-Domain configuration, DNS verification, certificate setup, and Sandbox configuration do not require an existing deployment. Assign domains to environments independently of their current version. Serving the game at a verified address requires a deployed version. Sandbox can be configured before the first build, with the same $5/month plus usage estimate and separate compute choices for multiplayer.
+Domain configuration, DNS verification, certificate setup, and Sandbox configuration do not require an existing deployment. Assign domains to environments independently of their current version. Serving the game at a verified address requires a deployed version. Sandbox can be configured before the first build: $5/month plus usage for single-player, or included in the multiplayer bundle with separate compute choices and usage.
 
 Removal detaches routing and certificates as appropriate; it does not delete game data. Apex-domain support, hostname quotas, and charging policy remain open. [Cloudflare for SaaS](https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/) is the candidate service for customer hostnames.
 
@@ -76,7 +76,7 @@ Removal detaches routing and certificates as appropriate; it does not delete gam
 
 ## Billing presentation
 
-The setup summary includes only paid selections: one $5 multiplayer game fee or $5 single-player service bundle, a separate $5 fee for the single Sandbox if enabled, and nonzero compute estimates for each region. Do not repeat renderer, language, UI, physics, or other free stack choices in this tally. Show Free for frontend-only production; label custom database usage separately and previews as unpriced until policy exists.
+The setup summary includes only paid selections: one $10 multiplayer bundle including Sandbox and game services, or separate $5 single-player service and Sandbox add-ons, plus nonzero compute estimates for each region. Do not repeat renderer, language, UI, physics, or other free stack choices in this tally. Show Free for single-player production; label custom database usage separately and previews as unpriced until policy exists.
 
 Production metered rates include 100% markup, Sandbox rates 50%. Single-player services include service usage. Sandbox is one environment with multiple independently configured regions; its fee is charged once. Single-player Sandbox uses static hosting without multiplayer compute. Extra storage/build/network charges require explicit policy. Mark totals as estimates; show reconciliation adjustments and measurement lag when billing exists. Do not equate player counts to provisioned runtime hours.
 
@@ -85,6 +85,8 @@ Production metered rates include 100% markup, Sandbox rates 50%. Single-player s
 Proposed: budget alerts and configurable hard caps. The suspension/grace behavior after a cap or payment failure is open and must be visible before enabling paid usage.
 
 ## Permissions and audit
+
+Community moderation is live at `/dashboard/manage`, with an admin-only navigation item. It searches deployed games and comments, provides audited hide/restrict/restore decisions and paginated history. Platform administration uses the existing server-checked `platform_admins` membership and is separate from the proposed project roles below. See [Game publishing](game-publishing.md#community-moderation) for the API, visibility rules and audit retention behavior.
 
 Proposed roles: owner, deployer, viewer. Final membership scope and roles are open. Validate permissions server-side for every game/environment action, including log streams. Production release, secrets, billing, CI authorization, and deletion may need distinct permissions.
 

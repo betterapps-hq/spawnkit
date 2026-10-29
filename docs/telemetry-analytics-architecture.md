@@ -68,7 +68,7 @@ Proposed addresses, not provisioned services:
 | Internal staging | `https://telemetry.eu.staging.spawnkit.cloud` |
 | Local regional testing | `https://telemetry.eu.local.spawnkit.cloud` |
 
-The existing `/v1/logs` path is retained. Trace and metric paths are introduced only with corresponding ingestion support. Existing nonregional names remain compatibility endpoints during migration; their names do not establish a particular data location. DNS, certificates and routing must be verified before any regional address is advertised. See the [domain contract](domains.md#planned-regional-telemetry).
+The existing `/v1/logs` path is retained. Trace and metric paths are introduced only with corresponding ingestion support. DNS, certificates and routing must be verified before any regional address is advertised. See the [domain contract](domains.md#planned-regional-telemetry).
 
 Proposed selection rules:
 

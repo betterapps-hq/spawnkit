@@ -3,12 +3,14 @@ import { defaultProjectDraft } from "@/components/project/creation-model"
 import { projectRecordModel, readProjectDraft, readProjectRecords, saveProjectRecord } from "./project-records"
 
 const draft = () => ({ ...structuredClone(defaultProjectDraft), name: "Emberfall" })
-describe("saved project migration", () => {
-  it("retains legacy identities without inventing deployed resources", () => {
-    const records = readProjectRecords('[{"id":"legacy-id","name":"Test","custom":"preserve"}]')
-    expect(records[0]).toEqual({ id: "legacy-id", name: "Test", custom: "preserve" })
+describe("project records", () => {
+  it("requires a complete configuration without inventing deployed resources", () => {
+    const records = readProjectRecords(
+      JSON.stringify([{ id: "game-id", name: "Test", configuration: { ...draft(), name: "Test" } }])
+    )
+    expect(() => readProjectRecords('[{"id":"game-id","name":"Test"}]')).toThrow("Check your project configuration")
     const model = projectRecordModel(records[0]!)
-    expect(model.id).toBe("legacy-id")
+    expect(model.id).toBe("game-id")
     expect(model.configuration?.name).toBe("Test")
     expect(model.production).toMatchObject({ url: "", status: "empty", release: null })
     expect(model.releases).toEqual([])

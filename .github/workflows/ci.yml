@@ -26,10 +26,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: pnpm verify
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:templates
       - run: pnpm test:telemetry-package
+      - run: pnpm test:cli-package
 
   browser:
     name: Browser acceptance (${{ matrix.project }})
@@ -48,10 +50,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm exec turbo run build --filter=@spawn/cli --filter=@spawn/stories
+      - run: pnpm exec turbo run build --filter=@spawnkit/cli --filter=@spawn/stories
       - run: pnpm test:e2e --project=${{ matrix.project }} --workers=2 --reporter=line,html
         env:
           SPAWN_E2E_STATIC_STORIES: "1"
+      - run: pnpm exec playwright test --config playwright.community.config.ts --project=${{ matrix.project }} --workers=2 --reporter=line,html
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:

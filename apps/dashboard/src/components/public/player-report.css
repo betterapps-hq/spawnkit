@@ -1,0 +1,83 @@
+.player-report-form {
+  padding-top: 20px;
+}
+.safety-dialog > .player-report-form {
+  padding: 24px 28px;
+  flex-shrink: 0;
+}
+.player-report-form form {
+  display: grid;
+  gap: 22px;
+}
+.player-report-form footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+}
+.player-report-target {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+.player-report-form fieldset {
+  display: grid;
+  gap: 8px;
+}
+.player-report-form legend {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.player-report-reason {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.player-report-reason[data-selected="true"] {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-color: var(--primary);
+}
+.player-report-reason input {
+  accent-color: var(--primary);
+}
+.player-report-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.player-report-details textarea {
+  width: 100%;
+}
+.player-report-details span,
+.player-report-details small {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.player-report-details small {
+  margin-left: auto;
+}
+.player-report-received {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 24px;
+  padding: 18px 0;
+}
+.player-report-received > svg {
+  color: var(--primary);
+}
+.publishing-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

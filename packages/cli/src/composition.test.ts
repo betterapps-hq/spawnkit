@@ -133,14 +133,14 @@ it("rejects changes made while the plan is being reviewed", async () => {
   await expect(access(join(path, "vitest.config.ts"))).rejects.toThrow("ENOENT")
 })
 
-it("does not offer renderer migration and suggests compatible UI alternatives", () => {
+it("does not offer renderer changes and suggests compatible UI alternatives", () => {
   const result = resolveComposition("game", ["pixi-ui"], { name: "game", template: "phaser" })
   expect(result).toHaveProperty("issue")
   if (!("issue" in result)) throw new Error("Expected conflict")
-  expect(result.issue.message).toContain("Renderer migration is not supported")
+  expect(result.issue.message).toContain("The renderer cannot be changed with add")
   expect(result.issue.choices.map((choice) => choice.label)).toContain("Keep phaser; use html-ui")
   expect(() => resolveComposition("game", ["pixi"], { name: "game", template: "phaser" }, ["phaser"])).toThrow(
-    "migration"
+    "renderer cannot be changed"
   )
 })
 

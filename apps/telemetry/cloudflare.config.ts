@@ -18,7 +18,7 @@ export default defineConfig({
         ? []
         : production
           ? ["telemetry.spawnkit.cloud"]
-          : ["telemetry.staging.spawnkit.cloud", "telemetry-staging.spawnkit.cloud"],
+          : ["telemetry.staging.spawnkit.cloud"],
     observability: { enabled: true, traces: { enabled: true, headSamplingRate: 0.1 } },
     env: {
       TENANTS: bindings.durableObject<typeof worker, "TelemetryStore">({ worker, exportName: "TelemetryStore" }),

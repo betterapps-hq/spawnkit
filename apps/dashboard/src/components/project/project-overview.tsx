@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Clock,
   ArrowUpRight,
   GitBranch,
   GitCommitHorizontal,
@@ -12,12 +13,14 @@ import {
   Sparkles
 } from "lucide-react"
 import type { ReactNode } from "react"
+import { formatReleaseDate } from "@/lib/release-format"
 import { cn } from "@/lib/utils"
 import { CopyButton } from "../copy-button"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { scaffoldCommand } from "./creation-model"
 import { DomainStatus, primaryHostname } from "./domains"
+import { MediaWarnings } from "./media-warnings"
 import type { OperationPanel, ProjectModel, ProjectPage, Release } from "./model"
 import { EmptyState, Notice, StatusBadge } from "./primitives"
 import { VersionTargets, type VersionSection } from "./version-console"
@@ -82,6 +85,7 @@ export function Overview({
   ]
   return (
     <div className="space-y-7">
+      <MediaWarnings warnings={live?.build.mediaWarnings} />
       {project.connected === false && project.configuration && (
         <section className="rounded-xl border bg-card p-5" aria-label="Project starter">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -152,24 +156,30 @@ export function Overview({
               <>
                 <button
                   className="mt-4 flex w-fit max-w-full items-center gap-2 text-left text-sm hover:text-primary"
+                  aria-label={`View version ${live.number}`}
                   onClick={() => onRelease(live)}
                 >
                   <Badge variant="secondary" className="shrink-0 font-mono">
                     v{live.number}
                   </Badge>
-                  <span className="truncate">{live.title}</span>
-                  <ArrowUpRight className="size-3 shrink-0" />
                 </button>
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <GitBranch className="size-3" />
-                    {live.branch}
+                  {live.branch && (
+                    <span className="flex items-center gap-1.5">
+                      <GitBranch className="size-3" />
+                      {live.branch}
+                    </span>
+                  )}
+                  {live.commit && (
+                    <code className="flex items-center gap-1.5" title={live.commit}>
+                      <GitCommitHorizontal className="size-3" />
+                      {live.commit.slice(0, 7)}
+                    </code>
+                  )}
+                  <span className="flex items-center gap-1.5" title={live.time}>
+                    <Clock className="size-3" />
+                    {formatReleaseDate(live.time)}
                   </span>
-                  <code className="flex items-center gap-1.5">
-                    <GitCommitHorizontal className="size-3" />
-                    {live.commit}
-                  </code>
-                  <span>{live.time}</span>
                 </div>
               </>
             ) : (
@@ -178,14 +188,7 @@ export function Overview({
               </p>
             )}
             <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
-              {live ? (
-                <Button size="sm" variant="outline" asChild>
-                  <a href={`https://${hostname}`} target="_blank" rel="noreferrer">
-                    Visit game
-                    <ArrowUpRight />
-                  </a>
-                </Button>
-              ) : (
+              {!live && (
                 <Button size="sm" disabled={!canEdit} onClick={() => onAction("deploy")}>
                   <Rocket />
                   Deploy project
@@ -195,11 +198,6 @@ export function Overview({
                 <Globe2 />
                 Manage domains
               </Button>
-              <span className="ml-auto text-[11px] text-muted-foreground">
-                {production.regions.length
-                  ? `${production.regions.length} ${production.regions.length === 1 ? "region" : "regions"}`
-                  : "Global static hosting"}
-              </span>
             </div>
           </div>
         </div>
@@ -236,6 +234,29 @@ export function Overview({
         </dl>
       </section>
 
+      {project.activity && (
+        <section aria-label="Game activity" className="rounded-xl border bg-card p-5">
+          <h2 className="text-sm font-semibold">Game activity</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            All-time visits and launches from SpawnKit. Repeat activity within 30 minutes counts once.
+          </p>
+          <dl className="mt-4 grid grid-cols-2 gap-6">
+            <div>
+              <dt className="text-xs text-muted-foreground">Views</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">
+                {project.activity.views.toLocaleString("en")}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Plays</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">
+                {project.activity.plays.toLocaleString("en")}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      )}
+
       <div className="grid items-start gap-7 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-6">
           <Section
@@ -260,8 +281,16 @@ export function Overview({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium group-hover:text-primary">{version.title}</p>
                     <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                      <code>{version.commit}</code>
-                      <span>{version.time}</span>
+                      {version.commit && (
+                        <code className="flex items-center gap-1.5" title={version.commit}>
+                          <GitCommitHorizontal className="size-3" />
+                          {version.commit.slice(0, 7)}
+                        </code>
+                      )}
+                      <span className="flex items-center gap-1.5" title={version.time}>
+                        <Clock className="size-3" />
+                        {formatReleaseDate(version.time)}
+                      </span>
                     </div>
                     <div className="mt-2">
                       <VersionTargets project={project} version={version} />
@@ -383,7 +412,11 @@ export function Overview({
                       <Plus />
                       Enable Sandbox
                     </Button>
-                    <span className="text-[11px] text-muted-foreground">$5/month + usage</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {project.mode === "multiplayer"
+                        ? "Included in your bundle; compute is separate"
+                        : "$5/month + usage"}
+                    </span>
                   </div>
                 </>
               )}

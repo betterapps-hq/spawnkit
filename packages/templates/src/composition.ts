@@ -92,7 +92,7 @@ export function resolveComposition(
   for (const id of replace) {
     if (!existing.includes(id)) throw new Error(`Cannot replace ${id}: it is not selected in this game.`)
     if (component(id).category === "renderer")
-      throw new Error("Renderer migration is not supported. Keep the existing renderer or create a separate game.")
+      throw new Error("The renderer cannot be changed with add. Keep the existing renderer or create a separate game.")
     if (component(id).category === "tool") throw new Error("Tool removal is not supported by this operation.")
   }
   const required: { id: string; by: string }[] = []
@@ -130,7 +130,7 @@ export function resolveComposition(
     if (installed && incoming.length === 1) {
       const target = incoming[0]!
       const choices: ResolutionChoice[] = []
-      // Only generated module changes have a migration; renderer game code does not.
+      // Only generated modules can be replaced; the renderer owns game code.
       if (category !== "renderer")
         choices.push({
           label: `Replace ${installed} with ${target} (edited files will be checked)`,
@@ -154,7 +154,7 @@ export function resolveComposition(
       }
       return {
         issue: {
-          message: `${incoming.join(", ")} conflicts with ${installed}.${category === "renderer" ? " Renderer migration is not supported." : " Replacing it requires your explicit choice."}`,
+          message: `${incoming.join(", ")} conflicts with ${installed}.${category === "renderer" ? " The renderer cannot be changed with add." : " Replacing it requires your explicit choice."}`,
           choices
         }
       }

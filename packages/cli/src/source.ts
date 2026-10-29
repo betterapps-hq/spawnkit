@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto"
+import type { Stats } from "node:fs"
 import { lstat, open, readFile, readdir, realpath } from "node:fs/promises"
 import { basename, isAbsolute, join, matchesGlob, resolve } from "node:path"
 import { gzipSync } from "node:zlib"
+import { checkListingMedia } from "./media-preflight"
 
 export const sourceLimits = { files: 2000, bytes: 20 * 1024 * 1024 }
 const excluded =
@@ -63,6 +65,7 @@ export async function createSourceArchive(directory: string) {
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error
   }
   const files: { path: string; content: string }[] = []
+  const inventory: { path: string; size: number; stat: Stats }[] = []
   const names = new Set<string>()
   let sourceBytes = 0
   let omitted = 0
@@ -94,36 +97,46 @@ export async function createSourceArchive(directory: string) {
         continue
       }
       if (!stat.isFile() || stat.nlink !== 1) throw new Error(`Source contains a linked or special file: ${entry}`)
-      if (files.length >= sourceLimits.files || sourceBytes + stat.size > sourceLimits.bytes)
-        throw new Error("Source exceeds the 2000-file / 20 MiB limit.")
+      if (inventory.length >= sourceLimits.files) throw new Error("Source exceeds the 2000-file / 20 MiB limit.")
       if (names.has(entry.toLowerCase())) throw new Error("Source contains case-colliding paths.")
-      const handle = await open(full, "r")
-      let content: Buffer
-      try {
-        const actual = await handle.stat()
-        if (actual.ino !== stat.ino || actual.dev !== stat.dev || actual.nlink !== 1 || actual.size !== stat.size)
-          throw new Error("Source changed during packaging; retry.")
-        content = Buffer.alloc(stat.size)
-        let offset = 0
-        while (offset < content.length) {
-          const { bytesRead } = await handle.read(content, offset, content.length - offset, offset)
-          if (!bytesRead) throw new Error("Source changed during packaging; retry.")
-          offset += bytesRead
-        }
-        const after = await handle.stat()
-        if (after.size !== stat.size || after.mtimeMs !== stat.mtimeMs)
-          throw new Error("Source changed during packaging; retry.")
-      } finally {
-        await handle.close()
-      }
-      if (secretContent.test(content.toString("utf8")))
-        throw new Error(`Possible credential in ${entry}. Remove it from source before deploying.`)
-      sourceBytes += content.length
       names.add(entry.toLowerCase())
-      files.push({ path: entry, content: content.toString("base64") })
+      sourceBytes += stat.size
+      inventory.push({ path: entry, size: stat.size, stat })
     }
   }
   await visit("")
+  async function readEntry(entry: string) {
+    const stat = inventory.find((file) => file.path === entry)!.stat
+    const full = join(root, entry)
+    const handle = await open(full, "r")
+    let content: Buffer
+    try {
+      const actual = await handle.stat()
+      if (actual.ino !== stat.ino || actual.dev !== stat.dev || actual.nlink !== 1 || actual.size !== stat.size)
+        throw new Error("Source changed during packaging; retry.")
+      content = Buffer.alloc(stat.size)
+      let offset = 0
+      while (offset < content.length) {
+        const { bytesRead } = await handle.read(content, offset, content.length - offset, offset)
+        if (!bytesRead) throw new Error("Source changed during packaging; retry.")
+        offset += bytesRead
+      }
+      const after = await handle.stat()
+      if (after.size !== stat.size || after.mtimeMs !== stat.mtimeMs)
+        throw new Error("Source changed during packaging; retry.")
+    } finally {
+      await handle.close()
+    }
+    return content
+  }
+  const mediaNotices = await checkListingMedia(inventory, async (path) => (await readEntry(path)).toString("utf8"))
+  if (sourceBytes > sourceLimits.bytes) throw new Error("Source exceeds the 2000-file / 20 MiB limit.")
+  for (const { path: entry } of inventory) {
+    const content = await readEntry(entry)
+    if (secretContent.test(content.toString("utf8")))
+      throw new Error(`Possible credential in ${entry}. Remove it from source before deploying.`)
+    files.push({ path: entry, content: content.toString("base64") })
+  }
   for (const required of ["game.config.json", "package.json", "pnpm-lock.yaml"])
     if (!files.some((file) => file.path === required)) throw new Error(`Missing required source file: ${required}`)
   files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
@@ -135,7 +148,8 @@ export async function createSourceArchive(directory: string) {
     sizeBytes: bytes.length,
     sourceBytes,
     fileCount: files.length,
-    omitted
+    omitted,
+    mediaNotices
   }
 }
 

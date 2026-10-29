@@ -1,32 +1,24 @@
-import { createFileRoute, redirect } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 import { GamesPage } from "@/components/public/games-page"
 import { gamesSearch } from "@/lib/game-discovery"
+import { getPublishedGames } from "@/lib/publishing"
+import { indexablePath, publicPageHead } from "@/lib/seo"
 
 export const Route = createFileRoute("/")({
   validateSearch: gamesSearch,
-  beforeLoad: ({ location }) => {
-    const params = new URLSearchParams(location.searchStr)
-    if (["page", "project", "view"].some((key) => params.has(key)))
-      throw redirect({ href: `/dashboard${location.searchStr}` })
-  },
-  head: () => ({
-    meta: [
-      { title: "SpawnKit — Free browser games" },
-      { property: "og:title", content: "Free browser games — SpawnKit" },
-      {
-        property: "og:description",
-        content: "Play free browser games and download starter kits for building your own."
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://spawnkit.cloud/examples/space-shooter.webp" },
-      { name: "twitter:card", content: "summary_large_image" },
-      {
-        name: "description",
-        content:
-          "Discover free browser game demos and new game ideas. Find something to play, then build a game of your own with SpawnKit."
-      }
-    ]
-  }),
+  loader: () => getPublishedGames(),
+  head: ({ match }) =>
+    publicPageHead(
+      "/",
+      !indexablePath(
+        "/",
+        new URLSearchParams(
+          Object.entries(match.search)
+            .filter(([, value]) => value !== undefined)
+            .map(([key, value]) => [key, String(value)])
+        ).toString()
+      )
+    ),
   component: GamesRoute
 })
 function GamesRoute() {
@@ -34,6 +26,8 @@ function GamesRoute() {
   const navigate = Route.useNavigate()
   return (
     <GamesPage
+      published={Route.useLoaderData().games}
+      unavailable={Route.useLoaderData().unavailable}
       search={search}
       onSearch={(next) => void navigate({ search: next, replace: true, resetScroll: false })}
     />

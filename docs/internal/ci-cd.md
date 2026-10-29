@@ -103,12 +103,6 @@ Temporary credential files are ignored, created with restricted permissions and 
 after each job. They are never uploaded as artifacts. Failed browser runs retain traces
 for seven days. Actions are pinned to commit SHAs; Dependabot proposes weekly updates.
 
-## Existing database adoption
+## Database schema
 
-Before the first automatic release, run `node scripts/migrate.mjs --environment staging --baseline`
-and the corresponding production command once. This verifies the actual tables and indexes
-against migrations 0001–0008 in an in-memory SQLite database before recording their history.
-It does not recreate tables or modify application records. Ordinary releases apply only
-pending migrations. A legacy database without history fails with a specific adoption error.
-
-Both existing databases completed this schema-verified adoption on October 14, 2026.
+Apply pending numbered SQL migrations with `node scripts/migrate.mjs --environment staging` and the corresponding production command. Migration files define the schema; retain their recorded history.

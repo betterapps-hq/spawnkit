@@ -52,7 +52,7 @@ it("does not add telemetry or deferred frameworks implicitly", () => {
 it("adds standalone HTML Storybook without changing the game runtime", () => {
   const plan = createProjectPlan({ name: "story-game", template: "pixi", addons: ["storybook"] })
   const pkg = JSON.parse(plan.files["package.json"]!)
-  expect(pkg.scripts.storybook).toBe("node scripts/local.mjs stories")
+  expect(pkg.scripts.storybook).toBe("dev-domains run stories")
   expect(pkg.devDependencies["@storybook/html-vite"]).toBe("10.6.2")
   expect(pkg.dependencies.react).toBeUndefined()
   expect(plan.files[".storybook/main.ts"]).toContain("disableTelemetry: true")
@@ -66,7 +66,7 @@ it("keeps Playwright optional and isolates browser tests from Vitest", () => {
   expect(plan.modules).toContain("playwright")
   const pkg = JSON.parse(plan.files["package.json"]!)
   expect(pkg.devDependencies["@playwright/test"]).toBe("1.64.0")
-  expect(pkg.scripts["test:e2e"]).toBe("playwright test")
+  expect(pkg.scripts.e2e).toBe("node scripts/browser-tools.mjs e2e")
   expect(plan.files["vitest.config.ts"]).toContain("src/**/*.test.ts")
   expect(plan.files["e2e/game.spec.ts"]).toContain("Collected: [1-9][0-9]*")
   const withoutHud = createProjectPlan({ name: "headless-hud", template: "three", addons: ["playwright"], ui: "none" })

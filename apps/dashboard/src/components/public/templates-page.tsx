@@ -1,4 +1,3 @@
-import { createProjectPlan, describeProjectPlan } from "@spawn/templates"
 import {
   addons,
   physicsOptions,
@@ -13,15 +12,13 @@ import {
   type UiId
 } from "@spawn/templates/catalog"
 import { resolveComposition, selectedComponents } from "@spawn/templates/composition"
-import { strToU8, zipSync } from "fflate"
+import { starterKits } from "@spawn/templates/kits"
 import {
   ArrowDownToLine,
   ArrowRight,
   Check,
   ChevronDown,
   Code2,
-  FileCode2,
-  Folder,
   Globe2,
   Monitor,
   Package,
@@ -36,6 +33,7 @@ import { Input } from "@/components/ui/input"
 import { SelectItem } from "@/components/ui/select"
 import { CopyButton } from "../copy-button"
 import { FieldSelect } from "./field-select"
+import { ProjectFilePreview } from "./project-file-preview"
 import { PublicShell } from "./shell"
 
 const recommendations: Record<TemplateId, string> = {
@@ -72,14 +70,13 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
     try {
       const resolved = resolveComposition(options.name, selectedComponents(options))
       if ("issue" in resolved) return { error: resolved.issue.message }
-      const plan = createProjectPlan(resolved.plan.options)
-      return { plan, description: describeProjectPlan(plan) }
+      return { plan: resolved.plan }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "This combination is not available." }
     }
   }, [options])
   const engineInfo = templates.find((item) => item.id === engine)!
-  const command = `pnpm cli init ../${name} --add ${selection.join(",")}`
+  const command = `pnpm dlx @spawnkit/cli init ${name} --add ${selection.join(",")}`
   function selectEngine(next: TemplateId) {
     setEngine(next)
     setPhysics("none")
@@ -91,12 +88,8 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
     setBusy(true)
     setNotice("")
     try {
-      const archive = zipSync(
-        Object.fromEntries(
-          Object.entries(result.plan.files).map(([path, source]) => [`${name}/${path}`, strToU8(source)])
-        ),
-        { level: 6 }
-      )
+      const { projectArchive } = await import("@/lib/project-archive")
+      const archive = projectArchive(result.plan.options)
       const url = URL.createObjectURL(new Blob([new Uint8Array(archive)], { type: "application/zip" }))
       const link = document.createElement("a")
       link.href = url
@@ -107,7 +100,9 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
       window.setTimeout(() => URL.revokeObjectURL(url), 10_000)
       setNotice("Your kit is ready. Extract it into a new folder, then follow the README to install and run it.")
     } catch {
-      setNotice("The download could not be prepared. Try again, or copy the local CLI command below.")
+      setNotice(
+        "The download could not be prepared. Reload the page and try again, or copy the local CLI command below."
+      )
     } finally {
       setBusy(false)
     }
@@ -117,8 +112,10 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
       <div className="p-container p-builder-page">
         <div className="p-builder-heading">
           <div>
-            <h1>Build your starter kit</h1>
-            <p>Choose your engine and tools. Download a standalone TypeScript project.</p>
+            <h1>Start with a kit</h1>
+            <p>
+              Choose a browser game engine and compatible tools. Download a free, standalone TypeScript starter kit.
+            </p>
           </div>
           <a href="/create" className="p-text-link">
             New to making games? <ArrowRight size={16} />
@@ -176,7 +173,17 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                       onChange={() => selectEngine(template.id)}
                     />
                     <div className="p-engine-image">
-                      <img src={`/templates/${template.id}.webp`} alt="" />
+                      <img
+                        src={`/templates/${template.id}.webp`}
+                        srcSet={`/templates/${template.id}-320.webp 320w, /templates/${template.id}-640.webp 640w, /templates/${template.id}.webp 960w`}
+                        sizes="(max-width: 1000px) 45vw, 360px"
+                        alt=""
+                        width="960"
+                        height="540"
+                        loading="eager"
+                        fetchPriority="high"
+                        decoding="async"
+                      />
                       <span>{template.dimension.toUpperCase()}</span>
                       {engine === template.id && (
                         <span className="p-engine-check">
@@ -310,7 +317,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
           </div>
           <aside className="p-kit-summary">
             <div className="p-summary-top">
-              <span className="p-live-dot" /> YOUR STARTER KIT <Package size={17} />
+              YOUR STARTER KIT <Package size={17} />
             </div>
             <div className="p-summary-content">
               <div className="p-kit-icon">
@@ -350,22 +357,7 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
                   {result.error}
                 </p>
               )}
-              <details className="p-file-preview">
-                <summary>
-                  <Folder size={16} />
-                  {result.plan ? Object.keys(result.plan.files).length : 0} project files
-                  <ChevronDown size={14} />
-                </summary>
-                <ul>
-                  {result.plan &&
-                    Object.keys(result.plan.files).map((file) => (
-                      <li key={file}>
-                        <FileCode2 size={12} />
-                        {file}
-                      </li>
-                    ))}
-                </ul>
-              </details>
+              <ProjectFilePreview options={result.plan?.options} />
               <div className="p-included-steps">
                 <b>Run your project</b>
                 <ol>
@@ -395,6 +387,20 @@ export function TemplatesPage({ initialEngine }: { initialEngine: TemplateId }) 
               disabled={!!nameError || !result.plan}
             />
           </div>
+        </section>
+        <section className="p-ready-kits">
+          <h2>Explore ready-to-use kits</h2>
+          <p>Compare the included files, prerequisites and setup before you download.</p>
+          <ul>
+            {starterKits.map((kit) => (
+              <li key={kit.id}>
+                <a href={`/kits/${kit.id}`}>
+                  <span>{kit.name}</span>
+                  <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
         </section>
       </div>
     </PublicShell>

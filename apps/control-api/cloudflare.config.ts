@@ -3,6 +3,7 @@ import buildEnvironments from "../../deploy/builds.json" with { type: "json" }
 import githubEnvironments from "../../deploy/github.json" with { type: "json" }
 import localOrigins from "../../deploy/local-origins.json" with { type: "json" }
 import previews from "../../deploy/previews.json" with { type: "json" }
+import { BUILD_CONCURRENCY } from "./build-policy.ts"
 import * as entrypoint from "./src/index.ts" with { type: "cf-worker" }
 
 const production = process.env.SPAWN_CONTROL_ENVIRONMENT === "production"
@@ -11,7 +12,7 @@ const builder = defineContainer({
   name: production ? "spawnkit-build" : "spawn-build",
   image: { dockerfile: "./Dockerfile" },
   instanceType: "basic",
-  maxInstances: 3
+  maxInstances: BUILD_CONCURRENCY
 })
 const buildsEnabled = process.env.SPAWN_ENABLE_BUILD_CONTAINERS
   ? process.env.SPAWN_ENABLE_BUILD_CONTAINERS === "true"
@@ -75,8 +76,10 @@ export default defineConfig({
         exportName: "TelemetryAdmin"
       }),
       CLERK_SECRET_KEY: bindings.secret(),
+      AGENT_AUTH_SIGNING_KEY: bindings.secret(),
+      RESEND_API_KEY: process.env.SPAWN_EMAIL_ENABLED === "true" ? bindings.secret() : bindings.text(""),
+      INVITATION_FROM: bindings.text("SpawnKit <team@spawnkit.cloud>"),
       BUILDS_ENABLED: bindings.text(buildsEnabled ? "true" : "false"),
-      HOSTING_MODE: bindings.text("domains"),
       HOSTING_TEST: bindings.text(production ? "false" : "true"),
       HOSTING_API_TOKEN: process.env.SPAWN_HOSTING_PROVISIONER === "true" ? bindings.secret() : bindings.text(""),
       DASHBOARD_ORIGINS: bindings.text(

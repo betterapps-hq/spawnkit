@@ -92,8 +92,7 @@ Maintain an append-only usage ledger with game/environment, provider resource, t
 For paid games:
 
 ```text
-monthly multiplayer charge = one $5 game fee
-               + $5 if the single Sandbox is enabled
+monthly multiplayer charge = one $10 bundle including Sandbox and game services
                + 1.5 × attributable sandbox Neon/Vultr/D1 cost
                + 2.0 × attributable production Neon/Vultr/D1 cost
 ```
@@ -102,7 +101,7 @@ Measure Vultr allocation duration, including provisioned idle time; no room-coun
 
 Shared VM costs need an agreed allocation formula for CPU, memory, host overhead, unused capacity, rollout overlap, bandwidth, and billing granularity. Provider invoice costs and per-game usage are different data sets; reconcile them and retain auditable adjustments. Define how free allowances and discounts affect the cost basis.
 
-Builds, R2, and other resource pricing remain open. Count the game fee once and the additional Sandbox fee once, regardless of region count. Single-player service usage is included in its $5/month service bundle; custom databases remain separately metered. Free frontend-only production does not enable free sandbox use.
+Builds, R2, and other resource pricing remain open. Count the multiplayer bundle once, regardless of region count; do not charge another base fee for its included Sandbox or game services. Single-player service usage is included in its $5/month add-on, with Sandbox a separate $5/month add-on. Custom databases remain separately metered. Free single-player production does not enable free Sandbox use.
 
 ## Lifecycle and controls
 

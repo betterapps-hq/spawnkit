@@ -80,7 +80,7 @@ export async function guidedLink(
   try {
     const project = await api.project(identifier(id))
     if (project.id !== id) throw new Error("Unexpected project ID.")
-    await projectSelection("set", id, root)
+    await projectSelection("set", id, root, project.hostname)
     write(`Linked to ${project.name} (${id})\nFolder: ${root}\nNext: spawn deploy --dry-run\n`)
   } catch {
     throw new Error(`Could not link this folder. The hosted project was preserved. Retry: spawn link --project ${id}`)

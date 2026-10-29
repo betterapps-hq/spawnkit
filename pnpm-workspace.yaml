@@ -2,6 +2,10 @@ packages:
   - apps/*
   - packages/*
 
+# Security patch for the SVG decoder, including Miniflare's transitive copy.
+overrides:
+  sharp@0.35.4: 0.35.5
+
 catalog:
   typescript: 7.0.2
   "@types/node": 24.19.2

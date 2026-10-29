@@ -3,7 +3,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join, dirname } from "node:path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { login, logout, readCredentials, trustedUrl } from "./auth"
+import { authenticationStatus, login, logout, readCredentials, trustedUrl } from "./auth"
 
 const nativeFetch = globalThis.fetch
 let directory: string
@@ -58,6 +58,30 @@ it("uses the website, rejects a wrong state, exchanges PKCE and clears local cre
   expect(exchanged.get("code")).toBe("test-code")
   expect(await logout(directory)).toBe("signed-out")
   expect(await logout(directory)).toBe("already-signed-out")
+})
+it("reports missing, valid and expired local auth without exposing credentials or fetching", async () => {
+  expect((await authenticationStatus(directory)).status).toBe("sign-in-required")
+  await writeFile(
+    join(directory, "credentials.json"),
+    JSON.stringify({
+      version: 1,
+      site: "https://spawn.example",
+      accessToken: "never-output-this",
+      expiresAt: Date.now() + 60000
+    })
+  )
+  expect(await authenticationStatus(directory)).toEqual({
+    status: "signed-in",
+    site: "https://spawn.example",
+    checked: "local",
+    serverVerified: false
+  })
+  await writeFile(
+    join(directory, "credentials.json"),
+    JSON.stringify({ version: 1, site: "https://spawn.example", accessToken: "never-output-this", expiresAt: 1 })
+  )
+  expect((await authenticationStatus(directory)).status).toBe("sign-in-required")
+  expect(fetch).not.toHaveBeenCalled()
 })
 it("handles denied access without saving credentials", async () => {
   const pending = login(

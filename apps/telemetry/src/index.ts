@@ -15,6 +15,7 @@ export class TelemetryAdmin extends WorkerEntrypoint<Env> {
       validProject(project)
       validEnvironment(environment)
       const store = this.env.TENANTS.getByName(`${project}:${environment}`)
+      if (operation === "project" && request.method === "DELETE") return store.purge()
       if (operation === "settings" && request.method === "PUT") {
         const body = object(await readJson(request, 4096))
         const scope = { project, environment, generation: crypto.randomUUID() }
@@ -24,8 +25,6 @@ export class TelemetryAdmin extends WorkerEntrypoint<Env> {
         return Response.json({ ...object(await response.json()), key, endpoint: this.env.PUBLIC_ENDPOINT })
       }
       if (operation === "settings" && request.method === "GET") return store.manage("settings", {})
-      if (operation === "origins" && request.method === "PATCH")
-        return store.manage("migrate-origin", object(await readJson(request, 4096)))
       if (operation === "settings" && request.method === "DELETE") return store.manage("disable", {})
       if (operation === "events" && request.method === "DELETE") return store.manage("erase", {})
       if (operation === "events" && request.method === "GET")

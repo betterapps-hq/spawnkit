@@ -25,7 +25,7 @@ test("project dashboard navigates between real page components and creates a pro
     .filter({ has: page.getByRole("heading", { name: "Iron Frontier", exact: true }) })
     .click()
   await expect(page.getByRole("heading", { name: "Iron Frontier", exact: true })).toBeVisible()
-  await expect(page.getByText("3 regions", { exact: true })).toBeVisible()
+  await expect(page.getByRole("region", { name: "Production deployment" })).toContainText("Healthy")
   await page.screenshot({
     path: `work/studio-overview-${testInfo.project.name}.png`,
     fullPage: true,
@@ -59,7 +59,8 @@ test("promotion and rollback review the artifact and prevent unavailable operati
   await dialog.getByRole("button", { name: "Promote version" }).click()
   await expect(dialog.getByRole("heading", { name: "Request submitted" })).toBeVisible()
   await dialog.getByRole("button", { name: "Back to project" }).click()
-  await page.getByRole("button", { name: "Rollback", exact: true }).click()
+  await page.getByRole("button", { name: /v23 Add the forest checkpoint/ }).click()
+  await page.getByRole("button", { name: "Roll back to version", exact: true }).click()
   await expect(dialog.getByRole("radio", { name: "Version v23", exact: true })).toBeChecked()
   await expect(dialog.getByRole("radio", { name: "Version v20", exact: true })).toBeDisabled()
   await expect(dialog.getByRole("radio", { name: "Version v19", exact: true })).toBeDisabled()
@@ -188,8 +189,7 @@ test("a PR version moves to Sandbox then production without changing its artifac
 })
 
 test("rollback can select a retained version that has never been in production", async ({ page }) => {
-  await story(page, "deployments--history")
-  await page.getByRole("button", { name: "Rollback", exact: true }).first().click()
+  await story(page, "deployments--rollback")
   const dialog = page.getByRole("dialog", { name: "Roll back production", exact: true })
   await dialog.getByLabel("Find a version", { exact: true }).fill("18")
   await dialog.getByRole("radio", { name: "Version v18", exact: true }).check()

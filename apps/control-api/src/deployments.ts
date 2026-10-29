@@ -1,8 +1,13 @@
 import { createHash } from "node:crypto"
 import { activate, type DeploymentRow } from "./activation"
+import { enqueueBuild } from "./build-queue"
 import { HttpError, jsonBody, requireValue } from "./http"
+import { mediaWarnings } from "./media-warnings"
 
 async function response(row: DeploymentRow, env: Env) {
+  const release = await env.DATABASE.prepare("SELECT media_warnings FROM releases WHERE id=? AND project_id=?")
+    .bind(row.release_id, row.project_id)
+    .first<{ media_warnings: string }>()
   const pinned =
     row.status === "succeeded"
       ? await env.DATABASE.prepare("SELECT hostname FROM deployment_hostnames WHERE deployment_id=?")
@@ -20,6 +25,8 @@ async function response(row: DeploymentRow, env: Env) {
     status: row.status,
     environment: row.environment,
     releaseId: row.release_id,
+    dashboardUrl: `${env.DASHBOARD_URL}/dashboard/projects/${row.project_id}`,
+    mediaWarnings: mediaWarnings(release?.media_warnings),
     ...(host ? { url: `https://${host.hostname}` } : {}),
     ...(pinned ? { deploymentUrl: `https://${pinned.hostname}` } : {})
   })
@@ -72,7 +79,7 @@ export async function deploymentRoute(
   if (existing) {
     if (existing.request_hash !== hash)
       throw new HttpError(409, "idempotency_conflict", "This request key was used for a different operation.")
-    if (existing.status === "queued") await env.BUILD_JOBS.getByName(existing.id).start(existing.id)
+    if (existing.status === "queued") await enqueueBuild(env, existing.id)
     if (existing.status === "activating") {
       await activate(env, existing)
       const current = await env.DATABASE.prepare("SELECT * FROM deployments WHERE id=?")
@@ -107,7 +114,7 @@ export async function deploymentRoute(
     uploadId = body.uploadId
     statements.push(
       env.DATABASE.prepare(
-        "INSERT INTO releases(id,project_id,build_id,status,environment,created_at) VALUES(?,?,?,'building',?,?)"
+        "INSERT INTO releases(id,project_id,build_id,status,environment,created_at) VALUES(?,?,?,'queued',?,?)"
       ).bind(releaseId, projectId, id, body.environment, now)
     )
   } else {
@@ -166,7 +173,7 @@ export async function deploymentRoute(
     status,
     expected_release_id: body.expectedReleaseId
   }
-  if (operation === "deployments") await env.BUILD_JOBS.getByName(id).start(id)
+  if (operation === "deployments") await enqueueBuild(env, id)
   else {
     try {
       await activate(env, row)

@@ -3,13 +3,6 @@ import { readFile, writeFile, mkdir, readdir, lstat, realpath } from "node:fs/pr
 import { resolve, dirname, relative } from "node:path"
 
 const root = "/workspace"
-const archive = JSON.parse(await readFile("/tmp/spawn-source.json", "utf8"))
-for (const file of archive.files) {
-  const target = resolve(root, file.path)
-  if (!target.startsWith(`${root}/`)) throw new Error("Invalid source path")
-  await mkdir(dirname(target), { recursive: true })
-  await writeFile(target, Buffer.from(file.content, "base64"), { flag: "wx" })
-}
 async function run(args) {
   const child = spawn("pnpm", args, {
     cwd: root,
@@ -18,6 +11,7 @@ async function run(args) {
       PATH: process.env.PATH,
       HOME: process.env.HOME,
       CI: "true",
+      NODE_EXTRA_CA_CERTS: "/etc/cloudflare/certs/cloudflare-containers-ca.crt",
       NODE_ENV: "production",
       npm_config_registry: "https://registry.npmjs.org/"
     }
@@ -33,7 +27,18 @@ async function run(args) {
     clearTimeout(timer)
   }
 }
-await run(["install", "--frozen-lockfile", "--ignore-scripts", "--prod=false"])
+if (process.argv[2] === "install") {
+  const archive = JSON.parse(await readFile("/tmp/spawn-source.json", "utf8"))
+  for (const file of archive.files) {
+    const target = resolve(root, file.path)
+    if (!target.startsWith(`${root}/`)) throw new Error("Invalid source path")
+    await mkdir(dirname(target), { recursive: true })
+    await writeFile(target, Buffer.from(file.content, "base64"), { flag: "wx" })
+  }
+  await run(["install", "--frozen-lockfile", "--ignore-scripts", "--ignore-pnpmfile", "--prod=false"])
+  process.exit(0)
+}
+if (process.argv[2] !== "build") throw new Error("Unknown build phase")
 await run(["run", "build"])
 const out = resolve(root, "dist")
 if ((await realpath(out)) !== out) throw new Error("Build output must not be a symbolic link")
@@ -55,4 +60,9 @@ async function walk(dir) {
 }
 await walk(out)
 if (!files.some((file) => file.path === "index.html")) throw new Error("Build must produce dist/index.html")
+if (
+  files.length > 2000 ||
+  files.reduce((total, file) => total + Buffer.byteLength(file.content, "base64"), 0) > 20 * 1024 * 1024
+)
+  throw new Error("Build output exceeds the artifact limit")
 await writeFile("/workspace/spawn-artifacts.json", JSON.stringify({ files }))
