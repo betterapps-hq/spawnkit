@@ -3,13 +3,13 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { expect, it } from "vitest"
-import { createProjectPlan } from "./index"
+import { gameFiles } from "./scaffold"
 
 it("builds equivalent TypeScript and JSON configs and rejects ambiguous or invalid sources", async () => {
   const work = fileURLToPath(new URL("../../../work/", import.meta.url))
   await mkdir(work, { recursive: true })
   const root = await mkdtemp(join(work, "listing-config-"))
-  const plan = createProjectPlan({ name: "config-check", template: "phaser" })
+  const files = await gameFiles({ name: "config-check", template: "phaser" })
   const write = async (name: string, value: string) => {
     const path = join(root, name)
     await mkdir(dirname(path), { recursive: true })
@@ -35,7 +35,7 @@ it("builds equivalent TypeScript and JSON configs and rejects ambiguous or inval
       "spawnkit.config.schema.json",
       "vite.config.ts"
     ])
-      await write(name, plan.files[name]!)
+      await write(name, files[name]!)
     await write("package.json", '{"type":"module"}')
     await write("index.html", "<!doctype html><title>Config test</title>")
     build()

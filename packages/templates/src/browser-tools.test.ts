@@ -4,7 +4,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { expect, it } from "vitest"
 import { browserToolsSource } from "./browser-tools"
-import { createProjectPlan } from "./index"
+import { gameFiles } from "./scaffold"
 
 async function exercise(args: string[], env: Record<string, string> = {}) {
   const directory = await mkdtemp(join(tmpdir(), "spawn-browser-tools-"))
@@ -71,13 +71,17 @@ it("prepares Vitest's browser too, and allows an explicitly provisioned offline 
   const offline = await exercise(["test"], { SPAWN_SKIP_BROWSER_INSTALL: "1" })
   expect(offline.calls).toEqual([{ tool: "vitest", args: ["run", "--coverage"] }])
 })
-it("composes testing add-ons together without adding browser setup to a plain kit", () => {
-  const both = createProjectPlan({ name: "test-game", template: "phaser", addons: ["vitest", "playwright"] })
-  const scripts = JSON.parse(both.files["package.json"]!).scripts
+it("composes testing add-ons together without adding browser setup to a plain kit", async () => {
+  const both = await gameFiles({
+    name: "test-game",
+    template: "phaser",
+    optional: ["@spawnkit/vitest", "@spawnkit/playwright"]
+  })
+  const scripts = JSON.parse(both["package.json"]!).scripts
   expect(scripts["e2e:ui"]).toBe("node scripts/browser-tools.mjs e2e --ui")
   expect(scripts.setup).toContain("dev-domains setup")
-  expect(both.files["scripts/browser-tools.mjs"]).toBe(browserToolsSource)
-  const plain = createProjectPlan({ name: "plain-game", template: "phaser" })
-  expect(plain.files["scripts/browser-tools.mjs"]).toBeUndefined()
-  expect(JSON.parse(plain.files["package.json"]!).scripts.postinstall).toBeUndefined()
+  expect(both["scripts/browser-tools.mjs"]).toBe(browserToolsSource)
+  const plain = await gameFiles({ name: "plain-game", template: "phaser" })
+  expect(plain["scripts/browser-tools.mjs"]).toBeUndefined()
+  expect(JSON.parse(plain["package.json"]!).scripts.postinstall).toBeUndefined()
 })

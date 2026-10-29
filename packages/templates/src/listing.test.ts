@@ -4,8 +4,8 @@ import { stripTypeScriptTypes } from "node:module"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { expect, it } from "vitest"
-import { createProjectPlan } from "./index"
 import { gameGenres, listingClassification, listingDetails, listingTemplate, parseListingConfig } from "./listing"
+import { gameFiles } from "./scaffold"
 
 it("uses one versioned JSON contract for downloadable and imported listings", () => {
   expect(parseListingConfig(JSON.parse(JSON.stringify(listingTemplate)))).toEqual(listingTemplate)
@@ -45,17 +45,17 @@ it("keeps gameplay facts bounded and source links explicitly licensed and permit
 import { listingConfigSource } from "./listing-config"
 it.each(["pixi", "phaser", "three", "babylon"] as const)(
   "includes a complete editable listing and default cover in %s",
-  (template) => {
-    const plan = createProjectPlan({ name: "new-game", template })
-    const listing = JSON.parse(plan.files["spawnkit.config.ts"]!.split("defineConfig(")[1]!.slice(0, -2))
+  async (template) => {
+    const files = await gameFiles({ name: "new-game", template })
+    const listing = JSON.parse(files["spawnkit.config.ts"]!.split("defineConfig(")[1]!.slice(0, -2))
     expect(listing.title).toBe("new-game")
     expect(listing.genre).toBe("Arcade")
     expect(listing.dimension).toBe(["pixi", "phaser"].includes(template) ? "2D" : "3D")
-    expect(plan.files[`public/${listing.coverPath}`]).toContain('<svg xmlns="http://www.w3.org/2000/svg"')
-    expect(JSON.parse(plan.files["spawnkit.config.schema.json"]!).properties.genre.enum).toEqual(gameGenres)
-    expect(plan.files["README.md"]).toContain("spawnkit.config.json")
-    expect(plan.files["README.md"]).toContain("up to 1 MiB")
-    expect(plan.files["README.md"]).toContain("up to 2 MiB")
+    expect(files[`public/${listing.coverPath}`]).toContain('<svg xmlns="http://www.w3.org/2000/svg"')
+    expect(JSON.parse(files["spawnkit.config.schema.json"]!).properties.genre.enum).toEqual(gameGenres)
+    expect(files["README.md"]).toContain("spawnkit.config.json")
+    expect(files["README.md"]).toMatch(/up to 1\s+MiB/)
+    expect(files["README.md"]).toMatch(/up to 2\s+MiB/)
   }
 )
 it("accepts the shared vocabulary and leaves unknown classifications unset", () => {
