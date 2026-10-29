@@ -68,7 +68,8 @@ test("3D artwork waits for both page load and visibility", async ({ page }) => {
   const release = await holdPageLoad(page)
   let worldRequests = 0
   page.on("request", (request) => {
-    if (/\/cloud-world\.ts/.test(request.url())) worldRequests++
+    // The dev server requests cloud-world.ts; a built Storybook requests a hashed cloud-world-*.js chunk.
+    if (/\/cloud-world[.-]/.test(request.url())) worldRequests++
   })
   try {
     await page.goto(`${stories}/iframe.html?id=public-site-marketing--environment-study&viewMode=story`, {

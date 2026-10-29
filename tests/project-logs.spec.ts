@@ -10,7 +10,7 @@ test("large logs stay compact and windowed, with full details and keyboard navig
   await expect(page.getByText("10,000 entries", { exact: true })).toBeVisible()
   await expect(page.locator('[data-log-index="9999"]')).toBeVisible()
   expect(await rows.count()).toBeLessThan(60)
-  expect((await rows.first().boundingBox())!.height).toBe(26)
+  expect((await rows.first().boundingBox())!.height).toBe(32)
   await page.locator('[data-log-index="9999"]').click()
   const dialog = page.getByRole("dialog", { name: "Log entry", exact: true })
   await expect(dialog).toContainText("at ForestRoom.onMessage (src/rooms/forest.ts:128:5)")

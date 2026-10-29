@@ -27,10 +27,9 @@ test.describe("Scaffolded game telemetry", () => {
         gamePath,
         "--name",
         "telemetry-acceptance",
-        "--template",
-        "pixi",
-        "--telemetry",
-        "platform"
+        "--add",
+        "pixi,platform-telemetry",
+        "--yes"
       ],
       { stdio: "pipe" }
     )
