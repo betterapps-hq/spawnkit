@@ -35,9 +35,9 @@ pnpm dev:database
 pnpm dev
 pnpm storybook
 pnpm build:storybook
-pnpm cli templates
-pnpm cli init ../my-game --add babylon --add bitecs,vitest
-pnpm cli init ../my-game --add babylon --add bitecs,vitest --dry-run --json
+pnpm cli catalog
+pnpm cli init babylon ../my-game --simulation bitecs --with vitest
+pnpm cli init babylon ../my-game --simulation bitecs --with vitest --dry-run --json
 pnpm verify
 pnpm exec playwright install chromium
 pnpm test:e2e
@@ -66,19 +66,17 @@ Git hooks are opt-in with `pnpm hooks:install` after Git initialization. No remo
 
 SEO specifications live in [specs/seo](../specs/seo/README.md). Run `pnpm seo:audit` for a read-only production HTTP/metadata report in ignored `work/`; an optional origin argument targets another environment. Run `pnpm exec playwright test --config playwright.seo.config.ts` for isolated desktop/mobile SSR acceptance with local catalog fixtures. This harness reserves loopback ports 5196 and 5197 and does not use hosted accounts. Public metadata lives in `apps/dashboard/src/lib/seo.ts`; crawl responses and host/indexing rules live in `seo-response.ts`. The sitemap uses the control API's complete paginated public inventory, independently of the discovery feed's 100-game limit. Deploy that API before the dashboard and follow the production checklist in the Batch 1 spec.
 
-Batch 2 recipes live in `@spawn/templates/kits`. `/kits/<id>` and `/downloads/kits/<id>.zip` share composition and generation; do not add independent template renderers. `/browse` and eligible `/categories/<genre>` pages use the complete paginated API inventory. Apply `0022_game_details.sql` before deploying the API that reads optional game facts.
+Batch 2 recipes live in `@spawn/templates/kits`. Each kit is the engine preset of the same id, so `/kits/<id>` and `/downloads/kits/<id>.zip` plan exactly what `spawn init --preset <id>` writes; do not add independent template renderers. `/browse` and eligible `/categories/<genre>` pages use the complete paginated API inventory. Apply `0022_game_details.sql` before deploying the API that reads optional game facts.
 
 Run `pnpm seo:performance [origin] [paths...]` for cold mobile lab measurements and screenshots in `work/`. Defaults are the homepage, creator, builder and hosting pages, with 4x CPU throttling, 150 ms latency and 1.6 Mbps download. Reports contain LCP, its element/resource, load-window CLS, TTFB, resources, JavaScript transfer and failures; they are not field INP or p75 reports. Run `pnpm images:templates` after changing original engine illustrations to regenerate their 320/640-pixel WebP variants using the pinned encoder already used by the control API.
 
 Add `--interactions` to measure the mobile menu and applicable builder/kit controls using browser Event Timing. For example: `pnpm seo:performance https://spawnkit.cloud /templates /kits/phaser --interactions`. The audit records completed actions and exposed event durations; `null` means no timing entry was available, not zero latency. An unsuccessful action or runtime error makes the command fail. Passing a `/play/<projectId>` path also records game-frame loading and its resources, without treating document load or canvas presence as verified gameplay readiness. Lab runs intercept game activity and Cloudflare RUM submissions so synthetic visits do not increment production counters or enter field reports; no credentials or user accounts are needed.
 
-## Template composition
+## Template catalog
 
-Each module declares dependencies, conflicts, files, package dependencies, and scripts. The resolver orders dependencies first, deduplicates modules, rejects cycles/conflicts, and rejects unequal values targeting the same file or package entry. The renderer and either plain movement, bitECS, or Koota simulation share an input contract. Optional Vitest tests exercise movement, bounds, diagonal speed, and isolated simulation instances.
+`@spawn/templates/scaffold` describes SpawnKit's games for the `@buildkitgg/scaffolder` engine: the `spawnkit` target with one mode per renderer, one template per renderer, the physics, UI, simulation and telemetry slots, the tools, and a preset per starter kit. The CLI runs the engine's commands on it. The dashboard plans with the engine's pure planner on an empty tree, which is what `spawn init` writes, so previews, kit downloads and builder downloads match the command they show. `@spawn/templates/answers` turns the dashboard's choices into engine answers and renders their `spawn init` command with the engine's `requestArgv`. The renderer and either plain movement, bitECS, or Koota simulation share an input contract. Optional Vitest tests exercise movement, bounds, diagonal speed, and isolated simulation instances.
 
-Generation validates names and file paths before creating an exclusive destination. Existing directories, even empty ones, are rejected. On a partial failure, the writer attempts to remove only files/directories it created. Dependency installation is a separate explicit step; generation does not execute package scripts or provision infrastructure.
-
-Guided setup selects one ECS (none, bitECS, or Koota), previews the resolved files, dependencies, scripts, and runtime requirements, then asks before creating the project. Declining leaves the filesystem untouched. `--dry-run` exposes the same setup details, including a `setup` object in JSON output. Both dry runs and generation reject existing destinations and missing parent directories; create the parent directory first. The exclusive writer still checks for collisions at write time.
+`init` needs a new or empty folder whose parent exists. Generation writes files but does not install dependencies, run package scripts or provision infrastructure. Generated projects record the chosen add-ons in `spawn.jsonc` and what the engine generated in `.spawn/lock.json`; commit both. In a terminal, `init` asks each question the flags left open, shows the plan, and asks before writing. Declining leaves the filesystem untouched. `--dry-run --json` prints the same plan.
 
 Generated projects are standalone pnpm projects, including when placed inside this checkout. Exact direct dependency versions are embedded; developers commit the lockfile produced by their initial install. `game.config.json` is a version-1 scaffolding manifest, not yet a deployment API contract.
 
@@ -86,7 +84,7 @@ Generated projects are standalone pnpm projects, including when placed inside th
 
 This is the platform's dashboard, not a reusable dashboard starter. TanStack Start owns routing, SSR, and server functions; TanStack Query owns catalog fetching; TanStack Form owns project-name validation; Zustand owns per-instance view/filter state; TanStack Table v8.21.3 powers the tablecn-derived table. Table v8 is pinned to match the adopted tablecn revision. Tailwind CSS 4 and official shadcn/Radix components provide styling and controls. Mantine hooks handle clipboard, hydration readiness, and mobile navigation. Utilities are ts-extras, ts-pattern, and tiny-invariant.
 
-The signed-in application and Storybook share `ProjectStudio` and its page components. The application reads authenticated cloud projects; isolated Storybook fixtures hold complete local project configurations. Unavailable backend operations remain visibly disabled. Dashboard pages use paths: `/dashboard`, `/dashboard/new`, `/dashboard/submissions`, `/dashboard/projects/<id>`, `/dashboard/projects/<id>/<page>`, and `/dashboard/projects/<id>/releases/<version>`. Query parameters hold deployment filters. The public catalog contains approved hosted releases. Dashboard setup commands use `pnpm dlx @spawnkit/cli init --add`.
+The signed-in application and Storybook share `ProjectStudio` and its page components. The application reads authenticated cloud projects; isolated Storybook fixtures hold complete local project configurations. Unavailable backend operations remain visibly disabled. Dashboard pages use paths: `/dashboard`, `/dashboard/new`, `/dashboard/submissions`, `/dashboard/projects/<id>`, `/dashboard/projects/<id>/<page>`, and `/dashboard/projects/<id>/releases/<version>`. Query parameters hold deployment filters. The public catalog contains approved hosted releases. Dashboard setup commands are `spawn init <template> <name>` with every slot answered (`--physics`, `--ui`, `--simulation`, `--telemetry` or `--no-<slot>`) and `--with` for tools, rendered by the engine from the project's answers.
 
 The dashboard shell uses the official shadcn Sidebar composition with an icon-only collapsed rail at every screen size. Small screens default to the rail; expanding opens a labeled drawer over the content. Selecting a page returns to the rail. Its footer contains the project CLI shortcut and an account dropdown; Account opens Clerk's profile manager and Sign out ends the Clerk session. The header contains breadcrumbs, the sidebar toggle, and notifications. Page actions remain next to the page title. The notification component supports unread filtering, individual/all read controls, and project navigation. Populated records are isolated to Storybook until an authenticated notification feed is connected; the application displays an empty inbox.
 
@@ -116,13 +114,13 @@ The `Project dashboard` group now covers full project pages, immutable version i
 
 Analytics is a distinct project route from Logs. `Project dashboard/Analytics` has twenty interactive design stories with four primary sections (Overview, Players, Health, Explore) and an Alerts utility: player engagement and retention, overview, AI investigation, issue triage/detail, performance, sessions, traces, event export, releases, alerts and boundary states. Metrics derive from deterministic Storybook-only session and player-day cohorts. AI uses an injected story-only adapter, with no live model or repository writes. The deployed Analytics route retains the working tenant telemetry panel; the advanced sample views are not bundled into the application. Read the [Sentry feature study and walkthrough](analytics-experience.md). Run `pnpm exec playwright test tests/analytics.spec.ts` through the repository browser-test configuration. For an already-running isolated preview, use `SPAWN_E2E_STORIES_URL` and a dedicated Playwright configuration with `webServer: []` and a separate output directory. For a stable review while other work changes the repository, build Storybook and serve it with `pnpm exec vite preview --outDir apps/dashboard/storybook-static --host 127.0.0.1 --port 6009`.
 
-Guided CLI setup explicitly asks whether to add Storybook (default no). Automation uses --add storybook; --add vitest,bitecs,storybook combines modules. Generated projects use @storybook/html-vite, HTML score-display stories, scripts, and a separate static output. They do not depend on the monorepo's React Storybook package. Only the esbuild installation script needed by Storybook is allowed in generated pnpm configuration. Storybook is development-only and does not add React/R3F/Bun to game runtime dependencies.
+Guided CLI setup offers Storybook among the tools (default no). Automation uses `--with storybook`; `--with vitest,storybook --simulation bitecs` combines them. Generated projects use @storybook/html-vite, HTML score-display stories, scripts, and a separate static output. They do not depend on the monorepo's React Storybook package. Only the esbuild installation script needed by Storybook is allowed in generated pnpm configuration. Storybook is development-only and does not add React/R3F/Bun to game runtime dependencies.
 
 ## Physics, interface, and telemetry
 
-The CLI resolves physics, UI, and telemetry through `--add` and validates the combination before creating files. Physics choices are Rapier 2D for Pixi, Arcade/Matter for Phaser, Havok for Babylon, and Rapier 3D for Three. Each demonstrates a falling object colliding with a floor. Player movement remains its separate simulation. UI choices are HTML/CSS, Pixi UI, Babylon GUI, or none, with Escape pause/resume in enabled interfaces. Native canvas controls supplement keyboard input.
+The CLI takes physics, UI, simulation and telemetry as slot flags (`--physics`, `--ui`, `--simulation`, `--telemetry`, or `--no-<slot>`) and tools through `--with`, and validates the combination before creating files. Physics choices are Rapier 2D for Pixi, Arcade/Matter for Phaser, Havok for Babylon, and Rapier 3D for Three. Each demonstrates a falling object colliding with a floor. Player movement remains its separate simulation. UI choices are HTML/CSS, Pixi UI, Babylon GUI, or none, with Escape pause/resume in enabled interfaces. Native canvas controls supplement keyboard input.
 
-Telemetry defaults to none during scaffolding. `--add platform-telemetry` installs the built `@spawn/telemetry` package as a standalone vendored dependency and generates a typed adapter. In the dashboard, open the project's Analytics → Telemetry setup, configure exact allowed game origins, and copy the returned environment settings into the game's ignored `.env`. Restart/rebuild the game after changing settings. Enable capture through `setTelemetryConsent(true)` when the application's collection policy permits it; developer configuration alone does not grant consent. Sentry generates a browser integration gated on `VITE_SENTRY_DSN`, with PII-related data collection disabled. Both public write keys and DSNs are browser configuration, never API/admin credentials. See [Telemetry operations](telemetry-operations.md) and the [SDK README](../packages/telemetry/README.md).
+Telemetry defaults to none during scaffolding. `--telemetry platform-telemetry` installs the built `@spawn/telemetry` package as a standalone vendored dependency and generates a typed adapter. In the dashboard, open the project's Analytics → Telemetry setup, configure exact allowed game origins, and copy the returned environment settings into the game's ignored `.env`. Restart/rebuild the game after changing settings. Enable capture through `setTelemetryConsent(true)` when the application's collection policy permits it; developer configuration alone does not grant consent. Sentry generates a browser integration gated on `VITE_SENTRY_DSN`, with PII-related data collection disabled. Both public write keys and DSNs are browser configuration, never API/admin credentials. See [Telemetry operations](telemetry-operations.md) and the [SDK README](../packages/telemetry/README.md).
 
 ## Next implementation slices
 
@@ -136,7 +134,7 @@ See the product specifications for launch requirements; they extend beyond this 
 
 ## Optional browser testing and selection cards
 
-Choose Playwright in the CLI add-on selector or pass --add playwright (optionally alongside vitest). Generated projects include Chromium configuration, a keyboard-input test, and an e2e command. After pnpm install, pnpm e2e prepares the matching Chromium browser and runs tests; cached browsers are reused. pnpm e2e:ui opens the interactive test UI. pnpm run setup prepares local HTTPS and Chromium explicitly, while pnpm test:setup prepares Chromium only. Installation itself has no postinstall side effects. In CI, provision browsers explicitly with pnpm test:setup --with-deps before running tests. SPAWN_SKIP_BROWSER_INSTALL=1 opts out for preprovisioned offline environments. A failed browser install stops before tests run. Vitest only discovers src/**/*.test.ts, keeping browser tests separate. UI-disabled templates use a canvas/focus smoke check; HUD-enabled templates assert collection.
+Choose Playwright in the CLI's tools question or pass `--with playwright` (optionally alongside vitest). Generated projects include Chromium configuration, a keyboard-input test, and an e2e command. After pnpm install, pnpm e2e prepares the matching Chromium browser and runs tests; cached browsers are reused. pnpm e2e:ui opens the interactive test UI. pnpm run setup prepares local HTTPS and Chromium explicitly, while pnpm test:setup prepares Chromium only. Installation itself has no postinstall side effects. In CI, provision browsers explicitly with pnpm test:setup --with-deps before running tests. SPAWN_SKIP_BROWSER_INSTALL=1 opts out for preprovisioned offline environments. A failed browser install stops before tests run. Vitest only discovers src/**/*.test.ts, keeping browser tests separate. UI-disabled templates use a canvas/focus smoke check; HUD-enabled templates assert collection.
 
 The dashboard uses checkbox cards for testing and single-choice radio cards for physics, interface, telemetry, and ECS (No ECS, Koota, or bitECS). Renderer changes reset physics and interface to compatible defaults. Each card has an icon-only Info popover with what it is, when to choose it, and what is included. Opening Info does not change the selection.
 
@@ -160,17 +158,17 @@ XState and Zustand are displayed as disabled Code architecture options. Their te
 
 ## CLI module additions
 
-Newly generated projects include `.spawn/state.json`: a versioned generator baseline with module revisions and original generated contents. Commit this file. Existing projects without this record are rejected by `add`; automatic adoption and version upgrades require a future explicit migration.
+Generated projects include `spawn.jsonc` and `.spawn/lock.json`, the engine's record of the chosen add-ons and of every file it generated. Commit both. `add` refuses a folder without them.
 
 ```sh
-pnpm cli add vitest playwright --directory ../my-game
-pnpm cli add vitest playwright --directory ../my-game --yes
-pnpm cli add storybook --directory ../my-game --dry-run --json
+pnpm cli add vitest playwright --cwd ../my-game
+pnpm cli add vitest playwright --cwd ../my-game --yes
+pnpm cli add storybook --cwd ../my-game --dry-run --json
 ```
 
-`add` previews by default. `--yes` applies; `--dry-run` always prevents writes. Supported additions are Vitest, Playwright, Storybook, bitECS, and Koota, using the shared template compatibility graph. JSON configuration is merged only at generator-changed keys, preserving unrelated fields. Edited generated source/doc files and conflicting package entries stop the entire operation. No overwrite/force option exists. Repeating an addition is a no-op. Dependencies are installed separately with `pnpm install`.
+Without a terminal, `add` previews unless `--yes` is passed; `--dry-run` always prevents writes. Any add-on the game's renderer supports can be added. Starter files merge with your edits, JSON and other shared files keep the keys you had, and an edited generated file is a conflict that stops the whole operation. No overwrite/force option exists. Repeating an addition is a no-op. Dependencies are installed separately with `pnpm install`. `spawn status` shows which managed files you changed, and `spawn upgrade` moves a game to the CLI's catalog version.
 
-Updates use an exclusive `.spawn/add.lock`, preflight content checks, and a `.spawn/recovery.json` journal containing original contents. Successful operations remove both. On interrupted updates, review the journal against current files before manually restoring; do not delete an active lock. Close editors that write the affected files during application. These local updates are not an atomic multi-file filesystem transaction.
+The engine locks the project while it writes and keeps a journal under `.spawn/`. Run `spawn recover` to roll back an interrupted apply; do not delete an active lock. Close editors that write the affected files during application.
 
 ## CLI sign-in and website authorization
 
@@ -206,9 +204,9 @@ For remote agents, `pnpm dlx @spawnkit/cli login --remote --email <verified-acco
 
 This first auth slice stores a short-lived identity access token. Refresh and deployment scopes are not implemented. `logout` deletes local credentials only: it does not sign the browser out or revoke the server-side OAuth grant. No authenticated deployment APIs exist yet. Live Clerk authorization requires the configuration above and manual account sign-in; automated tests cover protocol handling with mocked issuer responses and real loopback callbacks, plus signed-out browser pages.
 
-## Guided Sentry configuration
+## Sentry configuration
 
-When Sentry telemetry is selected, guided setup asks for the public project DSN using masked input. Leave it blank to configure later. A supplied DSN is validated and written as `VITE_SENTRY_DSN` in the new project's ignored `.env`, after the creation confirmation. Dry runs never write it. The value is excluded from console/JSON output, `.env.example`, and `.spawn/state.json`. API/auth tokens are not accepted: the browser SDK needs the public DSN; secret tokens for source-map publishing are a separate future integration. Noninteractive `--add sentry` continues to generate `.env.example` for manual configuration.
+`--telemetry sentry` adds an empty `VITE_SENTRY_DSN` to `.env.example`. Copy it into the project's ignored `.env` and set the public project DSN; Sentry stays off until it's set. API/auth tokens are not accepted: the browser SDK needs the public DSN; secret tokens for source-map publishing are a separate future integration.
 
 ## Generated game coverage
 
@@ -218,22 +216,23 @@ Vitest runs unit and renderer integration tests in Chromium using software WebGL
 
 `TEMPLATE_CASE` accepts comma-separated name filters when running `pnpm test:templates`, for example `pixi,three`. The complete suite checks every configured case.
 
-## Unified CLI add-on composition
+## CLI questions and flags
 
-Use `spawn addons` for the complete catalog and its required dependencies. New guided setup uses this same shared resolver. Categories remain useful in the wizard, while command arguments accept one common add-on namespace:
+`spawn catalog` lists every template, add-on and question; `--json` prints the questionnaire the dashboard's `/catalog/v1.json` also serves. Every question has a flag, and add-ons take their short names:
 
 ```sh
-pnpm cli init my-game --add pixi,rapier2d,pixi-ui --add vitest
-pnpm cli init my-game --add rapier2d,vitest --dry-run
+pnpm cli init pixi my-game --physics rapier2d --ui pixi-ui --with vitest
+pnpm cli init three my-game --no-ui --with vitest,playwright --dry-run
+pnpm cli init --preset phaser-arcade my-game
 pnpm cli add koota --replace bitecs --dry-run
 pnpm cli add koota --replace bitecs --yes
 ```
 
-`--add` is repeatable and accepts comma-separated names; `add` also accepts positional names. Renderer dependencies are inferred (for example, Rapier 2D requires Pixi). If no renderer can be inferred, the resolver asks for one. The final plan includes required add-ons, replacements, generated files, packages and scripts. Interactive commands ask once to apply this completed plan. Noninteractive and JSON commands preview unless `--yes` is supplied. Dry runs never prompt or write; unresolved choices return `needs-decision` and exit code 1. `--yes` cannot choose a replacement, resolve ambiguity, or overwrite an edited file.
+A slot takes `--<slot> <add-on>` or `--no-<slot>` for an optional one; tools go in `--with`, and `--preset <kit>` starts from a starter kit's answers. Each template is one renderer, and a slot offers only the add-ons that renderer supports. The plan lists the add-ons, generated files, packages and scripts. Interactive commands ask once to apply the completed plan. Noninteractive and JSON commands preview unless `--yes` is supplied. Dry runs never prompt or write; unresolved choices return `needs-decision` and exit code 1. `--yes` cannot choose a replacement, resolve ambiguity, or overwrite an edited file.
 
-Existing renderer changes is unsupported. Incompatible renderer-specific UI can offer compatible alternatives. Physics, UI, ECS and telemetry replacements require an explicit selection or `--replace <old-name>`. Empty choices such as `no-physics` do not require a removal prompt when enabling that feature. Every affected file is checked before the final confirmation; application rejects changes made during review. Three-way JSON merging preserves unrelated user settings. Obsolete generator-owned files and package entries can be removed only when their current contents permit the migration. Edited files block the entire update. The existing recovery journal also covers removed files.
+Changing an existing game's renderer is unsupported. Adding an add-on to a slot that already has one is a decision: choose it, or pass `--replace <add-on>`. Every affected file is checked before the final confirmation; application rejects changes made during review. Obsolete generated files and package entries are removed only while they still match what the engine wrote. Edited files block the entire update.
 
-Package installation remains an explicit follow-up: `pnpm install`, then `pnpm dev`. Plans never run package installation scripts. The unified `--add` flow is the only generation interface. `spawn templates` lists the current catalog.
+Package installation remains an explicit follow-up: `pnpm install`, then `pnpm dev`. Plans never run package installation scripts. `spawn addons` and `spawn templates` are kept as names for `spawn catalog`.
 
 ## Public game discovery and creator experience
 
@@ -243,7 +242,7 @@ The public site shares the dashboard's filled lightning mark, wordmark, SVG favi
 
 Discovery lists approved hosted releases only. Cards show saved genre/dimension, real views, rating averages and comment counts. Search, genre, dimension, minimum rating, minimum review count and sorting persist in URL parameters. Sorting supports views, rating, review count, recency and name. The random-play control selects from the approved feed. CLI and downloadable templates include spawnkit.config.ts, a matching spawnkit.config.schema.json editor schema, and an editable default cover. JSON authors can replace the TypeScript config with spawnkit.config.json at the project root. Both build to dist/spawnkit.config.json.
 
-The public builder consumes the shared `@spawn/templates/catalog`, `@spawn/templates/composition`, and project generator. It filters compatible physics/interface choices, resolves ECS/tools/telemetry, validates project names, previews actual generated files, and downloads a standalone ZIP via `fflate`. Downloads do not install packages, provision resources, or write over existing directories. The public CLI is @spawnkit/cli. Repository development uses pnpm cli.
+The public builder shows the choices in `@spawn/templates/catalog`, turns them into engine answers with `@spawn/templates/answers`, and plans with `@spawn/templates/scaffold`. It filters compatible physics/interface choices, validates project names, shows the `spawn init` command for the same answers, previews the planned files, and downloads them as a standalone ZIP via `fflate`. Downloads do not install packages, provision resources, or write over existing directories. The public CLI is @spawnkit/cli. Repository development uses pnpm cli.
 
 The public header uses readable navigation links, a current-page indicator, theme selection, and a single creation action. Its mobile menu supports Escape and restores focus. The Creators page follows the [page brief](creators-page.md): engine choices come from the shared catalog, artwork changes with the selection, and the starter link preserves it. The page explains editable source and the actual download/install/run workflow with links to the published CLI setup guide. A shared laptop-and-phone composition uses HTML/CSS and an SVG Prism Break scene; native desktop/mobile templates remain coming soon. Physics uses an actual Rapier 3D world with gravity and collision bodies rendered in Three.js. It loads near the viewport, disposes resources on unmount, and shows an SVG still preview if WebGL is unavailable. Reduced motion renders the settled physics state directly. Public controls stay disabled until hydration.
 

@@ -101,6 +101,9 @@ export function KitPage({
               </li>
             </ol>
             <p>
+              To create the same files with the CLI instead, run <code>{details.command}</code>.
+            </p>
+            <p>
               The local HTTPS setup may ask you to trust its development certificate. See the included README for setup
               and troubleshooting.
             </p>

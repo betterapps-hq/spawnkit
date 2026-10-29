@@ -1,6 +1,9 @@
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { basename, dirname, join, resolve } from "node:path"
+import { basename, dirname, join, relative, resolve } from "node:path"
+import { gameAnswers, initArgv, kitAnswers, kitArgv, kitProjectName } from "@spawn/templates/answers"
+import { starterKits } from "@spawn/templates/kits"
+import { gameFiles } from "@spawn/templates/scaffold"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { runCli } from "./cli"
 import { isProjectCommand } from "./project-commands"
@@ -11,6 +14,16 @@ const write = (text: string) => {
   output += text
 }
 const json = () => JSON.parse(output) as { status: string; error?: { code: string; message: string } }
+/** Every file under a folder, keyed by its path from that folder. */
+async function readTree(root: string): Promise<Record<string, string>> {
+  const entries = await readdir(root, { recursive: true, withFileTypes: true })
+  const files = entries.filter((entry) => entry.isFile()).map((entry) => join(entry.parentPath, entry.name))
+  return Object.fromEntries(
+    await Promise.all(
+      files.map(async (path) => [relative(root, path).replaceAll("\\", "/"), await readFile(path, "utf8")] as const)
+    )
+  )
+}
 beforeEach(async () => {
   directory = await mkdtemp(join(tmpdir(), "spawn-cli-"))
   output = ""
@@ -77,6 +90,26 @@ describe("project commands", () => {
     expect(process.exitCode).toBe(2)
     expect(await readdir(directory)).toEqual([])
   })
+  // The dashboard plans in memory. These check that what it shows and downloads is exactly what the command writes.
+  it.each(starterKits.map((kit) => kit.id))("writes the %s kit download with spawn init --preset", async (id) => {
+    const kit = starterKits.find((entry) => entry.id === id)!
+    await runCli([...kitArgv(kit), "--yes", "--json"], directory, write)
+    expect(json().status).toBe("applied")
+    const written = await readTree(join(directory, kitProjectName(kit)))
+    expect(written).toEqual(await gameFiles({ ...kitAnswers(kit), name: kitProjectName(kit) }))
+  })
+  it("writes the composer's game with the command the composer shows", async () => {
+    const answers = gameAnswers({
+      name: "moon-jump",
+      template: "phaser",
+      physics: "matter",
+      telemetry: "platform",
+      addons: ["storybook", "koota", "playwright"]
+    })
+    await runCli([...initArgv(answers), "--yes", "--json"], directory, write)
+    expect(json().status).toBe("applied")
+    expect(await readTree(join(directory, "moon-jump"))).toEqual(await gameFiles(answers))
+  })
   it("never prompts without a terminal", async () => {
     await runCli(["init", "pixi", "demo"], directory, write)
     expect(output).toContain("--yes")
@@ -104,7 +137,7 @@ describe("help", () => {
     await runCli(["--help"], directory, write)
     expect(output).toContain("Templates: pixi, phaser, babylon, three")
     expect(output).toMatch(/--physics +rapier2d/)
-    expect(output).toContain("--preset     phaser-arcade, three-rapier")
+    expect(output).toContain("--preset     pixi, phaser, babylon, three, phaser-arcade, three-rapier")
     expect(output).toContain("spawn login --site")
   })
   it("describes a project command's options", async () => {

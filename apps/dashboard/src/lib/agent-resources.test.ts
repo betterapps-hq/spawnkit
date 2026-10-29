@@ -1,3 +1,4 @@
+import { catalogQuestions } from "@spawn/templates/scaffold"
 import { strFromU8, unzipSync } from "fflate"
 import { expect, it } from "vitest"
 import { agentDocuments, documentMarkdown, skillFiles } from "./agent-docs"
@@ -33,35 +34,46 @@ it("serves the same documents and portable skill references with bounded method 
         true
       )
     }
-    expect(await agentResource(request(`/docs/${doc.id}.md`))!.text()).toBe(documentMarkdown(doc))
-    expect(await agentResource(request(`/docs/${doc.id}.md`, "HEAD"))!.text()).toBe("")
-    expect(agentResource(request(`/docs/${doc.id}.md`, "POST"))!.status).toBe(405)
+    expect(await (await agentResource(request(`/docs/${doc.id}.md`)))!.text()).toBe(documentMarkdown(doc))
+    expect(await (await agentResource(request(`/docs/${doc.id}.md`, "HEAD")))!.text()).toBe("")
+    expect((await agentResource(request(`/docs/${doc.id}.md`, "POST")))!.status).toBe(405)
   }
-  const authentication = await agentResource(request("/auth.md"))!.text()
+  const authentication = await (await agentResource(request("/auth.md")))!.text()
   expect(authentication).toContain("service_auth")
   expect(authentication).toContain("oauth2/revoke")
   expect(authentication).toContain("/cli/access")
-  expect(agentCatalog()).toMatchObject({ cliDistribution: "npm", cliPackage: "@spawnkit/cli" })
-  expect(await agentResource(request("/llms.txt"))!.text()).toContain("/catalog/v1.json")
-  expect(agentResource(request("/docs/missing.md"))).toBeNull()
-  expect(agentResource(request("/skills/spawnkit/toString"))).toBeNull()
-  const zip = unzipSync(new Uint8Array(await agentResource(request("/downloads/skills/spawnkit.zip"))!.arrayBuffer()))
+  expect(await agentCatalog()).toMatchObject({ cliDistribution: "npm", cliPackage: "@spawnkit/cli" })
+  expect(await (await agentResource(request("/llms.txt")))!.text()).toContain("/catalog/v1.json")
+  expect(await agentResource(request("/docs/missing.md"))).toBeNull()
+  expect(await agentResource(request("/skills/spawnkit/toString"))).toBeNull()
+  const zip = unzipSync(
+    new Uint8Array(await (await agentResource(request("/downloads/skills/spawnkit.zip")))!.arrayBuffer())
+  )
   for (const [path, source] of Object.entries(skillFiles())) {
     expect(strFromU8(zip[`spawnkit/${path}`]!)).toBe(source)
-    expect(await agentResource(request(`/skills/spawnkit/${path}`))!.text()).toBe(source)
+    expect(await (await agentResource(request(`/skills/spawnkit/${path}`)))!.text()).toBe(source)
   }
   expect(skillFiles()["SKILL.md"]).toMatch(/^---\nname: spawnkit\ndescription: .+\n---/)
 })
 it("keeps the documented API, shared catalog, commands and actual downloaded kits aligned", async () => {
-  const catalog = await agentResource(request("/catalog/v1.json"))!.json()
-  expect(catalog).toEqual(agentCatalog())
-  expect(await agentResource(request("/openapi.json"))!.json()).toEqual(agentOpenApi)
+  const catalog = await (await agentResource(request("/catalog/v1.json")))!.json()
+  expect(catalog).toEqual(await agentCatalog())
+  expect(await (await agentResource(request("/openapi.json")))!.json()).toEqual(agentOpenApi)
+  // The catalog is the questionnaire spawn catalog --json prints, with SpawnKit's kits added.
+  expect(catalog).toMatchObject(catalogQuestions())
+  const schema = agentOpenApi.paths["/catalog/v1.json"].get.responses["200"].content["application/json"].schema
+  for (const field of schema.required) expect(catalog).toHaveProperty(field)
+  for (const field of schema.properties.kits.items.required) expect(catalog.kits[0]).toHaveProperty(field)
   expect(agentOpenApi.paths["/downloads/kits/{kit}.zip"].parameters[0]!.schema.enum).toEqual(
     catalog.kits.map((kit: { id: string }) => kit.id)
   )
-  for (const kit of agentCatalog().kits) {
-    const plan = starterKitPlan(kit.id),
-      zip = unzipSync(new Uint8Array(await kitDownload(new Request(kit.downloadUrl))!.arrayBuffer()))
+  expect(catalog.presets.map((preset: { id: string }) => preset.id)).toEqual(
+    catalog.kits.map((kit: { preset: string }) => kit.preset)
+  )
+  for (const kit of (await agentCatalog()).kits) {
+    const plan = await starterKitPlan(kit.id),
+      zip = unzipSync(new Uint8Array(await (await kitDownload(new Request(kit.downloadUrl)))!.arrayBuffer()))
+    expect(kit.command).toBe(`pnpm dlx @spawnkit/cli init --preset ${kit.id} ${plan.name}`)
     expect(JSON.parse(strFromU8(zip[`${plan.name}/package.json`]!)).scripts).toEqual(kit.scripts)
     for (const command of ["lint", "test", "build", "dev"]) expect(kit.scripts).toHaveProperty(command)
     expect(strFromU8(zip[`${plan.name}/AGENTS.md`]!)).toContain("Standalone")

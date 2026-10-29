@@ -58,7 +58,7 @@ describe("GitHub source boundary", () => {
       await archive([
         { name: ".env.example", content: "TOKEN=" },
         { name: ".npmrc", content: "engine-strict=true\n//registry.npmjs.org/:_authToken=local-only" },
-        { name: ".spawn/state.json", content: '{"version":1,"files":{}}' },
+        { name: ".spawn/lock.json", content: '{"engine":"0.1.0","files":{}}' },
         { name: ".spawn/project.json", content: '{"projectId":"private-local-link"}' },
         { name: "src/main.ts", content: "export {}" }
       ])

@@ -11,7 +11,7 @@ import { crawlResponse, indexingHeaders } from "./lib/seo-response"
 const handler = createStartHandler(defaultStreamHandler)
 export default createServerEntry({
   async fetch(request) {
-    const resource = agentResource(request)
+    const resource = await agentResource(request)
     if (resource) return resource
     const url = new URL(request.url)
     const kit = /^\/downloads\/kits\/([a-z0-9-]+)\.zip$/.exec(url.pathname)?.[1]
@@ -19,7 +19,7 @@ export default createServerEntry({
       request.method === "GET" && kit && findStarterKit(kit) && url.searchParams.get("attribution") === "1"
         ? await prepareKitAttribution(request, kit)
         : null
-    const download = kitDownload(request, attribution)
+    const download = await kitDownload(request, attribution)
     if (download) return download
     const crawl = await crawlResponse(request, getGameSitemap)
     if (crawl) return crawl
