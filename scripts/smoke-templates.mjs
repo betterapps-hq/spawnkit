@@ -80,6 +80,8 @@ try {
       !process.env.TEMPLATE_CASE || process.env.TEMPLATE_CASE.split(",").some((name) => entry.name.includes(name))
   )) {
     console.log(`Checking ${name}…`)
+    // A game without a UI has no header, so there's no score to watch.
+    const collects = !flags.some((flag) => flag.split(",").includes("no-ui"))
     run(
       process.execPath,
       [
@@ -174,7 +176,7 @@ try {
       await canvas.waitFor({ state: "visible" })
       await canvas.focus()
       await page.keyboard.down("ArrowRight")
-      if (!flags.includes("none"))
+      if (collects)
         await page.waitForFunction(
           () => /^Collected: [1-9][0-9]*$/.test(document.querySelector("#score")?.textContent ?? ""),
           null,
@@ -189,9 +191,9 @@ try {
       const coverage = Object.fromEntries(
         ["statements", "branches", "functions", "lines"].map((metric) => [metric, summary[metric].pct])
       )
-      results.push({ name, installed: true, built: true, collected: !flags.includes("none"), coverage })
+      results.push({ name, installed: true, built: true, collected: collects, coverage })
       console.log(
-        `Passed ${name}: install, lint, 90% coverage gate, production build, ${flags.includes("none") ? "keyboard focus" : "keyboard collection"}.`
+        `Passed ${name}: install, lint, 90% coverage gate, production build, ${collects ? "keyboard collection" : "keyboard focus"}.`
       )
     } catch (error) {
       await page.screenshot({ path: join(directory, `${name}-failure.png`) })
