@@ -32,76 +32,71 @@ const results = []
 let browser
 try {
   browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] })
+  const renderers = ["pixi", "phaser", "babylon", "three"]
+  // Each case's init arguments, before the folder. Every game but pixi-add starts with Vitest, for the coverage gate.
   const cases = [
-    { name: "pixi-add", renderer: "pixi", ecs: false, flags: [], playwright: true, add: true },
-    ...["pixi", "phaser", "babylon", "three"].map((renderer) => ({
+    { name: "pixi-add", args: ["pixi"], playwright: true, add: true },
+    ...renderers.map((renderer) => ({
       name: `${renderer}-koota`,
-      renderer,
-      ecs: false,
-      flags: ["--add", "koota,vitest"]
+      args: [renderer, "--simulation", "koota", "--with", "vitest"]
     })),
-    ...["pixi", "phaser", "babylon", "three"].map((renderer) => ({
+    ...renderers.map((renderer) => ({
       name: `${renderer}-playwright`,
-      renderer,
-      ecs: false,
-      flags: [],
+      args: [renderer, "--with", "vitest,playwright"],
       playwright: true
     })),
-    { name: "pixi-playwright-no-ui", renderer: "pixi", ecs: false, flags: ["--add", "no-ui"], playwright: true },
-    { name: "pixi-storybook", renderer: "pixi", ecs: false, flags: [], storybook: true },
-    ...["pixi", "phaser", "babylon", "three"].flatMap((renderer) =>
-      [false, true].map((ecs) => ({ renderer, ecs, name: `${renderer}-${ecs ? "ecs" : "plain"}`, flags: [] }))
+    { name: "pixi-playwright-no-ui", args: ["pixi", "--no-ui", "--with", "vitest,playwright"], playwright: true },
+    { name: "pixi-storybook", args: ["pixi", "--with", "vitest,storybook"], storybook: true },
+    ...renderers.flatMap((renderer) =>
+      [false, true].map((ecs) => ({
+        name: `${renderer}-${ecs ? "ecs" : "plain"}`,
+        args: [renderer, ...(ecs ? ["--simulation", "bitecs"] : []), "--with", "vitest"]
+      }))
     ),
     {
       name: "pixi-rapier-ui",
-      renderer: "pixi",
-      ecs: true,
-      flags: ["--add", "rapier2d,pixi-ui,platform-telemetry"]
+      args: ["pixi", "--simulation", "bitecs", "--physics", "rapier2d", "--ui", "pixi-ui"].concat([
+        "--telemetry",
+        "platform-telemetry",
+        "--with",
+        "vitest"
+      ])
     },
-    { name: "phaser-arcade", renderer: "phaser", ecs: true, flags: ["--add", "arcade,sentry"] },
+    {
+      name: "phaser-arcade",
+      args: ["phaser", "--simulation", "bitecs", "--physics", "arcade", "--telemetry", "sentry", "--with", "vitest"]
+    },
     {
       name: "phaser-matter",
-      renderer: "phaser",
-      ecs: false,
-      flags: ["--add", "matter,platform-telemetry"]
+      args: ["phaser", "--physics", "matter", "--telemetry", "platform-telemetry", "--with", "vitest"]
     },
     {
       name: "babylon-havok-gui",
-      renderer: "babylon",
-      ecs: true,
-      flags: ["--add", "havok,babylon-gui,sentry"]
+      args: ["babylon", "--simulation", "bitecs", "--physics", "havok", "--ui", "babylon-gui"].concat([
+        "--telemetry",
+        "sentry",
+        "--with",
+        "vitest"
+      ])
     },
-    { name: "three-rapier", renderer: "three", ecs: true, flags: ["--add", "rapier3d,platform-telemetry"] },
-    { name: "kit-phaser-arcade", renderer: "phaser", ecs: false, flags: ["--add", "arcade"] },
-    { name: "kit-three-rapier", renderer: "three", ecs: false, flags: ["--add", "rapier3d"] }
+    {
+      name: "three-rapier",
+      args: ["three", "--simulation", "bitecs", "--physics", "rapier3d", "--telemetry", "platform-telemetry"].concat([
+        "--with",
+        "vitest"
+      ])
+    },
+    { name: "kit-phaser-arcade", args: ["--preset", "phaser-arcade", "--with", "vitest"] },
+    { name: "kit-three-rapier", args: ["--preset", "three-rapier", "--with", "vitest"] }
   ]
-  for (const { renderer, ecs, name, flags, storybook, playwright, add } of cases.filter(
+  for (const { name, args, storybook, playwright, add } of cases.filter(
     (entry) =>
       !process.env.TEMPLATE_CASE || process.env.TEMPLATE_CASE.split(",").some((name) => entry.name.includes(name))
   )) {
     console.log(`Checking ${name}…`)
     // A game without a UI has no header, so there's no score to watch.
-    const collects = !flags.some((flag) => flag.split(",").includes("no-ui"))
-    run(
-      process.execPath,
-      [
-        cli,
-        "init",
-        name,
-        "--add",
-        renderer,
-        ...(add
-          ? []
-          : [
-              "--add",
-              playwright ? "vitest,playwright" : storybook ? "vitest,storybook" : ecs ? "bitecs,vitest" : "vitest"
-            ]),
-        ...flags,
-        "--json",
-        "--yes"
-      ],
-      directory
-    )
+    const collects = !args.includes("--no-ui")
+    run(process.execPath, [cli, "init", ...args, name, "--json", "--yes"], directory)
     const project = join(directory, name)
     if (add) {
       run(process.execPath, [cli, "add", "vitest", "playwright", "--yes", "--json"], project)

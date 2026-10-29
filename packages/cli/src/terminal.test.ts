@@ -8,125 +8,74 @@ vi.mock("@clack/prompts", () => ({
   outro: vi.fn<(...args: unknown[]) => unknown>(),
   note: vi.fn<(...args: unknown[]) => unknown>(),
   cancel: vi.fn<(...args: unknown[]) => unknown>(),
-  log: { info: vi.fn<(...args: unknown[]) => unknown>() },
+  log: {
+    info: vi.fn<(...args: unknown[]) => unknown>(),
+    message: vi.fn<(...args: unknown[]) => unknown>(),
+    error: vi.fn<(...args: unknown[]) => unknown>(),
+    step: vi.fn<(...args: unknown[]) => unknown>()
+  },
   password: vi.fn<(...args: unknown[]) => unknown>(),
   text: vi.fn<(...args: unknown[]) => unknown>(),
   select: vi.fn<(...args: unknown[]) => unknown>(),
   multiselect: vi.fn<(...args: unknown[]) => unknown>(),
   confirm: vi.fn<(...args: unknown[]) => unknown>(),
-  isCancel: (value: unknown) => typeof value === "symbol",
-  spinner: () => ({
-    start: vi.fn<(...args: unknown[]) => unknown>(),
-    stop: vi.fn<(...args: unknown[]) => unknown>(),
-    error: vi.fn<(...args: unknown[]) => unknown>()
-  })
+  isCancel: (value: unknown) => typeof value === "symbol"
 }))
 vi.mock("./cli", () => ({ runCli: vi.fn<(...args: unknown[]) => unknown>() }))
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(prompts.confirm).mockResolvedValue(false)
-  vi.mocked(runCli).mockImplementation(async (_args, _cwd, write) => {
-    write(
-      JSON.stringify({
-        status: "created",
-        name: "test-game",
-        destination: "/test-game",
-        modules: ["pixi"],
-        files: ["main.ts"],
-        nextSteps: ["pnpm install"]
-      })
-    )
-  })
+  vi.mocked(runCli).mockResolvedValue()
 })
 afterEach(() => {
   process.exitCode = 0
 })
-it("guides through compatible renderer, physics, UI, and telemetry choices", async () => {
-  vi.mocked(prompts.text).mockResolvedValue("test-game")
-  vi.mocked(prompts.select)
-    .mockResolvedValueOnce("pixi")
-    .mockResolvedValueOnce("rapier2d")
-    .mockResolvedValueOnce("pixi")
-    .mockResolvedValueOnce("bitecs")
-    .mockResolvedValueOnce("platform")
-  vi.mocked(prompts.multiselect).mockResolvedValue(["vitest"])
-  vi.mocked(prompts.confirm).mockResolvedValueOnce(true).mockResolvedValueOnce(true)
-  await runTerminal(["init"], { interactive: true, tty: true })
-  expect(runCli).toHaveBeenCalledWith(
-    ["init", "test-game", "--add", "pixi,rapier2d,pixi-ui,platform-telemetry,bitecs,vitest,storybook"],
-    expect.any(String),
-    expect.any(Function),
-    expect.objectContaining({ composition: expect.any(Object) })
-  )
+
+it("starts the guided setup for a bare spawn in an interactive terminal", async () => {
+  await runTerminal([], { interactive: true, tty: true })
+  expect(runCli).toHaveBeenCalledWith(["init"], expect.any(String), expect.any(Function), {
+    project: {
+      isTTY: true,
+      prompter: expect.objectContaining({ select: expect.any(Function) }),
+      stderr: expect.any(Function)
+    }
+  })
   expect(prompts.outro).toHaveBeenCalledWith("Ready for your next step.")
 })
-it("cancels before generation without reporting success", async () => {
-  vi.mocked(prompts.text).mockResolvedValue(Symbol("cancel") as never)
-  await runTerminal(["init"], { interactive: true, tty: true })
-  expect(runCli).not.toHaveBeenCalled()
-  expect(prompts.cancel).toHaveBeenCalledWith("Setup cancelled. No files were written.")
-  expect(process.exitCode).toBe(130)
+it("never prompts in a terminal that isn't interactive", async () => {
+  await runTerminal(["init", "pixi", "demo"], { interactive: false, tty: true })
+  expect(vi.mocked(runCli).mock.calls[0]![3]).toMatchObject({ project: { isTTY: false } })
 })
 it("never prompts or decorates JSON automation output", async () => {
-  vi.mocked(runCli).mockResolvedValue()
-  await runTerminal(["init", "demo", "--json"], { interactive: true, tty: true })
+  await runTerminal(["init", "pixi", "demo", "--json"], { interactive: true, tty: true })
   expect(prompts.intro).not.toHaveBeenCalled()
-  expect(prompts.text).not.toHaveBeenCalled()
-  expect(runCli).toHaveBeenCalledWith(["init", "demo", "--json"], expect.any(String), expect.any(Function))
+  expect(runCli).toHaveBeenCalledWith(["init", "pixi", "demo", "--json"], expect.any(String), expect.any(Function))
 })
-it("does not display success when generation fails", async () => {
+it.each([
+  { code: 1, outro: "Choose an answer above, then run the command again." },
+  { code: 130, outro: "Cancelled. Nothing was changed." },
+  { code: 3, outro: "Review the message above." }
+])("ends with what to do next after exit code $code", async ({ code, outro }) => {
+  vi.mocked(runCli).mockImplementation(async () => {
+    process.exitCode = code
+  })
+  await runTerminal(["add", "sentry"], { interactive: true, tty: true })
+  expect(prompts.outro).toHaveBeenCalledWith(outro)
+})
+it("does not display success when a command fails", async () => {
   vi.mocked(runCli).mockRejectedValueOnce(new Error("Destination exists"))
-  await expect(runTerminal(["init", "demo"], { interactive: false, tty: true })).rejects.toThrow("Destination exists")
+  await expect(runTerminal(["init", "pixi", "demo"], { interactive: false, tty: true })).rejects.toThrow(
+    "Destination exists"
+  )
   expect(prompts.outro).not.toHaveBeenCalled()
 })
-
-it("declines the reviewed plan without generating files", async () => {
-  vi.mocked(prompts.text).mockResolvedValue("test-game")
-  vi.mocked(prompts.select)
-    .mockResolvedValueOnce("pixi")
-    .mockResolvedValueOnce("none")
-    .mockResolvedValueOnce("html")
-    .mockResolvedValueOnce("none")
-    .mockResolvedValueOnce("none")
-  vi.mocked(prompts.multiselect).mockResolvedValue([])
-  await runTerminal(["init"], { interactive: true, tty: true })
-  expect(runCli).toHaveBeenCalledTimes(1)
-  const setup = vi.mocked(runCli).mock.calls[0]![3]!
-  expect(await setup.composition!.confirm("Review plan")).toBe(false)
-  expect(prompts.note).toHaveBeenCalledWith("Review plan", "Review changes")
-})
-
-it("asks for a masked Sentry DSN and keeps it out of displayed plans", async () => {
-  const dsn = "https://publickey@sentry.example/123"
-  vi.mocked(prompts.text).mockResolvedValue("test-game")
-  vi.mocked(prompts.select)
-    .mockResolvedValueOnce("pixi")
-    .mockResolvedValueOnce("none")
-    .mockResolvedValueOnce("html")
-    .mockResolvedValueOnce("none")
-    .mockResolvedValueOnce("sentry")
-  vi.mocked(prompts.multiselect).mockResolvedValue([])
-  vi.mocked(prompts.password).mockResolvedValue(dsn)
-  vi.mocked(prompts.confirm).mockResolvedValueOnce(false).mockResolvedValueOnce(true)
-  await runTerminal(["init"], { interactive: true, tty: true })
-  expect(prompts.password).toHaveBeenCalledOnce()
-  expect(runCli).toHaveBeenLastCalledWith(expect.any(Array), expect.any(String), expect.any(Function), {
-    sentryDsn: dsn,
-    composition: expect.any(Object)
+it("shows help as a command reference", async () => {
+  vi.mocked(runCli).mockImplementation(async (_args, _cwd, write) => {
+    write("SPAWNKIT  /  Build your next world\n\nTemplates: pixi\n")
   })
-  expect(JSON.stringify(vi.mocked(prompts.note).mock.calls)).not.toContain(dsn)
+  await runTerminal(["--help"], { interactive: true, tty: true })
+  expect(prompts.note).toHaveBeenCalledWith("Templates: pixi", "Command reference")
 })
-it("cancels at the DSN prompt before generating anything", async () => {
-  vi.mocked(prompts.text).mockResolvedValue("test-game")
-  vi.mocked(prompts.select)
-    .mockResolvedValueOnce("pixi")
-    .mockResolvedValueOnce("none")
-    .mockResolvedValueOnce("html")
-    .mockResolvedValueOnce("none")
-    .mockResolvedValueOnce("sentry")
-  vi.mocked(prompts.multiselect).mockResolvedValue([])
-  vi.mocked(prompts.password).mockResolvedValue(Symbol("cancel") as never)
-  await runTerminal(["init"], { interactive: true, tty: true })
-  expect(runCli).not.toHaveBeenCalled()
-  expect(prompts.cancel).toHaveBeenCalled()
+it("routes deploy status to the platform", async () => {
+  await runTerminal(["status", "dep_123"], { interactive: false, tty: true })
+  expect(vi.mocked(runCli).mock.calls[0]![3]).toHaveProperty("platform")
 })
