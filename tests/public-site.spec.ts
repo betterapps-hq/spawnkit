@@ -137,6 +137,8 @@ test("cloud workflow and machine pricing are interactive", async ({ page }, info
 })
 
 test("creator page and responsive navigation connect the public experience", async ({ page }, info) => {
+  // It drives every scene on the page and takes full-page screenshots, which is slow with software WebGL, as in CI.
+  test.setTimeout(90_000)
   await page.goto("/create")
   await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
   await expect(page.getByRole("heading", { name: /Start with a playable game/, level: 1 })).toBeVisible()
@@ -279,7 +281,8 @@ test("company footer links contact details and the published privacy policy", as
     .getByRole("navigation", { name: "Legal", exact: true })
     .getByRole("link", { name: "Privacy policy", exact: true })
     .click()
-  await expect(page.getByRole("heading", { name: "Privacy policy", exact: true })).toBeVisible()
+  // The page loads on demand, and a cold dev server compiles it on this first visit.
+  await expect(page.getByRole("heading", { name: "Privacy policy", exact: true })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole("heading", { name: "Retention and deletion", exact: true })).toBeVisible()
   await expect(page.getByRole("link", { name: "hello@spawnkit.cloud", exact: true }).first()).toHaveAttribute(
     "href",

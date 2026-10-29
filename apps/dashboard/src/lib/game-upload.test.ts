@@ -22,7 +22,8 @@ it("packages a ready-built game and dashboard metadata for the existing validate
   expect(JSON.parse(atob(listing.content))).toEqual(listingTemplate)
   expect(document.files.some((file: { path: string }) => file.path === "pnpm-lock.yaml")).toBe(true)
 })
-it("rejects oversized expanded archives before publishing", async () => {
+// Zipping 21 MB takes several seconds on a slow CI runner.
+it("rejects oversized expanded archives before publishing", { timeout: 20_000 }, async () => {
   const value = input()
   value.archive = new File([new Uint8Array(zipSync({ "index.html": new Uint8Array(21 * 1024 * 1024) }))], "game.zip")
   await expect(prepareGameUpload(value)).rejects.toThrow("20 MB")
