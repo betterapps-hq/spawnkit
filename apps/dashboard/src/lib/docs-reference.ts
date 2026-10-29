@@ -47,25 +47,31 @@ export const referenceDocuments: AgentDocument[] = [
         id: "create",
         title: "Discover and create",
         blocks: [
-          code(
-            "Inspect available components",
-            "sh",
-            "pnpm dlx @spawnkit/cli templates --json\npnpm dlx @spawnkit/cli addons --json"
-          ),
+          code("Inspect every question and its choices", "sh", "pnpm dlx @spawnkit/cli catalog --json"),
           code(
             "Preview, then create a standalone game",
             "sh",
-            "pnpm dlx @spawnkit/cli init my-game --add phaser,vitest --dry-run\npnpm dlx @spawnkit/cli init my-game --add phaser,vitest\ncd my-game\npnpm install\npnpm dev"
+            "pnpm dlx @spawnkit/cli init phaser my-game --physics arcade --with vitest --dry-run\npnpm dlx @spawnkit/cli init phaser my-game --physics arcade --with vitest\ncd my-game\npnpm install\npnpm dev"
           ),
           p(
-            "The destination must not exist, even as an empty folder; its parent must exist. Generation writes files but does not install dependencies. Run `pnpm dlx @spawnkit/cli init` without a directory in an interactive terminal for guided setup."
+            "`init` takes a template (`pixi`, `phaser`, `babylon` or `three`) and a new or empty folder whose parent exists. Generation writes files but does not install dependencies. In a terminal, `init` asks each question the flags left open; run `pnpm dlx @spawnkit/cli init` with no arguments for guided setup."
           ),
           table(
             ["Option", "Behavior"],
             [
-              ["`--add <names>`", "Comma-separated add-ons; repeatable. Use the catalog to check compatibility."],
-              ["`--name <name>`", "Package name; defaults to the directory name."],
+              [
+                "`--physics`, `--ui`, `--simulation`, `--telemetry <add-on>`",
+                "Answer a question, such as `--physics rapier2d`. The catalog lists each template's choices."
+              ],
+              ["`--no-<question>`", "Answer no to an optional question, such as `--no-telemetry`."],
+              ["`--with <add-ons>`", "Comma-separated tools: `vitest`, `playwright`, `storybook`; repeatable."],
+              [
+                "`--preset <kit>`",
+                "Start from a kit's answers, such as `init --preset phaser-arcade my-game`. It writes the same files as the kit's download."
+              ],
+              ["`--name <name>`", "Package name; defaults to the folder name."],
               ["`--dry-run`", "Show the plan without writing files."],
+              ["`--yes`", "Apply without asking. Unanswered questions take their defaults."],
               ["`--json`", "Machine-readable output; interactive prompts are unavailable."]
             ]
           )
@@ -78,19 +84,22 @@ export const referenceDocuments: AgentDocument[] = [
           code(
             "Review a module addition",
             "sh",
-            "pnpm dlx @spawnkit/cli add vitest --directory ./my-game --dry-run\npnpm dlx @spawnkit/cli add vitest --directory ./my-game"
+            "pnpm dlx @spawnkit/cli add vitest --cwd ./my-game --dry-run\npnpm dlx @spawnkit/cli add vitest --cwd ./my-game"
           ),
           table(
             ["Option", "Behavior"],
             [
-              ["`--directory <path>`", "Existing game folder; defaults to the current directory."],
-              ["`--replace <names>`", "Explicitly replace incompatible add-ons; inspect the proposed changes first."],
+              ["`--cwd <path>`", "Existing game folder; defaults to the current directory."],
+              [
+                "`--replace <add-on>`",
+                "Swap the add-on that answers a question, such as `add koota --replace bitecs`; inspect the proposed changes first."
+              ],
               ["`--yes`", "Accept a resolved plan. It does not permit overwriting conflicting edits."],
               ["`--dry-run --json`", "Inspect file changes and unresolved choices without writing."]
             ]
           ),
           p(
-            "Read [Updating an existing game](/docs/updating) for ownership records, conflict recovery, and verification. Renderer switching is not supported by `pnpm dlx @spawnkit/cli add`."
+            "`status` shows the files SpawnKit manages and whether you changed them, and `upgrade` moves a game to the CLI's catalog version. Read [Updating an existing game](/docs/updating) for ownership records, conflict recovery, and verification. Renderer switching is not supported by `pnpm dlx @spawnkit/cli add`."
           )
         ]
       },
@@ -222,7 +231,7 @@ export const referenceDocuments: AgentDocument[] = [
           code(
             "Typical generated project; optional tools add more files",
             "text",
-            "my-game/\n├── src/\n│   ├── main.ts\n│   └── score.ts\n├── public/media/cover.svg\n├── spawnkit/config.ts\n├── spawnkit/vite.ts\n├── spawnkit.config.ts\n├── game.config.json\n├── dev-domains.config.mjs\n├── vite.config.ts\n├── package.json\n├── tsconfig.json\n└── .spawn/state.json"
+            "my-game/\n├── src/\n│   ├── main.ts\n│   └── score.ts\n├── public/media/cover.svg\n├── spawnkit/config.ts\n├── spawnkit/game.ts\n├── spawnkit/vite.ts\n├── spawnkit.config.ts\n├── spawn.jsonc\n├── game.config.json\n├── dev-domains.config.mjs\n├── vite.config.ts\n├── package.json\n├── tsconfig.json\n└── .spawn/lock.json"
           ),
           table(
             ["File or folder", "Responsibility"],
@@ -234,9 +243,16 @@ export const referenceDocuments: AgentDocument[] = [
                 "`spawnkit.config.ts` or `spawnkit.config.json`",
                 "One configuration for title, description, genre, dimension, and release-relative media paths."
               ],
-              ["`spawnkit/`", "Local listing types, validation, and Vite plugin. No private package required."],
+              [
+                "`spawnkit/`",
+                "Generated files: listing types, validation, the Vite plugin, and `game.ts`, which starts the add-ons. Change them through the CLI rather than by hand. No private package required."
+              ],
               ["`dev-domains.config.mjs`", "Named local HTTPS endpoints."],
-              ["`.spawn/state.json`", "Generator ownership baseline used for safe module additions."],
+              ["`spawn.jsonc`", "The template and add-ons you chose. `spawn add` and `spawn config` change it."],
+              [
+                "`.spawn/lock.json`",
+                "What SpawnKit generated, so later changes can keep your edits. Commit it; don't edit it by hand."
+              ],
               ["`.spawn/project.json`", "Created by CLI linking; associates this folder with a hosted project."],
               [
                 "`pnpm-lock.yaml`",
@@ -568,7 +584,7 @@ export const referenceDocuments: AgentDocument[] = [
         title: "1. Save a working baseline",
         blocks: [
           p(
-            "Commit your working game or make a separate backup before changing modules. Record what currently passes: lint, build, installed tests, and a short playthrough. Keep `game.config.json`, `.spawn/state.json`, and your lockfile; they describe the generated project and its dependency state."
+            "Commit your working game or make a separate backup before changing modules. Record what currently passes: lint, build, installed tests, and a short playthrough. Keep `spawn.jsonc`, `.spawn/lock.json`, `game.config.json`, and your pnpm lockfile; they describe the generated project and its dependency state."
           ),
           code("Inspect and verify the current project", "sh", "git status --short\npnpm lint\npnpm build"),
           p(
@@ -587,10 +603,10 @@ export const referenceDocuments: AgentDocument[] = [
           code(
             "Inspect available modules and proposed changes",
             "sh",
-            "pnpm dlx @spawnkit/cli addons --json\npnpm dlx @spawnkit/cli add vitest --dry-run"
+            "pnpm dlx @spawnkit/cli catalog --json\npnpm dlx @spawnkit/cli status\npnpm dlx @spawnkit/cli add vitest --dry-run"
           ),
           p(
-            "The ownership record lets SpawnKit compare the original generated file, the new generated file, and your current file. Compatible JSON fields can be merged; conflicting edits stop the operation. The CLI does not switch renderers through `pnpm dlx @spawnkit/cli add`."
+            "`.spawn/lock.json` records what SpawnKit generated, so it can compare that with the new generated file and your current file. Starter files merge with your edits, and your keys in JSON files are kept; a conflicting edit stops the operation and asks. The CLI does not switch renderers through `pnpm dlx @spawnkit/cli add`."
           )
         ]
       },
@@ -620,12 +636,12 @@ export const referenceDocuments: AgentDocument[] = [
                 "Read the proposed changes, compare against a separate generated project, and merge intentionally."
               ],
               [
-                "Incompatible selected add-ons",
-                "Inspect `pnpm dlx @spawnkit/cli addons` and the dry run. Use `--replace <names>` only when you intend to replace those components."
+                "Another add-on already answers that question",
+                "Inspect `pnpm dlx @spawnkit/cli catalog` and the dry run. Use `--replace <add-on>` only when you intend to replace it."
               ],
               [
                 "Missing or unsupported ownership record",
-                "Run the command from your generated project root. Do not fabricate or edit `.spawn/state.json`."
+                "Run the command from your generated project root. Do not fabricate or edit `.spawn/lock.json`."
               ],
               ["Different renderer desired", "Create a new project and port game logic and assets deliberately."]
             ]
@@ -633,10 +649,10 @@ export const referenceDocuments: AgentDocument[] = [
           code(
             "Create a comparison project in a new directory",
             "sh",
-            "pnpm dlx @spawnkit/cli init comparison-game --add phaser,vitest --dry-run\npnpm dlx @spawnkit/cli init comparison-game --add phaser,vitest"
+            "pnpm dlx @spawnkit/cli init phaser comparison-game --with vitest --dry-run\npnpm dlx @spawnkit/cli init phaser comparison-game --with vitest"
           ),
           p(
-            "Choose your actual renderer and modules; the example uses Phaser. The destination must not already exist. A comparison project is a reference, not a replacement for the original."
+            "Choose your actual renderer and modules; the example uses Phaser. The destination must be a new or empty folder. A comparison project is a reference, not a replacement for the original."
           )
         ]
       },

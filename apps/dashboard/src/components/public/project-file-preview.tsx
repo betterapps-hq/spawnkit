@@ -1,15 +1,15 @@
-import type { ProjectOptions } from "@spawn/templates"
+import type { Answers } from "@spawn/templates/answers"
 import { ChevronDown, FileCode2, Folder } from "lucide-react"
 import { useEffect, useState } from "react"
 
-function ProjectFiles({ options }: { options: ProjectOptions }) {
+function ProjectFiles({ answers }: { answers: Answers }) {
   const [result, setResult] = useState<{ files?: string[]; error?: string }>({})
   useEffect(() => {
     let active = true
-    void import("@spawn/templates")
-      .then(({ createProjectPlan }) => {
-        const files = Object.keys(createProjectPlan(options).files)
-        if (active) setResult({ files })
+    void import("@spawn/templates/scaffold")
+      .then(({ gameFiles }) => gameFiles(answers))
+      .then((files) => {
+        if (active) setResult({ files: Object.keys(files) })
       })
       .catch(() => {
         if (active) setResult({ error: "The file preview could not load. Reload the page and try again." })
@@ -17,7 +17,7 @@ function ProjectFiles({ options }: { options: ProjectOptions }) {
     return () => {
       active = false
     }
-  }, [options])
+  }, [answers])
   if (result.error) return <p role="alert">{result.error}</p>
   if (!result.files) return <output>Loading project files…</output>
   return (
@@ -35,7 +35,7 @@ function ProjectFiles({ options }: { options: ProjectOptions }) {
   )
 }
 
-export function ProjectFilePreview({ options }: { options: ProjectOptions | undefined }) {
+export function ProjectFilePreview({ answers }: { answers: Answers | undefined }) {
   const [open, setOpen] = useState(false)
   return (
     <details className="p-file-preview" onToggle={(event) => setOpen(event.currentTarget.open)}>
@@ -45,8 +45,8 @@ export function ProjectFilePreview({ options }: { options: ProjectOptions | unde
         <ChevronDown size={14} />
       </summary>
       {open &&
-        (options ? (
-          <ProjectFiles key={JSON.stringify(options)} options={options} />
+        (answers ? (
+          <ProjectFiles key={JSON.stringify(answers)} answers={answers} />
         ) : (
           <p>Choose a valid project name and compatible tools to preview your files.</p>
         ))}

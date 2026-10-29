@@ -47,7 +47,7 @@ test("reads current projects and persists the complete starter configuration", a
   await expect(page.getByRole("heading", { name: "Night Orchard is ready", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Open project", exact: true }).click()
   await expect(page.getByTestId("scaffold-command")).toContainText(
-    "--add three,rapier3d,html-ui,no-telemetry,vitest,bitecs"
+    "init three night-orchard --physics rapier3d --ui html-ui --simulation bitecs --no-telemetry --with vitest"
   )
   await expect(page.getByRole("button", { name: "New version", exact: true })).toBeDisabled()
   const records = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), key)
@@ -193,7 +193,7 @@ test("copies the generated command and reports clipboard failure", async ({ page
   await context.grantPermissions(["clipboard-read", "clipboard-write"])
   await page.getByRole("button", { name: "Copy scaffold command", exact: true }).click()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    "npx @spawnkit/cli init emberfall --add pixi,no-physics,html-ui,no-telemetry,vitest,no-ecs"
+    "npx @spawnkit/cli init pixi emberfall --no-physics --ui html-ui --simulation plain --no-telemetry --with vitest"
   )
   await page.evaluate(() => {
     Object.defineProperty(navigator, "clipboard", {
