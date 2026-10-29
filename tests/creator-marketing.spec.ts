@@ -21,9 +21,10 @@ test("new visits default to dark while saved and system choices remain usable", 
 })
 
 test("creator tests animate, can be paused and respect reduced motion", async ({ page }) => {
-  // The physics demo below loads while the browser tests play. With software WebGL, as in CI, it can hold the main
-  // thread for several seconds, so the animation gets extra time.
-  test.setTimeout(60_000)
+  // The physics demo below starts loading while the browser tests play. With software WebGL, as in CI, its first frame
+  // can hold the main thread for half a minute, so this test keeps it on its static preview. public-site.spec.ts covers
+  // the demo itself.
+  await page.route("**/physics-world*", (route) => route.abort())
   await page.emulateMedia({ reducedMotion: "no-preference" })
   await page.goto("/create")
   await expect(page.locator(".public-site")).toHaveAttribute("data-ready", "true")
@@ -42,7 +43,7 @@ test("creator tests animate, can be paused and respect reduced motion", async ({
   await checks.getByRole("tab", { name: "Browser tests", exact: true }).click()
   await run.scrollIntoViewIfNeeded()
   await expect(run).toHaveAttribute("data-running", "true")
-  await expect(run).toHaveAttribute("data-complete", "true", { timeout: 30000 })
+  await expect(run).toHaveAttribute("data-complete", "true", { timeout: 15000 })
   await expect(checks.locator(".c-test-level")).toHaveAttribute("data-collected", "true")
   await page.emulateMedia({ reducedMotion: "reduce" })
   await expect(run).toHaveAttribute("data-running", "false")
