@@ -35,6 +35,13 @@ const jobs = Number(
   flags.jobs ?? process.env.TEMPLATE_JOBS ?? Math.max(1, Math.min(2, Math.floor(availableParallelism() / 2)))
 )
 if (!Number.isInteger(jobs) || jobs < 1) throw new Error("--jobs takes a whole number of at least 1")
+// A game's e2e tests serve it on a fixed loopback port, so one case at a time runs them.
+let e2eTurn = Promise.resolve()
+const oneAtATime = (task) => {
+  const turn = e2eTurn.then(task)
+  e2eTurn = turn.catch(() => {})
+  return turn
+}
 
 const { cases, rejected } = await templateCases({ all: flags.all })
 const selected = selectCases(cases, { filters, shard })
@@ -189,7 +196,7 @@ async function check(entry, { directory, cli, pnpm, browser }) {
     await packageCommand(["build"])
     steps.push("type check and production build")
     if (scripts.e2e) {
-      await packageCommand(["e2e"])
+      await oneAtATime(() => packageCommand(["e2e"]))
       steps.push("e2e")
     }
     if (devDependencies.storybook) {
