@@ -63,16 +63,16 @@ jobs:
             test-results/
           retention-days: 7
 
-  # Each kit and the pairwise set of answers, generated, installed, tested and built. template-matrix.yml runs every
-  # combination nightly.
+  # Each kit, the flows and a sample of the pairwise set of answers, generated, installed, tested and built.
+  # template-matrix.yml runs the whole pairwise set nightly.
   templates:
-    name: Templates (${{ matrix.shard }}/4)
+    name: Templates (${{ matrix.shard }}/2)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2]
     concurrency:
       group: templates-${{ matrix.shard }}-${{ github.ref }}
       cancel-in-progress: true
@@ -82,7 +82,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:templates --shard ${{ matrix.shard }}/4
+      - run: pnpm test:templates --shard ${{ matrix.shard }}/2
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

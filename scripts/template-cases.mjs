@@ -104,13 +104,30 @@ async function generated(all) {
   return { cases, rejected }
 }
 
+/** How many pairwise games per template a pull request runs. */
+const samplePerTemplate = 4
+
+/** Up to `count` of a template's cases, spread evenly through its pairwise set so they cover different answers. */
+function sample(cases, count) {
+  const byTemplate = Map.groupBy(cases, (entry) => entry.name.slice(0, entry.name.lastIndexOf("-")))
+  return [...byTemplate.values()].flatMap((group) => {
+    const step = Math.max(1, group.length / count)
+    return Array.from({ length: Math.min(count, group.length) }, (_, index) => group[Math.floor(index * step)])
+  })
+}
+
 /**
- * The smoke cases, in a stable order: each kit, the flows, then the pairwise set or, with `all`, every combination.
- * `argv` is the CLI command without `--yes --json`; the game's folder is the case name.
+ * The smoke cases, in a stable order: each kit, the flows, then the generated games. `matrix` picks those games:
+ * `sample`, a few of each template's pairwise games, for pull requests; `pairwise`, the whole pairwise set, nightly; or
+ * `all`, every combination, run by hand. `argv` is the CLI command without `--yes --json`; the game's folder is the case
+ * name.
  */
-export async function templateCases({ all = false } = {}) {
-  const { cases, rejected } = await generated(all)
-  return { cases: [...kits, ...flows, ...cases], rejected }
+export async function templateCases({ matrix = "sample" } = {}) {
+  if (!["sample", "pairwise", "all"].includes(matrix)) {
+    throw new Error(`--matrix takes sample, pairwise or all, not ${matrix}`)
+  }
+  const { cases, rejected } = await generated(matrix === "all")
+  return { cases: [...kits, ...flows, ...(matrix === "sample" ? sample(cases, samplePerTemplate) : cases)], rejected }
 }
 
 /**

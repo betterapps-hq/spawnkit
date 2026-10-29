@@ -3,7 +3,7 @@ import { test } from "node:test"
 import { catalog } from "@spawn/templates/scaffold"
 import { selectCases, templateCases } from "./template-cases.mjs"
 
-const { cases, rejected } = await templateCases()
+const { cases, rejected } = await templateCases({ matrix: "pairwise" })
 
 test("cases cover each kit, the flows and every game in the pairwise set once", () => {
   assert.deepEqual(
@@ -40,4 +40,16 @@ test("filters match a case's name or its command", () => {
   assert.ok(koota.length > 0)
   assert.ok(koota.every((entry) => entry.argv.join(" ").includes("--simulation koota")))
   assert.deepEqual(selectCases(cases, { filters: ["pixi-add"] }).length, 1)
+})
+
+test("pull requests run a few of each template's pairwise games", async () => {
+  const { cases: sampled } = await templateCases()
+  const pairwise = new Set(cases.filter((entry) => entry.kind === "pairwise").map((entry) => entry.name))
+  for (const template of catalog.templates) {
+    const picked = sampled.filter((entry) => entry.kind === "pairwise" && entry.argv[1] === template.id)
+    assert.ok(picked.length > 1 && picked.length <= 4, template.id)
+    for (const entry of picked) assert.ok(pairwise.has(entry.name), entry.name)
+  }
+  assert.ok(sampled.filter((entry) => entry.kind === "kit" || entry.kind === "flow").length >= 4)
+  await assert.rejects(templateCases({ matrix: "most" }), /--matrix/)
 })

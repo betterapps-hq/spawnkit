@@ -10,14 +10,17 @@ import { chromium } from "@playwright/test"
 import { catalog, settings } from "@spawn/templates/scaffold"
 import { selectCases, templateCases } from "./template-cases.mjs"
 
-// pnpm test:templates [--all] [--case <filter>,...] [--shard <index>/<count>] [--jobs <count>] [--list] [--out <folder>]
+// pnpm test:templates [--matrix sample|pairwise|all] [--all] [--case <filter>,...] [--shard <index>/<count>] [--jobs <count>]
+//   [--list] [--out <folder>]
 // Generates games through the bundled CLI, then installs, lints, tests, builds and plays each one. The cases are each kit,
-// the flows and the engine's pairwise set; --all swaps the pairwise set for every combination. A filter matches a case's
-// name or command. TEMPLATE_MATRIX=all, TEMPLATE_CASE, TEMPLATE_SHARD and TEMPLATE_JOBS do the same from the environment.
+// the flows and generated games: by default a sample of the engine's pairwise set, --matrix pairwise for all of it, or
+// --matrix all (--all) for every combination. A filter matches a case's name or command. TEMPLATE_MATRIX, TEMPLATE_CASE,
+// TEMPLATE_SHARD and TEMPLATE_JOBS do the same from the environment.
 const root = fileURLToPath(new URL("../", import.meta.url))
 const { values: flags } = parseArgs({
   options: {
-    all: { type: "boolean", default: process.env.TEMPLATE_MATRIX === "all" },
+    matrix: { type: "string", default: process.env.TEMPLATE_MATRIX ?? "sample" },
+    all: { type: "boolean", default: false },
     case: { type: "string", multiple: true, default: [] },
     shard: { type: "string" },
     jobs: { type: "string" },
@@ -43,7 +46,7 @@ const oneAtATime = (task) => {
   return turn
 }
 
-const { cases, rejected } = await templateCases({ all: flags.all })
+const { cases, rejected } = await templateCases({ matrix: flags.all ? "all" : flags.matrix })
 const selected = selectCases(cases, { filters, shard })
 if (selected.length === 0) throw new Error(`No template case matches ${[...filters, shard].filter(Boolean).join(", ")}`)
 const kinds = Object.entries(Object.groupBy(selected, (entry) => entry.kind))

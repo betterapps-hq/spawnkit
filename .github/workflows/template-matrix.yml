@@ -1,9 +1,16 @@
 name: Template matrix
 on:
-  # Every combination of template answers, plus each kit. Pull requests run the kits and the pairwise set in CI.
+  # Each kit, the flows and the engine's whole pairwise set of template answers, every night. Pull requests run a sample
+  # of the pairwise set. Run it by hand with matrix "all" for every combination, which is about 1,600 games.
   schedule:
     - cron: "0 7 * * *"
   workflow_dispatch:
+    inputs:
+      matrix:
+        description: Which generated games to run
+        type: choice
+        options: [pairwise, all]
+        default: pairwise
 
 permissions:
   contents: read
@@ -14,13 +21,13 @@ env:
 
 jobs:
   templates:
-    name: Every combination (${{ matrix.shard }}/16)
+    name: Template matrix (${{ matrix.shard }}/${{ inputs.matrix == 'all' && 16 || 4 }})
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        shard: ${{ fromJSON(inputs.matrix == 'all' && '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]' || '[1, 2, 3, 4]') }}
     concurrency:
       group: template-matrix-${{ matrix.shard }}-${{ github.ref }}
       cancel-in-progress: true
@@ -30,7 +37,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:templates --all --shard ${{ matrix.shard }}/16
+      - run: pnpm test:templates --matrix ${{ inputs.matrix || 'pairwise' }} --shard ${{ matrix.shard }}/${{ inputs.matrix == 'all' && 16 || 4 }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
