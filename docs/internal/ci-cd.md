@@ -13,6 +13,11 @@ instead of waiting for development-time compilation on shared runners.
 Every deployment also builds shared packages before bundling Workers, because release
 jobs start from fresh checkouts and do not inherit the verification job's artifacts.
 
+The verification job calls the `ci-verify` workflow from the shared
+[betterapps-hq/pipelines](https://github.com/betterapps-hq/pipelines), and the browser and
+template jobs use its setup action, each pinned to a release's commit. The release and
+weekly template-matrix workflows still use the local `.github/actions/setup`.
+
 A passing push to `main` deploys services, app and Storybook to staging, applies pending
 D1 migrations, and checks the published app, story index and commit metadata:
 
@@ -95,8 +100,8 @@ endpoint supports issuing the scoped token. No token value is stored in the repo
 
 GitHub rejected branch protection for this private repository on the current account
 plan (Pro is required). CI runs and deployment gates are configured, but GitHub does
-not enforce required checks before a writer pushes or merges. Enable required `Verify`
-and both `Browser acceptance (desktop)` and `Browser acceptance (mobile)` checks when
+not enforce required checks before a writer pushes or merges. Enable required
+`Verify / Verify (ubuntu-24.04)` and both `Browser acceptance (desktop)` and `Browser acceptance (mobile)` checks when
 branch protection becomes available.
 
 Temporary credential files are ignored, created with restricted permissions and removed
