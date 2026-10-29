@@ -199,9 +199,15 @@ importers:
       '@buildkitgg/dev-domains':
         specifier: 0.1.0
         version: 0.1.0(magicast@0.5.5)
+      '@buildkitgg/scaffolder':
+        specifier: 'catalog:'
+        version: 0.1.0
       '@playwright/test':
         specifier: 1.64.0
         version: 1.64.0
+      '@spawn/templates':
+        specifier: workspace:*
+        version: link:packages/templates
       knip:
         specifier: 6.41.0
         version: 6.41.0
