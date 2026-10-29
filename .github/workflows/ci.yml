@@ -9,28 +9,31 @@ on:
 permissions:
   contents: read
 
+# The jobs here read these. A called workflow doesn't, so verify's prepare writes them to $GITHUB_ENV.
 env:
   CF_SEND_TELEMETRY: "false"
   DO_NOT_TRACK: "1"
 
 jobs:
+  # The shared pipelines' ci-verify checks out, installs Node from .nvmrc, pnpm and the locked dependencies, then runs
+  # prepare and command. A newer push to the same branch or pull request cancels it.
   verify:
     name: Verify
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    concurrency:
-      group: verify-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - run: pnpm verify
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:telemetry-package
-      - run: pnpm test:cli-package
+    uses: betterapps-hq/pipelines/.github/workflows/ci-verify.yml@978c87e0f9676edfb85ea5ca735e3cea656c8475 # v1.1.0
+    with:
+      os: '["ubuntu-24.04"]'
+      timeout-minutes: 30
+      # Tests write under work/, and the media processor's need FFmpeg.
+      prepare: |
+        echo "CF_SEND_TELEMETRY=false" >> "$GITHUB_ENV"
+        echo "DO_NOT_TRACK=1" >> "$GITHUB_ENV"
+        mkdir -p work
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      command: |
+        pnpm verify
+        pnpm exec playwright install --with-deps chromium
+        pnpm test:telemetry-package
+        pnpm test:cli-package
 
   browser:
     name: Browser acceptance (${{ matrix.project }})
@@ -44,10 +47,8 @@ jobs:
       group: browser-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
+      - uses: betterapps-hq/pipelines/github/actions/setup@978c87e0f9676edfb85ea5ca735e3cea656c8475 # v1.1.0
+      - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec turbo run build --filter=@spawnkit/cli --filter=@spawn/stories
       - run: pnpm test:e2e --project=${{ matrix.project }} --workers=2 --reporter=line,html
@@ -77,10 +78,8 @@ jobs:
       group: templates-${{ matrix.shard }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
+      - uses: betterapps-hq/pipelines/github/actions/setup@978c87e0f9676edfb85ea5ca735e3cea656c8475 # v1.1.0
+      - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:templates --shard ${{ matrix.shard }}/2
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
