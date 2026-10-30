@@ -66,7 +66,7 @@ describe("commands", () => {
       addons: ["playwright", "bitecs", "vitest"]
     })
     expect(initArgv(answers)).toEqual([
-      "init",
+      "create",
       "three",
       "night-orchard",
       "--physics",
@@ -99,7 +99,7 @@ describe("commands", () => {
     for (const kit of starterKits) {
       expect(catalog.presets!.find((preset) => preset.id === kit.id)).toEqual(kitPreset(kit))
       expect(kitPreset(kit).answers).toEqual(kitAnswers(kit))
-      expect(kitArgv(kit)).toEqual(["init", "--preset", kit.id, kitProjectName(kit)])
+      expect(kitArgv(kit)).toEqual(["create", "--preset", kit.id, kitProjectName(kit)])
     }
   })
   it("plans every kit with tests, and the physics its page names", async () => {

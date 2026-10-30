@@ -6,10 +6,10 @@ import { expect, it } from "vitest"
 import { kitDownload } from "./kit-download"
 import { starterKitPlan } from "./kit-plan"
 
-it("downloads every curated kit as the files spawn init --preset writes", async () => {
+it("downloads every curated kit as the files spawn create --preset writes", async () => {
   for (const kit of starterKits) {
     const plan = await starterKitPlan(kit.id)
-    expect(plan.argv).toEqual(["init", "--preset", kit.id, kitProjectName(kit)])
+    expect(plan.argv).toEqual(["create", "--preset", kit.id, kitProjectName(kit)])
     expect(plan.files).toEqual(await gameFiles({ ...kitAnswers(kit), name: plan.name }))
     const response = (await kitDownload(new Request(`https://spawnkit.cloud/downloads/kits/${kit.id}.zip`)))!
     expect(response.status).toBe(200)

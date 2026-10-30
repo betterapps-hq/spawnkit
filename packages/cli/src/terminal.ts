@@ -109,7 +109,7 @@ export async function runTerminal(
     return
   }
   // A bare `spawn` in an interactive terminal starts the guided setup, which is init's wizard.
-  const effective = interactive && args.length === 0 ? ["init"] : args
+  const effective = interactive && args.length === 0 ? ["create"] : args
   const isHelp = effective.length === 0 || effective.includes("--help") || effective.includes("-h")
   if (isHelp || effective.includes("--version") || effective.includes("-v")) {
     let output = ""

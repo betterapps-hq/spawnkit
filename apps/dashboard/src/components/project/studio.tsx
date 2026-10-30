@@ -372,8 +372,8 @@ function StudioContent({
               <PopoverContent side="right" align="end" className="w-64 rounded-xl">
                 <p className="mb-3 text-sm font-medium">Start from your terminal</p>
                 <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2">
-                  <code className="text-xs">npx @spawnkit/cli init</code>
-                  <CopyButton value="npx @spawnkit/cli init" label="Copy init command" compact />
+                  <code className="text-xs">npx @spawnkit/cli create</code>
+                  <CopyButton value="npx @spawnkit/cli create" label="Copy create command" compact />
                 </div>
               </PopoverContent>
             </Popover>

@@ -32,7 +32,7 @@ afterEach(() => {
 
 it("starts the guided setup for a bare spawn in an interactive terminal", async () => {
   await runTerminal([], { interactive: true, tty: true })
-  expect(runCli).toHaveBeenCalledWith(["init"], expect.any(String), expect.any(Function), {
+  expect(runCli).toHaveBeenCalledWith(["create"], expect.any(String), expect.any(Function), {
     project: {
       isTTY: true,
       prompter: expect.objectContaining({ select: expect.any(Function) }),
@@ -42,13 +42,13 @@ it("starts the guided setup for a bare spawn in an interactive terminal", async 
   expect(prompts.outro).toHaveBeenCalledWith("Ready for your next step.")
 })
 it("never prompts in a terminal that isn't interactive", async () => {
-  await runTerminal(["init", "pixi", "demo"], { interactive: false, tty: true })
+  await runTerminal(["create", "pixi", "demo"], { interactive: false, tty: true })
   expect(vi.mocked(runCli).mock.calls[0]![3]).toMatchObject({ project: { isTTY: false } })
 })
 it("never prompts or decorates JSON automation output", async () => {
-  await runTerminal(["init", "pixi", "demo", "--json"], { interactive: true, tty: true })
+  await runTerminal(["create", "pixi", "demo", "--json"], { interactive: true, tty: true })
   expect(prompts.intro).not.toHaveBeenCalled()
-  expect(runCli).toHaveBeenCalledWith(["init", "pixi", "demo", "--json"], expect.any(String), expect.any(Function))
+  expect(runCli).toHaveBeenCalledWith(["create", "pixi", "demo", "--json"], expect.any(String), expect.any(Function))
 })
 it.each([
   { code: 1, outro: "Choose an answer above, then run the command again." },
@@ -63,7 +63,7 @@ it.each([
 })
 it("does not display success when a command fails", async () => {
   vi.mocked(runCli).mockRejectedValueOnce(new Error("Destination exists"))
-  await expect(runTerminal(["init", "pixi", "demo"], { interactive: false, tty: true })).rejects.toThrow(
+  await expect(runTerminal(["create", "pixi", "demo"], { interactive: false, tty: true })).rejects.toThrow(
     "Destination exists"
   )
   expect(prompts.outro).not.toHaveBeenCalled()

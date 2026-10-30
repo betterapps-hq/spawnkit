@@ -40,7 +40,7 @@ const simulations = ["bitecs", "koota"] as const satisfies readonly AddonId[]
 const tools = ["vitest", "playwright", "storybook"] as const satisfies readonly AddonId[]
 
 /**
- * The engine answers for a game. Every slot is answered, so `spawn init` in a terminal asks nothing the dashboard
+ * The engine answers for a game. Every slot is answered, so `spawn create` in a terminal asks nothing the dashboard
  * already chose. Throws when a choice doesn't exist or doesn't work with the renderer. The name isn't checked here: use
  * `validateProjectName`.
  */
@@ -76,7 +76,7 @@ export function gameAnswers(choices: GameChoices): Answers {
       simulation: scope + (ecs[0] ?? "plain"),
       telemetry: telemetry.id === "none" ? null : scope + telemetryAddons[telemetry.id]
     },
-    // `spawn init` without `--with` leaves this out, and the request has to match it to plan the same lock.
+    // `spawn create` without `--with` leaves this out, and the request has to match it to plan the same lock.
     ...(optional.length > 0 ? { optional } : {})
   }
 }

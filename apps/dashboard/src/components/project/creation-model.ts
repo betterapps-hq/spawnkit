@@ -49,7 +49,7 @@ export function draftAnswers(draft: ProjectDraft): Answers {
   return gameAnswers({ ...draft, name: projectSlug(draft.name) || "my-game" })
 }
 /**
- * `spawn init` for a draft, from the engine's rendering of its request. A saved configuration that no longer makes a
+ * `spawn create` for a draft, from the engine's rendering of its request. A saved configuration that no longer makes a
  * game falls back to the wizard, which asks for everything.
  */
 export function scaffoldCommand(draft: ProjectDraft) {
@@ -59,6 +59,6 @@ function scaffoldArgv(draft: ProjectDraft) {
   try {
     return initArgv(draftAnswers(draft))
   } catch {
-    return ["init"]
+    return ["create"]
   }
 }

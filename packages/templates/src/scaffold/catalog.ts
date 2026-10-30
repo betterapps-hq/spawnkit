@@ -57,7 +57,7 @@ export const catalog = defineCatalog({
     }),
     defineSlot({ id: "telemetry", title: "Telemetry", question: "Add telemetry?", choose: "Which telemetry?" })
   ],
-  // One template per renderer, each limited to its own mode, so a game can't change renderer after init.
+  // One template per renderer, each limited to its own mode, so a game can't change renderer after create.
   templates: templates.map((template) =>
     defineTemplate({
       id: template.id,
@@ -75,6 +75,6 @@ export const catalog = defineCatalog({
     })
   ),
   addons,
-  // Each starter kit is a preset of the same id, so a kit download is what `spawn init --preset <kit>` writes.
+  // Each starter kit is a preset of the same id, so a kit download is what `spawn create --preset <kit>` writes.
   presets: starterKits.map(kitPreset)
 })

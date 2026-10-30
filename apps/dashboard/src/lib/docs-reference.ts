@@ -51,10 +51,10 @@ export const referenceDocuments: AgentDocument[] = [
           code(
             "Preview, then create a standalone game",
             "sh",
-            "pnpm dlx @spawnkit/cli init phaser my-game --physics arcade --with vitest --dry-run\npnpm dlx @spawnkit/cli init phaser my-game --physics arcade --with vitest\ncd my-game\npnpm install\npnpm dev"
+            "pnpm dlx @spawnkit/cli create phaser my-game --physics arcade --with vitest --dry-run\npnpm dlx @spawnkit/cli create phaser my-game --physics arcade --with vitest\ncd my-game\npnpm install\npnpm dev"
           ),
           p(
-            "`init` takes a template (`pixi`, `phaser`, `babylon` or `three`) and a new or empty folder whose parent exists. Generation writes files but does not install dependencies. In a terminal, `init` asks each question the flags left open; run `pnpm dlx @spawnkit/cli init` with no arguments for guided setup."
+            "`create` takes a template (`pixi`, `phaser`, `babylon` or `three`) and a new or empty folder whose parent exists. Generation writes files but does not install dependencies. In a terminal, `create` asks each question the flags left open; run `pnpm dlx @spawnkit/cli create` with no arguments for guided setup."
           ),
           table(
             ["Option", "Behavior"],
@@ -649,7 +649,7 @@ export const referenceDocuments: AgentDocument[] = [
           code(
             "Create a comparison project in a new directory",
             "sh",
-            "pnpm dlx @spawnkit/cli init phaser comparison-game --with vitest --dry-run\npnpm dlx @spawnkit/cli init phaser comparison-game --with vitest"
+            "pnpm dlx @spawnkit/cli create phaser comparison-game --with vitest --dry-run\npnpm dlx @spawnkit/cli create phaser comparison-game --with vitest"
           ),
           p(
             "Choose your actual renderer and modules; the example uses Phaser. The destination must be a new or empty folder. A comparison project is a reference, not a replacement for the original."

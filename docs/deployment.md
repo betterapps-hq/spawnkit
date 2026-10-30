@@ -27,7 +27,7 @@ A build can back releases in both environments. A failed deployment does not inv
 5. Return a resource and cost plan; distinguish rate estimates from exact future charges.
 6. Check permissions, account standing, resource quotas, and entitlement for paid sandbox/compute.
 
-The implemented CLI includes `login`, `init`, `plan`, `deploy`, `promote`, `rollback`, `status`, and `logs`. Import remains proposed.
+The implemented CLI includes `login`, `create`, `plan`, `deploy`, `promote`, `rollback`, `status`, and `logs`. Import remains proposed.
 
 `spawn deploy` waits for the deployment to finish by default, displaying build output as it arrives and then the game, immutable deployment and project dashboard URLs. `--no-wait` returns after acceptance. `spawn logs <deployment-id> --project <project-id> --follow` resumes watching an existing deployment without submitting it again. Logs use sequence cursors, so reconnecting does not repeat lines. `--json` keeps stdout to one final result object and sends live output to stderr. Failed deployments exit nonzero. Ctrl+C stops local watching with exit 130; the remote build continues. Watching stops after 30 minutes with commands to resume or check status.
 

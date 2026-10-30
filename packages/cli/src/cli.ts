@@ -41,8 +41,8 @@ Options:
   --version          Show CLI version
 
 Examples:
-  spawn init pixi my-game --physics rapier2d --ui pixi-ui --with vitest
-  spawn init --preset three-rapier my-world
+  spawn create pixi my-game --physics rapier2d --ui pixi-ui --with vitest
+  spawn create --preset three-rapier my-world
   spawn add sentry
 
 Run pnpm install in the new game, then pnpm dev.
