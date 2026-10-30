@@ -13,7 +13,7 @@ export { isRenderer } from "./target"
 export type { Renderer } from "./game"
 
 /**
- * Plans a new game on an empty tree: what `spawn init` writes, for the dashboard's previews and downloads. Throws when
+ * Plans a new game on an empty tree: what `spawn create` writes, for the dashboard's previews and downloads. Throws when
  * the answers leave a question open.
  */
 export async function planGame(answers: Answers): Promise<Plan> {
@@ -30,7 +30,7 @@ export async function planGame(answers: Answers): Promise<Plan> {
   return planned
 }
 
-/** The files `spawn init` writes for these answers, keyed by path. */
+/** The files `spawn create` writes for these answers, keyed by path. */
 export async function gameFiles(answers: Answers): Promise<Record<string, string>> {
   const planned = await planGame(answers)
   return Object.fromEntries(
@@ -40,7 +40,7 @@ export async function gameFiles(answers: Answers): Promise<Record<string, string
   )
 }
 
-/** Every question `spawn init` can ask, as `spawn catalog --json` prints it. */
+/** Every question `spawn create` can ask, as `spawn catalog --json` prints it. */
 export function catalogQuestions(): CatalogDescription {
   return describeCatalog(catalog)
 }

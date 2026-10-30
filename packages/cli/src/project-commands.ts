@@ -6,7 +6,7 @@ import { version } from "../package.json"
 
 /** Commands that create or change a game. The scaffolding engine runs them from SpawnKit's catalog. */
 const projectCommands = [
-  "init",
+  "create",
   "add",
   "config",
   "upgrade",
@@ -19,8 +19,8 @@ const projectCommands = [
   "schema",
   "recover"
 ]
-// Earlier names for `spawn catalog`.
-const aliases: Record<string, string> = { addons: "catalog", templates: "catalog" }
+// Earlier command names: `spawn init` for `spawn create`, and `spawn addons` and `spawn templates` for `spawn catalog`.
+const aliases: Record<string, string> = { init: "create", addons: "catalog", templates: "catalog" }
 
 function options(io: Partial<CliIo> = {}): CliOptions {
   return {
@@ -89,9 +89,9 @@ export function projectHelp(): string {
   const tools = [...new Set(catalog.templates.flatMap((template) => Object.keys(template.optional ?? {})))].map(short)
   return [
     "Create and change a game:",
-    "  spawn init [template] [folder]  Create a game. With no arguments in a terminal, it asks",
-    "  spawn add <add-on...>           Add an add-on, or swap one with --replace <add-on>",
-    "  spawn catalog [--json]          Every template, add-on and question",
+    "  spawn create [template] [folder]  Create a game. With no arguments in a terminal, it asks",
+    "  spawn add <add-on...>             Add an add-on, or swap one with --replace <add-on>",
+    "  spawn catalog [--json]            Every template, add-on and question",
     "  spawn upgrade | sync | check | status [path] | config | explain | plan | schema | recover",
     "  Run spawn <command> --help for a command's options.",
     "",

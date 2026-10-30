@@ -45,13 +45,17 @@ describe("project commands", () => {
     ).toEqual(["pixi", "phaser", "babylon", "three"])
   })
   it("plans without writing anything", async () => {
-    await runCli(["init", "pixi", "demo", "--dry-run", "--json"], directory, write)
+    await runCli(["create", "pixi", "demo", "--dry-run", "--json"], directory, write)
     expect(json().status).toBe("planned")
     expect(await readdir(directory)).toEqual([])
   })
+  it("still runs spawn init, create's earlier name", async () => {
+    await runCli(["init", "pixi", "demo", "--dry-run", "--json"], directory, write)
+    expect(json().status).toBe("planned")
+  })
   it("creates a game with the add-ons it was asked for", async () => {
     await runCli(
-      ["init", "babylon", "demo", "--physics", "havok", "--with", "vitest", "--yes", "--json"],
+      ["create", "babylon", "demo", "--physics", "havok", "--with", "vitest", "--yes", "--json"],
       directory,
       write
     )
@@ -66,7 +70,7 @@ describe("project commands", () => {
     expect(await readdir(join(directory, "demo"))).toEqual(expect.arrayContaining(["spawn.jsonc", ".spawn"]))
   })
   it("adds an add-on to a game it created", async () => {
-    await runCli(["init", "pixi", "demo", "--yes", "--json"], directory, write)
+    await runCli(["create", "pixi", "demo", "--yes", "--json"], directory, write)
     output = ""
     await runCli(["add", "sentry", "--yes", "--json"], join(directory, "demo"), write)
     expect(json().status).toBe("applied")
@@ -75,16 +79,16 @@ describe("project commands", () => {
   })
   it("refuses a folder that isn't empty, and keeps its files", async () => {
     await writeFile(join(directory, "keep.txt"), "important")
-    await runCli(["init", "pixi", ".", "--name", "demo", "--yes", "--json"], directory, write)
+    await runCli(["create", "pixi", ".", "--name", "demo", "--yes", "--json"], directory, write)
     expect(json().error?.code).toBe("E_DESTINATION")
     expect(process.exitCode).toBe(2)
     expect(await readFile(join(directory, "keep.txt"), "utf8")).toBe("important")
   })
   it.each([
-    { args: ["init", "three", "demo", "--physics", "havok"], code: "E_UNSUPPORTED" },
-    { args: ["init", "pixi", "demo", "--physics", "colyseus"], code: "E_UNKNOWN_ADDON" },
-    { args: ["init", "pixi"], code: "E_USAGE" },
-    { args: ["init", "pixi", "demo", "--unknown"], code: "E_USAGE" }
+    { args: ["create", "three", "demo", "--physics", "havok"], code: "E_UNSUPPORTED" },
+    { args: ["create", "pixi", "demo", "--physics", "colyseus"], code: "E_UNKNOWN_ADDON" },
+    { args: ["create", "pixi"], code: "E_USAGE" },
+    { args: ["create", "pixi", "demo", "--unknown"], code: "E_USAGE" }
   ])("rejects $args without writing", async ({ args, code }) => {
     await runCli([...args, "--json"], directory, write)
     expect(json().error?.code).toBe(code)
@@ -92,7 +96,7 @@ describe("project commands", () => {
     expect(await readdir(directory)).toEqual([])
   })
   // The dashboard plans in memory. These check that what it shows and downloads is exactly what the command writes.
-  it.each(starterKits.map((kit) => kit.id))("writes the %s kit download with spawn init --preset", async (id) => {
+  it.each(starterKits.map((kit) => kit.id))("writes the %s kit download with spawn create --preset", async (id) => {
     const kit = starterKits.find((entry) => entry.id === id)!
     await runCli([...kitArgv(kit), "--yes", "--json"], directory, write)
     expect(json().status).toBe("applied")
@@ -130,14 +134,14 @@ describe("project commands", () => {
       },
       note: () => {}
     }
-    await runCli(["init", "pixi", "demo", "--telemetry", "sentry"], directory, write, {
+    await runCli(["create", "pixi", "demo", "--telemetry", "sentry"], directory, write, {
       project: { isTTY: true, prompter }
     })
     expect(asked.filter((message) => message.startsWith("VITE_SENTRY_DSN"))).toHaveLength(1)
     expect(await readFile(join(directory, "demo/.env"), "utf8")).toContain(`VITE_SENTRY_DSN=${dsn}`)
   })
   it("never prompts without a terminal", async () => {
-    await runCli(["init", "pixi", "demo"], directory, write)
+    await runCli(["create", "pixi", "demo"], directory, write)
     expect(output).toContain("--yes")
     expect(await readdir(directory)).toEqual([])
   })
@@ -167,8 +171,8 @@ describe("help", () => {
     expect(output).toContain("spawn login --site")
   })
   it("describes a project command's options", async () => {
-    await runCli(["init", "--help"], directory, write)
-    expect(output).toContain("Usage: spawn init [template] [folder] [options]")
+    await runCli(["create", "--help"], directory, write)
+    expect(output).toContain("Usage: spawn create [template] [folder] [options]")
     expect(output).toContain("--physics <value>")
     expect(output).toContain("--dry-run")
   })

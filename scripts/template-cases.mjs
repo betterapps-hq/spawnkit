@@ -45,7 +45,7 @@ const packs = [
   {
     name: "pack-tower",
     kind: "pack",
-    argv: ["init", "@spawn-fixture/tower", "pack-tower", "--with", "vitest"],
+    argv: ["create", "@spawn-fixture/tower", "pack-tower", "--with", "vitest"],
     after: []
   }
 ]

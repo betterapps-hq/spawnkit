@@ -2,7 +2,7 @@ import type { Answers } from "@spawn/templates/answers"
 import { gameFiles } from "@spawn/templates/scaffold"
 import { strToU8, zipSync } from "fflate"
 
-/** A ZIP of what `spawn init` writes for these answers, in a folder named after the project. */
+/** A ZIP of what `spawn create` writes for these answers, in a folder named after the project. */
 export async function projectArchive(answers: Answers & { name: string }) {
   const files = await gameFiles(answers)
   return zipSync(

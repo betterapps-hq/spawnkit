@@ -42,17 +42,17 @@ export const workflowDocuments: AgentDocument[] = [
               {
                 label: "pnpm",
                 language: "sh",
-                code: "pnpm dlx @spawnkit/cli init phaser my-game --with vitest --dry-run\npnpm dlx @spawnkit/cli init phaser my-game --with vitest"
+                code: "pnpm dlx @spawnkit/cli create phaser my-game --with vitest --dry-run\npnpm dlx @spawnkit/cli create phaser my-game --with vitest"
               },
               {
                 label: "npm / npx",
                 language: "sh",
-                code: "npx @spawnkit/cli init phaser my-game --with vitest --dry-run\nnpx @spawnkit/cli init phaser my-game --with vitest"
+                code: "npx @spawnkit/cli create phaser my-game --with vitest --dry-run\nnpx @spawnkit/cli create phaser my-game --with vitest"
               }
             ]
           },
           p(
-            "The dry run shows the proposed files and add-ons. In a terminal, the second command asks the questions the flags left open, such as physics and the game interface, then asks for confirmation; review and accept it to create the files. In a noninteractive agent session, use `--yes` only after reviewing the dry-run plan. Phaser supplies the renderer and Vitest supplies tests. Answer other questions with flags such as `--physics arcade` or `--no-telemetry`, or start from a kit with `--preset phaser-arcade`. Run `pnpm dlx @spawnkit/cli catalog --json` for every question and its choices; use `pnpm dlx @spawnkit/cli init` alone for interactive setup."
+            "The dry run shows the proposed files and add-ons. In a terminal, the second command asks the questions the flags left open, such as physics and the game interface, then asks for confirmation; review and accept it to create the files. In a noninteractive agent session, use `--yes` only after reviewing the dry-run plan. Phaser supplies the renderer and Vitest supplies tests. Answer other questions with flags such as `--physics arcade` or `--no-telemetry`, or start from a kit with `--preset phaser-arcade`. Run `pnpm dlx @spawnkit/cli catalog --json` for every question and its choices; use `pnpm dlx @spawnkit/cli create` alone for interactive setup."
           )
         ]
       },

@@ -73,7 +73,7 @@ it("keeps the documented API, shared catalog, commands and actual downloaded kit
   for (const kit of (await agentCatalog()).kits) {
     const plan = await starterKitPlan(kit.id),
       zip = unzipSync(new Uint8Array(await (await kitDownload(new Request(kit.downloadUrl)))!.arrayBuffer()))
-    expect(kit.command).toBe(`pnpm dlx @spawnkit/cli init --preset ${kit.id} ${plan.name}`)
+    expect(kit.command).toBe(`pnpm dlx @spawnkit/cli create --preset ${kit.id} ${plan.name}`)
     expect(JSON.parse(strFromU8(zip[`${plan.name}/package.json`]!)).scripts).toEqual(kit.scripts)
     for (const command of ["lint", "test", "build", "dev"]) expect(kit.scripts).toHaveProperty(command)
     expect(strFromU8(zip[`${plan.name}/AGENTS.md`]!)).toContain("Standalone")

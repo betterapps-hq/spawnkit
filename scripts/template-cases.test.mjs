@@ -10,12 +10,12 @@ const { cases, rejected } = await templateCases({ matrix: "pairwise" })
 test("cases cover each kit, the flows, the template package and every game in the pairwise set once", () => {
   assert.deepEqual(
     cases.filter((entry) => entry.kind === "kit").map((entry) => entry.argv),
-    catalog.presets.map((preset) => ["init", "--preset", preset.id, `kit-${preset.id}`])
+    catalog.presets.map((preset) => ["create", "--preset", preset.id, `kit-${preset.id}`])
   )
   assert.ok(cases.some((entry) => entry.kind === "flow" && entry.after.length > 0))
   assert.deepEqual(
     cases.filter((entry) => entry.kind === "pack").map((entry) => entry.argv.slice(0, 2)),
-    [["init", "@spawn-fixture/tower"]]
+    [["create", "@spawn-fixture/tower"]]
   )
   assert.equal(new Set(cases.map((entry) => entry.name)).size, cases.length)
   assert.deepEqual(rejected, [])

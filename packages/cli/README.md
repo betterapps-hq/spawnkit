@@ -6,18 +6,18 @@ Node.js 24 or newer is required. Creating and running a game locally does not re
 ## Create a game
 
 ```sh
-pnpm dlx @spawnkit/cli init phaser my-game --physics arcade --with vitest,playwright --yes
+pnpm dlx @spawnkit/cli create phaser my-game --physics arcade --with vitest,playwright --yes
 cd my-game
 pnpm install
 pnpm dev
 ```
 
-Run `pnpm dlx @spawnkit/cli init` with no arguments in a terminal to choose the renderer, physics, UI, simulation,
+Run `pnpm dlx @spawnkit/cli create` with no arguments in a terminal to choose the renderer, physics, UI, simulation,
 telemetry and tools step by step. `--dry-run` shows the plan without writing anything, and `--json` prints it for scripts
 and agents.
 
-Start from a starter kit with `--preset`: `spawn init --preset phaser-arcade my-game` makes that kit's game, and other
-flags change its answers. `spawn init --help` lists the kits. In a terminal, `init` also asks for the settings the game
+Start from a starter kit with `--preset`: `spawn create --preset phaser-arcade my-game` makes that kit's game, and other
+flags change its answers. `spawn create --help` lists the kits. In a terminal, `create` also asks for the settings the game
 reads from its environment, such as Sentry's public DSN, and writes them to the game's ignored `.env`.
 
 The generated project belongs to you. It has its own package manifest, source, tests, and build configuration; it does not depend on the SpawnKit repository.
@@ -43,10 +43,10 @@ silently: a conflict stops and asks.
 
 ### Templates from npm
 
-Anyone can publish SpawnKit templates as an npm package, and `init` installs one by name:
+Anyone can publish SpawnKit templates as an npm package, and `create` installs one by name:
 
 ```sh
-pnpm dlx @spawnkit/cli init @acme/tower-defense my-game
+pnpm dlx @spawnkit/cli create @acme/tower-defense my-game
 ```
 
 Add a version or a range (`@acme/tower-defense@^2`), and `#<template>` to pick one of several

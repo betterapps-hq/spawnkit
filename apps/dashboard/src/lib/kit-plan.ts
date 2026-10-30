@@ -5,7 +5,7 @@ import { gameFiles } from "@spawn/templates/scaffold"
 export interface KitPlan {
   name: string
   answers: Answers
-  /** `spawn init --preset <kit> <name>`, without the CLI's name. */
+  /** `spawn create --preset <kit> <name>`, without the CLI's name. */
   argv: string[]
   files: Record<string, string>
 }
@@ -13,7 +13,7 @@ export interface KitPlan {
 // Kits never change while the Worker runs, so each is planned once.
 const plans = new Map<string, Promise<KitPlan>>()
 
-/** A kit's project, planned on an empty tree from the preset `spawn init --preset <kit>` uses. */
+/** A kit's project, planned on an empty tree from the preset `spawn create --preset <kit>` uses. */
 export function starterKitPlan(id: string): Promise<KitPlan> {
   const kit = findStarterKit(id)
   if (!kit) throw new Error("Unknown starter kit")
