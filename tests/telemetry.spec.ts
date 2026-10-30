@@ -23,7 +23,7 @@ test.describe("Scaffolded game telemetry", () => {
       process.execPath,
       [
         resolve("packages/cli/dist/main.mjs"),
-        "init",
+        "create",
         "pixi",
         gamePath,
         "--name",
