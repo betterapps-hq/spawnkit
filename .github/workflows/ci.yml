@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 
-# The jobs here read these. A called workflow doesn't, so verify's prepare writes them to $GITHUB_ENV.
+# The jobs here read these. A called workflow doesn't, so verify passes them again as its env.
 env:
   CF_SEND_TELEMETRY: "false"
   DO_NOT_TRACK: "1"
@@ -19,14 +19,16 @@ jobs:
   # prepare and command. A newer push to the same branch or pull request cancels it.
   verify:
     name: Verify
-    uses: betterapps-hq/pipelines/.github/workflows/ci-verify.yml@978c87e0f9676edfb85ea5ca735e3cea656c8475 # v1.1.0
+    uses: betterapps-hq/pipelines/.github/workflows/ci-verify.yml@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
     with:
       os: '["ubuntu-24.04"]'
       timeout-minutes: 30
+      # Every step gets these, the install included.
+      env: |
+        CF_SEND_TELEMETRY=false
+        DO_NOT_TRACK=1
       # Tests write under work/, and the media processor's need FFmpeg.
       prepare: |
-        echo "CF_SEND_TELEMETRY=false" >> "$GITHUB_ENV"
-        echo "DO_NOT_TRACK=1" >> "$GITHUB_ENV"
         mkdir -p work
         sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       command: |
@@ -47,7 +49,7 @@ jobs:
       group: browser-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: betterapps-hq/pipelines/github/actions/setup@978c87e0f9676edfb85ea5ca735e3cea656c8475 # v1.1.0
+      - uses: betterapps-hq/pipelines/github/actions/setup@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
       - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec turbo run build --filter=@spawnkit/cli --filter=@spawn/stories
@@ -78,7 +80,7 @@ jobs:
       group: templates-${{ matrix.shard }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: betterapps-hq/pipelines/github/actions/setup@978c87e0f9676edfb85ea5ca735e3cea656c8475 # v1.1.0
+      - uses: betterapps-hq/pipelines/github/actions/setup@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
       - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:templates --shard ${{ matrix.shard }}/2
