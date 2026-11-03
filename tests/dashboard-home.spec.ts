@@ -59,13 +59,13 @@ test("single project has an actionable scaffold command and adapts to dark mode"
   await openStory(page, "single-project")
   const next = page.getByRole("complementary", { name: "Project next step" })
   await expect(next).toContainText(
-    "npx @spawnkit/cli create pixi mosslight --no-physics --ui html-ui --simulation plain --no-telemetry --with vitest"
+    "npx @spawnkit/cli create pixi mosslight --no-physics --ui html-ui --simulation plain --no-telemetry --tools vitest"
   )
   await next.getByRole("button", { name: "Copy project command", exact: true }).click()
   await expect(next.getByRole("button", { name: "Command copied", exact: true })).toBeVisible()
   await expect(page.locator("html")).toHaveAttribute(
     "data-copied-command",
-    "npx @spawnkit/cli create pixi mosslight --no-physics --ui html-ui --simulation plain --no-telemetry --with vitest"
+    "npx @spawnkit/cli create pixi mosslight --no-physics --ui html-ui --simulation plain --no-telemetry --tools vitest"
   )
   await page.screenshot({
     path: `work/home-single-${testInfo.project.name}.png`,

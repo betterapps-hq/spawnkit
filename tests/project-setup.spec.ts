@@ -36,7 +36,7 @@ test("template creation preserves compatible options and resets renderer-specifi
   await expect(page.locator("main")).toContainText("Arcade Physics")
   await expect(
     page.locator("code").filter({ hasText: "npx @spawnkit/cli create phaser canyon-circuit" })
-  ).toContainText("--physics arcade --ui html-ui --simulation bitecs --no-telemetry --with vitest")
+  ).toContainText("--physics arcade --ui html-ui --simulation bitecs --no-telemetry --tools vitest")
   await page.screenshot({ path: `work/creation-review-${testInfo.project.name}.png`, fullPage: true })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole("button", { name: "Create project", exact: true }).click()
