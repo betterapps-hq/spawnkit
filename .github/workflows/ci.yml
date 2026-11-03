@@ -49,7 +49,7 @@ jobs:
       group: browser-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: betterapps-hq/pipelines/github/actions/setup@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
+      - uses: betterapps-hq/pipelines/github/actions/setup@efa1c3e00652cca72174fdf3abdb911a5c501c45 # v1.11.1
       - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec turbo run build --filter=@spawnkit/cli --filter=@spawn/stories
@@ -80,7 +80,7 @@ jobs:
       group: templates-${{ matrix.shard }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: betterapps-hq/pipelines/github/actions/setup@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
+      - uses: betterapps-hq/pipelines/github/actions/setup@efa1c3e00652cca72174fdf3abdb911a5c501c45 # v1.11.1
       - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:templates --shard ${{ matrix.shard }}/2
