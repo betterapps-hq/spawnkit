@@ -60,7 +60,7 @@ export const agentOpenApi = {
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["schemaVersion", "catalog", "templates", "addons", "slots", "presets", "kits"],
+                  required: ["schemaVersion", "catalog", "templates", "addons", "presets", "kits"],
                   properties: {
                     schemaVersion: { const: 1 },
                     catalog: {
@@ -73,12 +73,11 @@ export const agentOpenApi = {
                       description: "Each template's questions, by mode, as spawn catalog --json prints them",
                       items: {
                         type: "object",
-                        required: ["template", "questionsByMode"],
-                        properties: { template: { type: "string" }, questionsByMode: { type: "object" } }
+                        required: ["id", "questionsByMode"],
+                        properties: { id: { type: "string" }, questionsByMode: { type: "object" } }
                       }
                     },
                     addons: { type: "array", items: { type: "object", required: ["id"] } },
-                    slots: { type: "array", items: { type: "object", required: ["id"] } },
                     presets: { type: "array", items: { type: "object", required: ["id", "template"] } },
                     kits: {
                       type: "array",

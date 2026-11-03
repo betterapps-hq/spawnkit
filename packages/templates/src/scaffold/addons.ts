@@ -90,8 +90,9 @@ function ui(spec: {
     version: "1.0.0",
     title: spec.title,
     description: spec.description,
-    slot: "ui",
-    provides: { pause: { key: "Escape" } },
+    // One interface per game: each provides ui, and keeps out any other that does.
+    provides: { ui: {}, pause: { key: "Escape" } },
+    conflicts: ["provides:ui"],
     ...(spec.renderers ? { supports: onlyOn(...spec.renderers) } : {}),
     contribute: (ctx) => [
       ...(spec.packages ?? []).map((pkg) => dependency(ctx, pkg)),
@@ -294,7 +295,8 @@ function rapier(dimension: "2d" | "3d") {
     version: "1.0.0",
     title: `Rapier ${dimension.toUpperCase()}`,
     description: `Rapier's ${dimension.toUpperCase()} physics engine, stepped at a fixed 60 Hz.`,
-    slot: "physics",
+    provides: { physics: {} },
+    conflicts: ["provides:physics"],
     supports: onlyOn(renderer),
     contribute: (ctx) => [
       dependency(ctx, pkg),
@@ -313,7 +315,8 @@ function phaserPhysics(engine: "arcade" | "matter") {
     version: "1.0.0",
     title: arcade ? "Arcade Physics" : "Matter.js",
     description: arcade ? "Phaser's fast, box-based physics." : "Phaser's Matter.js integration for rigid bodies.",
-    slot: "physics",
+    provides: { physics: {} },
+    conflicts: ["provides:physics"],
     supports: onlyOn("phaser"),
     contribute: () => [
       {
@@ -362,7 +365,8 @@ const havok = defineAddon({
   version: "1.0.0",
   title: "Havok",
   description: "Babylon's Havok physics plugin.",
-  slot: "physics",
+  provides: { physics: {} },
+  conflicts: ["provides:physics"],
   supports: onlyOn("babylon"),
   contribute: (ctx) => [
     dependency(ctx, "@babylonjs/havok"),
@@ -411,7 +415,8 @@ function simulation(id: string, title: string, description: string, source: stri
     version: "1.0.0",
     title,
     description,
-    slot: "simulation",
+    provides: { simulation: {} },
+    conflicts: ["provides:simulation"],
     contribute: (ctx) => [...(pkg ? [dependency(ctx, pkg)] : []), file("src/simulation.ts", source)]
   })
 }
@@ -429,7 +434,8 @@ const platformTelemetry = defineAddon({
   version: "1.0.0",
   title: "SpawnKit telemetry",
   description: "Events, errors and logs in your project dashboard. Requires setup and consent.",
-  slot: "telemetry",
+  provides: { telemetry: {} },
+  conflicts: ["provides:telemetry"],
   contribute: (ctx) => [
     { kind: "dependency", name: "@spawn/telemetry", version: "file:vendor/spawn-telemetry" },
     ...Object.entries(telemetryFiles).map(([path, content]) => file(path, content, "owned")),
@@ -494,7 +500,8 @@ const sentry = defineAddon({
   version: "1.0.0",
   title: "Sentry",
   description: "Error reporting with your own DSN.",
-  slot: "telemetry",
+  provides: { telemetry: {} },
+  conflicts: ["provides:telemetry"],
   contribute: (ctx) => [
     dependency(ctx, "@sentry/browser"),
     file(

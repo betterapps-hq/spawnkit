@@ -300,7 +300,7 @@ async function check(entry, { directory, cli, pnpm, browser, registry }) {
     const { scripts = {}, devDependencies = {} } = JSON.parse(await readFile(join(project, "package.json"), "utf8"))
     const lock = JSON.parse(await readFile(join(project, lockPath(settings)), "utf8"))
     if (entry.kind === "pack") await packAddons(project, lock, registry)
-    const collects = Object.keys(lock.addons).some((id) => findAddon(catalog, id)?.slot === "ui")
+    const collects = Object.keys(lock.addons).some((id) => findAddon(catalog, id)?.provides?.ui !== undefined)
     if (process.env.CI && scripts["test:setup"]) await packageCommand(["test:setup"])
     await packageCommand(["lint"])
     steps.push("lint")

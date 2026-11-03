@@ -1,4 +1,4 @@
-import { defineCatalog, defineSettings, defineSlot, defineTemplate } from "@buildkitgg/scaffolder"
+import { defineCatalog, defineQuestion, defineSettings, defineTemplate } from "@buildkitgg/scaffolder"
 import { templates } from "../catalog"
 import { starterKits } from "../kits"
 import { addons } from "./addons"
@@ -7,11 +7,10 @@ import { spawnkitTarget } from "./target"
 
 /**
  * SpawnKit's file names: `spawn.jsonc` and `.spawn/`. The catalog ships inside the CLI and the dashboard, not on its own,
- * so upgrades merge seeds against bases stored in the lock.
+ * so upgrades merge seeds against bases stored in the lock. Games pin pnpm in `packageManager`, so `spawn create`'s
+ * setup steps install with pnpm whichever package manager ran the CLI.
  */
-export const settings = defineSettings({ product: "spawn", seedBases: "stored" })
-
-const tools = ["@spawnkit/vitest", "@spawnkit/playwright", "@spawnkit/storybook"]
+export const settings = defineSettings({ product: "spawn", seedBases: "stored", setup: { packageManager: "pnpm" } })
 
 export const catalog = defineCatalog({
   id: "@spawn/templates",
@@ -46,16 +45,51 @@ export const catalog = defineCatalog({
     "@storybook/html-vite": "10.6.2"
   },
   targets: [spawnkitTarget],
-  slots: [
-    defineSlot({ id: "physics", title: "Physics", question: "Add physics?", choose: "Which physics engine?" }),
-    defineSlot({ id: "ui", title: "UI", question: "Add a pause UI?", choose: "Which UI?" }),
-    defineSlot({
+  // Each question offers every renderer's choices; a template shows the ones whose supports() accepts its renderer. The
+  // add-ons provide the question's capability and conflict with any other add-on that provides it, so a game has one of
+  // each, through create and through add.
+  questions: [
+    defineQuestion({
+      id: "physics",
+      title: "Physics",
+      question: "Add physics?",
+      choose: "Which physics engine?",
+      pick: "one",
+      choices: ["@spawnkit/rapier2d", "@spawnkit/arcade", "@spawnkit/matter", "@spawnkit/havok", "@spawnkit/rapier3d"]
+    }),
+    defineQuestion({
+      id: "ui",
+      title: "UI",
+      question: "Add a pause UI?",
+      choose: "Which UI?",
+      pick: "one",
+      choices: ["@spawnkit/html-ui", "@spawnkit/pixi-ui", "@spawnkit/babylon-gui"]
+    }),
+    defineQuestion({
       id: "simulation",
       title: "Simulation",
-      question: "Add a simulation?",
-      choose: "Which simulation runs movement?"
+      choose: "Which simulation runs movement?",
+      pick: "one",
+      required: true,
+      choices: ["@spawnkit/plain", "@spawnkit/bitecs", "@spawnkit/koota"]
     }),
-    defineSlot({ id: "telemetry", title: "Telemetry", question: "Add telemetry?", choose: "Which telemetry?" })
+    // Sentry or SpawnKit telemetry, not both.
+    defineQuestion({
+      id: "telemetry",
+      title: "Telemetry",
+      question: "Add telemetry?",
+      choose: "Which telemetry?",
+      pick: "one",
+      choices: ["@spawnkit/platform-telemetry", "@spawnkit/sentry"]
+    }),
+    defineQuestion({
+      id: "tools",
+      title: "Developer tools",
+      question: "Add developer tools?",
+      choose: "Which tools?",
+      pick: "many",
+      choices: ["@spawnkit/vitest", "@spawnkit/playwright", "@spawnkit/storybook"]
+    })
   ],
   // One template per renderer, each limited to its own mode, so a game can't change renderer after create.
   templates: templates.map((template) =>
@@ -65,13 +99,13 @@ export const catalog = defineCatalog({
       description: template.description,
       target: "spawnkit",
       modes: [template.renderer],
-      optional: Object.fromEntries(tools.map((id) => [id, { default: false }])),
-      slots: {
-        physics: { required: false },
-        ui: { required: false, default: "@spawnkit/html-ui" },
-        simulation: { required: true, default: "@spawnkit/plain" },
-        telemetry: { required: false }
-      }
+      questions: [
+        "physics",
+        { use: "ui", default: "@spawnkit/html-ui" },
+        { use: "simulation", default: "@spawnkit/plain" },
+        "telemetry",
+        "tools"
+      ]
     })
   ),
   addons,

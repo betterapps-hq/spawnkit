@@ -48,7 +48,10 @@ export function isProjectCommand(args: readonly string[], cwd: string): boolean 
   )
 }
 
-/** Runs a project command and returns its exit code: 0 done, 1 needs a decision, 2 usage, 3 conflict, 4 drift, 5 locked. */
+/**
+ * Runs a project command and returns its exit code: 0 done, 1 needs a decision, 2 usage, 3 conflict, 4 drift, 5 locked,
+ * 6 created but a setup step failed.
+ */
 export function runProjectCommand(args: readonly string[], io: Partial<CliIo> = {}): Promise<number> {
   const [command = "", ...rest] = args
   return runCli([aliases[command] ?? command, ...rest], options(io))
@@ -84,9 +87,8 @@ export function projectCommandHelp(command: string): string {
 
 const short = (id: string) => id.slice(id.lastIndexOf("/") + 1)
 
-/** The project section of `spawn --help`: templates, slots, tools and kits, read from the catalog. */
+/** The project section of `spawn --help`: templates, questions and kits, read from the catalog. */
 export function projectHelp(): string {
-  const tools = [...new Set(catalog.templates.flatMap((template) => Object.keys(template.optional ?? {})))].map(short)
   return [
     "Create and change a game:",
     "  spawn create [template] [folder]  Create a game. With no arguments in a terminal, it asks",
@@ -96,14 +98,12 @@ export function projectHelp(): string {
     "  Run spawn <command> --help for a command's options.",
     "",
     `Templates: ${catalog.templates.map((template) => template.id).join(", ")}`,
-    ...catalog.slots.map(
-      (slot) =>
-        `--${slot.id.padEnd(10)} ${catalog.addons
-          .filter((addon) => addon.slot === slot.id)
-          .map((addon) => short(addon.id))
+    ...(catalog.questions ?? []).map(
+      (question) =>
+        `--${question.id.padEnd(10)} ${question.choices
+          .map((choice) => short(typeof choice === "string" ? choice : "addon" in choice ? choice.addon : choice.npm))
           .join(", ")}`
     ),
-    `--with       ${tools.join(", ")}`,
     `--preset     ${(catalog.presets ?? []).map((preset) => preset.id).join(", ")}`
   ].join("\n")
 }

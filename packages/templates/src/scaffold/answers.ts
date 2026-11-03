@@ -40,8 +40,8 @@ const simulations = ["bitecs", "koota"] as const satisfies readonly AddonId[]
 const tools = ["vitest", "playwright", "storybook"] as const satisfies readonly AddonId[]
 
 /**
- * The engine answers for a game. Every slot is answered, so `spawn create` in a terminal asks nothing the dashboard
- * already chose. Throws when a choice doesn't exist or doesn't work with the renderer. The name isn't checked here: use
+ * The engine answers for a game. Every question but the tools is answered, so `spawn create` in a terminal asks nothing
+ * the dashboard already chose. Throws when a choice doesn't exist or doesn't work with the renderer. The name isn't checked here: use
  * `validateProjectName`.
  */
 export function gameAnswers(choices: GameChoices): Answers {
@@ -66,19 +66,18 @@ export function gameAnswers(choices: GameChoices): Answers {
   if (unknown) throw new Error(`There's no add-on named ${unknown}.`)
   const ecs = simulations.filter((id) => addons.includes(id))
   if (ecs.length > 1) throw new Error("bitECS and Koota can't be combined. Choose one entity system.")
-  const optional = tools.filter((id) => addons.includes(id)).map((id) => scope + id)
-  return {
-    template: template.id,
-    ...(choices.name === undefined ? {} : { name: choices.name }),
-    slots: {
-      physics: physics.id === "none" ? null : scope + physics.id,
-      ui: ui.id === "none" ? null : scope + uiAddons[ui.id],
-      simulation: scope + (ecs[0] ?? "plain"),
-      telemetry: telemetry.id === "none" ? null : scope + telemetryAddons[telemetry.id]
-    },
-    // `spawn create` without `--with` leaves this out, and the request has to match it to plan the same lock.
-    ...(optional.length > 0 ? { optional } : {})
+  const chosen = tools.filter((id) => addons.includes(id)).map((id) => scope + id)
+  const questions: Record<string, string[]> = {
+    physics: physics.id === "none" ? [] : [scope + physics.id],
+    ui: ui.id === "none" ? [] : [scope + uiAddons[ui.id]],
+    simulation: [scope + (ecs[0] ?? "plain")],
+    telemetry: telemetry.id === "none" ? [] : [scope + telemetryAddons[telemetry.id]]
   }
+  // `spawn create` without `--tools` leaves this out, and the request has to match it to plan the same lock.
+  if (chosen.length > 0) questions.tools = chosen
+  const answers: Answers = { template: template.id, questions }
+  if (choices.name !== undefined) answers.name = choices.name
+  return answers
 }
 
 /** The `spawn` arguments that create this game, as the engine renders the request. */

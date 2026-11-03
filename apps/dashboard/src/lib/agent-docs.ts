@@ -671,7 +671,7 @@ export const agentDocuments: AgentDocument[] = [
           },
           {
             type: "paragraph",
-            text: "The response is the questionnaire `pnpm dlx @spawnkit/cli catalog --json` prints, with `schemaVersion: 1` and SpawnKit's curated kits added. `templates` lists each template's questions by mode: physics, UI, simulation and telemetry, with the add-ons that answer each one for that renderer, and the optional tools. `addons`, `slots` and `presets` describe the rest. Each kit names its preset and the `init --preset` command that creates the same files as its download, with its download URL and resolved scripts and dependencies."
+            text: "The response is the questionnaire `pnpm dlx @spawnkit/cli catalog --json` prints, with `schemaVersion: 1` and SpawnKit's curated kits added. `templates` lists each template's questions by mode: physics, UI, simulation, telemetry and developer tools, with the add-ons that answer each one for that renderer. `addons`, with what each provides, requires and conflicts with, and `presets` describe the rest. Each kit names its preset and the `create --preset` command that creates the same files as its download, with its download URL and resolved scripts and dependencies."
           },
           {
             type: "paragraph",

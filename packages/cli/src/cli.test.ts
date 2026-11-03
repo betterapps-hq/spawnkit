@@ -40,9 +40,12 @@ afterEach(async () => {
 describe("project commands", () => {
   it.each(["catalog", "templates", "addons"])("lists the catalog as JSON with spawn %s", async (command) => {
     await runCli([command, "--json"], directory, write)
-    expect(
-      (JSON.parse(output) as { templates: { template: string }[] }).templates.map((entry) => entry.template)
-    ).toEqual(["pixi", "phaser", "babylon", "three"])
+    expect((JSON.parse(output) as { templates: { id: string }[] }).templates.map((entry) => entry.id)).toEqual([
+      "pixi",
+      "phaser",
+      "babylon",
+      "three"
+    ])
   })
   it("plans without writing anything", async () => {
     await runCli(["create", "pixi", "demo", "--dry-run", "--json"], directory, write)
@@ -134,7 +137,8 @@ describe("project commands", () => {
       },
       note: () => {}
     }
-    await runCli(["create", "pixi", "demo", "--telemetry", "sentry"], directory, write, {
+    // --no-setup: this prompter would say yes to the setup steps, which install and commit for real.
+    await runCli(["create", "pixi", "demo", "--telemetry", "sentry", "--no-setup"], directory, write, {
       project: { isTTY: true, prompter }
     })
     expect(asked.filter((message) => message.startsWith("VITE_SENTRY_DSN"))).toHaveLength(1)
@@ -163,10 +167,11 @@ describe("routing", () => {
 })
 
 describe("help", () => {
-  it("lists templates, slots, tools and kits from the catalog", async () => {
+  it("lists templates, questions and kits from the catalog", async () => {
     await runCli(["--help"], directory, write)
     expect(output).toContain("Templates: pixi, phaser, babylon, three")
     expect(output).toMatch(/--physics +rapier2d/)
+    expect(output).toContain("--tools      vitest, playwright, storybook")
     expect(output).toContain("--preset     pixi, phaser, babylon, three, phaser-arcade, three-rapier")
     expect(output).toContain("spawn login --site")
   })
