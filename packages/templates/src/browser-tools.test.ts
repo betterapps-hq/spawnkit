@@ -75,7 +75,7 @@ it("composes testing add-ons together without adding browser setup to a plain ki
   const both = await gameFiles({
     name: "test-game",
     template: "phaser",
-    optional: ["@spawnkit/vitest", "@spawnkit/playwright"]
+    questions: { tools: ["@spawnkit/vitest", "@spawnkit/playwright"] }
   })
   const scripts = JSON.parse(both["package.json"]!).scripts
   expect(scripts["e2e:ui"]).toBe("node scripts/browser-tools.mjs e2e --ui")

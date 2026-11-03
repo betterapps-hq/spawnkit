@@ -19,7 +19,7 @@ it("passes the engine's catalog checks, including every pairwise combination", (
 
 describe("new games", () => {
   it.each(renderers)("creates a standalone %s project with optional tests", async (template) => {
-    const files = await gameFiles({ name: "my-game", template, optional: ["@spawnkit/vitest"] })
+    const files = await gameFiles({ name: "my-game", template, questions: { tools: ["@spawnkit/vitest"] } })
     const pkg = json(files["package.json"])
     expect(pkg.scripts.dev).toBe("dev-domains run app")
     expect(pkg.devDependencies["@buildkitgg/dev-domains"]).toBe("0.1.0")
@@ -58,13 +58,12 @@ describe("new games", () => {
     const bitecs = await gameFiles({
       name: "ecs-game",
       template,
-      slots: { simulation: "@spawnkit/bitecs" },
-      optional: ["@spawnkit/vitest"]
+      questions: { simulation: ["@spawnkit/bitecs"], tools: ["@spawnkit/vitest"] }
     })
     expect(bitecs["src/main.ts"]).toContain('from "./simulation"')
     expect(bitecs["src/simulation.ts"]).toContain('from "bitecs"')
     expect(bitecs["src/simulation.test.ts"]).toContain("keeps worlds independent")
-    const koota = await gameFiles({ name: "koota-game", template, slots: { simulation: "@spawnkit/koota" } })
+    const koota = await gameFiles({ name: "koota-game", template, questions: { simulation: ["@spawnkit/koota"] } })
     expect(json(koota["package.json"]).dependencies.koota).toBe("0.6.6")
     expect(koota["src/simulation.ts"]).toContain('from "koota"')
   })
@@ -75,7 +74,7 @@ describe("add-ons", () => {
     const files = await gameFiles({
       name: "world",
       template: "pixi",
-      slots: { telemetry: "@spawnkit/platform-telemetry" }
+      questions: { telemetry: ["@spawnkit/platform-telemetry"] }
     })
     expect(files["src/telemetry.ts"]).toContain('consent: "denied"')
     expect(files["src/telemetry.ts"]).toContain("setTelemetryConsent")
@@ -83,19 +82,23 @@ describe("add-ons", () => {
     expect(json(files["package.json"]).dependencies["@spawn/telemetry"]).toBe("file:vendor/spawn-telemetry")
   })
   it("enables Sentry only with a developer-provided DSN", async () => {
-    const files = await gameFiles({ name: "world", template: "three", slots: { telemetry: "@spawnkit/sentry" } })
+    const files = await gameFiles({ name: "world", template: "three", questions: { telemetry: ["@spawnkit/sentry"] } })
     expect(files[".env.example"]).toContain("VITE_SENTRY_DSN=\n")
     expect(files["src/telemetry.ts"]).toContain("if (dsn)")
     expect(files["src/telemetry.ts"]).toContain("userInfo: false")
   })
   it("doesn't add telemetry, a UI or deferred frameworks unless asked", async () => {
-    const files = await gameFiles({ name: "world", template: "pixi", slots: { ui: null } })
+    const files = await gameFiles({ name: "world", template: "pixi", questions: { ui: [] } })
     expect(files["src/telemetry.ts"]).toBeUndefined()
     expect(files["src/ui.ts"]).toBeUndefined()
     expect(files["package.json"]).not.toMatch(/react|react-three|bun/)
   })
   it("adds standalone HTML Storybook without changing the game runtime", async () => {
-    const files = await gameFiles({ name: "story-game", template: "pixi", optional: ["@spawnkit/storybook"] })
+    const files = await gameFiles({
+      name: "story-game",
+      template: "pixi",
+      questions: { tools: ["@spawnkit/storybook"] }
+    })
     const pkg = json(files["package.json"])
     expect(pkg.scripts.storybook).toBe("dev-domains run stories")
     expect(pkg.devDependencies["@storybook/html-vite"]).toBe("10.6.2")
@@ -108,7 +111,7 @@ describe("add-ons", () => {
     const files = await gameFiles({
       name: "tested",
       template: "pixi",
-      optional: ["@spawnkit/vitest", "@spawnkit/playwright"]
+      questions: { tools: ["@spawnkit/vitest", "@spawnkit/playwright"] }
     })
     const pkg = json(files["package.json"])
     expect(pkg.devDependencies["@playwright/test"]).toBe("1.64.0")
@@ -120,7 +123,7 @@ describe("add-ons", () => {
 
 describe("changing a game", () => {
   it("leaves AGENTS.md to its owner, edited or deleted", async () => {
-    const files = await gameFiles({ name: "game", template: "pixi", slots: { simulation: "@spawnkit/bitecs" } })
+    const files = await gameFiles({ name: "game", template: "pixi", questions: { simulation: ["@spawnkit/bitecs"] } })
     expect(files["AGENTS.md"]).toContain("Standalone PixiJS")
     const { "AGENTS.md": _, ...deleted } = files
     for (const tree of [deleted, { ...files, "AGENTS.md": "My own project instructions\n" }]) {
@@ -129,8 +132,8 @@ describe("changing a game", () => {
       expect(result.operations.some((operation) => operation.path === "AGENTS.md")).toBe(false)
     }
   })
-  it("asks before replacing an add-on in a slot, and each choice plans", async () => {
-    const files = await gameFiles({ name: "game", template: "pixi", slots: { simulation: "@spawnkit/bitecs" } })
+  it("asks before replacing the simulation, and each choice plans", async () => {
+    const files = await gameFiles({ name: "game", template: "pixi", questions: { simulation: ["@spawnkit/bitecs"] } })
     const result = await add(files, { addons: ["koota"] })
     expect(result.status).toBe("needs-decision")
     const [choice] = result.decisions[0]!.choices

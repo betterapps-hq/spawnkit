@@ -36,7 +36,11 @@ test("the fixture template package extends the catalog and plans its game", asyn
     request: {
       intent: {
         command: "init",
-        answers: { template: "@spawn-fixture/tower#tower", name: "pack-tower", optional: ["@spawnkit/vitest"] }
+        answers: {
+          template: "@spawn-fixture/tower#tower",
+          name: "pack-tower",
+          questions: { tools: ["@spawnkit/vitest"] }
+        }
       }
     },
     tree: memoryTree({})

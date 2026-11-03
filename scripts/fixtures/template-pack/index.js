@@ -1,6 +1,4 @@
 // A pack written out rather than made with definePack, so the package has no dependencies for npm to fetch.
-const tools = ["@spawnkit/vitest", "@spawnkit/playwright", "@spawnkit/storybook"]
-
 export default {
   extends: { catalog: "@spawn/templates", versions: "^1.0.0" },
   templates: [
@@ -8,16 +6,9 @@ export default {
       id: "tower",
       title: "Tower defense",
       description: "A PixiJS game that waves of enemies cross",
-      target: "spawnkit",
-      modes: ["pixi"],
-      required: ["@spawn-fixture/tower/waves"],
-      optional: Object.fromEntries(tools.map((id) => [id, { default: false }])),
-      slots: {
-        physics: { required: false },
-        ui: { required: false, default: "@spawnkit/html-ui" },
-        simulation: { required: true, default: "@spawnkit/plain" },
-        telemetry: { required: false }
-      }
+      // The catalog's Pixi template: its renderer, and its physics, UI, simulation, telemetry and tools questions.
+      extends: "pixi",
+      required: ["@spawn-fixture/tower/waves"]
     }
   ],
   addons: [

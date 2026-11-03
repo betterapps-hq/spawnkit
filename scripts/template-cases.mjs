@@ -32,8 +32,7 @@ const flows = [
     argv: init({
       template: "phaser",
       name: "phaser-replace",
-      slots: { physics: "@spawnkit/arcade" },
-      optional: ["@spawnkit/vitest"]
+      questions: { physics: ["@spawnkit/arcade"], tools: ["@spawnkit/vitest"] }
     }),
     after: [add(["@spawnkit/matter"], ["@spawnkit/arcade"])]
   }
@@ -50,17 +49,23 @@ const packs = [
   }
 ]
 
-/** Every answer to every question a template asks in one mode. */
+/**
+ * Every answer to every question a template asks in one mode: no (unless it's required) or each choice, and for a
+ * `many` question every set of its choices.
+ */
 function everyAnswer(template, mode, questions) {
-  let sets = [{ template, mode, slots: {}, optional: [] }]
-  for (const slot of questions.slots) {
-    const values = [...(slot.required ? [] : [null]), ...slot.choices.map((choice) => choice.id)]
+  let sets = [{ template, mode, questions: {} }]
+  for (const question of questions) {
+    const ids = question.choices.map((choice) => choice.id)
+    const values =
+      question.pick === "many"
+        ? ids.reduce((subsets, id) => subsets.flatMap((subset) => [subset, [...subset, id]]), [[]])
+        : [[], ...ids.map((id) => [id])]
     sets = sets.flatMap((answers) =>
-      values.map((value) => ({ ...answers, slots: { ...answers.slots, [slot.slot]: value } }))
+      values
+        .filter((value) => !question.required || value.length > 0)
+        .map((value) => ({ ...answers, questions: { ...answers.questions, [question.id]: value } }))
     )
-  }
-  for (const tool of questions.optional) {
-    sets = sets.flatMap((answers) => [answers, { ...answers, optional: [...answers.optional, tool.id] }])
   }
   return sets
 }
@@ -78,9 +83,7 @@ async function generated(all) {
   for (const template of describeCatalog(catalog).templates) {
     const modes = Object.entries(template.questionsByMode)
     for (const [mode, questions] of modes) {
-      const sets = all
-        ? everyAnswer(template.template, mode, questions)
-        : pairwiseAnswers(catalog, template.template, mode)
+      const sets = all ? everyAnswer(template.id, mode, questions) : pairwiseAnswers(catalog, template.id, mode)
       for (const set of sets) {
         // Each case names its own folder, and the CLI picks a template's only mode itself.
         const answers = { ...set }
@@ -105,8 +108,8 @@ async function generated(all) {
         const addons = Object.entries(planned.lock.addons)
           .map(([id, entry]) => [id, entry.options])
           .sort(([left], [right]) => (left < right ? -1 : 1))
-        const selection = JSON.stringify([template.template, mode, addons])
-        const name = `${template.template}-${createHash("sha256").update(selection).digest("hex").slice(0, 8)}`
+        const selection = JSON.stringify([template.id, mode, addons])
+        const name = `${template.id}-${createHash("sha256").update(selection).digest("hex").slice(0, 8)}`
         if (selections.has(name)) {
           if (selections.get(name) !== selection) throw new Error(`Two games share the case name ${name}`)
           continue

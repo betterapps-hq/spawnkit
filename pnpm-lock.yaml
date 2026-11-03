@@ -165,8 +165,8 @@ settings:
 catalogs:
   default:
     '@buildkitgg/scaffolder':
-      specifier: 0.6.0
-      version: 0.6.0
+      specifier: 0.9.0
+      version: 0.9.0
     '@types/node':
       specifier: 24.19.2
       version: 24.19.2
@@ -201,7 +201,7 @@ importers:
         version: 0.1.0(magicast@0.5.5)
       '@buildkitgg/scaffolder':
         specifier: 'catalog:'
-        version: 0.6.0
+        version: 0.9.0
       '@playwright/test':
         specifier: 1.64.0
         version: 1.64.0
@@ -541,7 +541,7 @@ importers:
         version: 7.29.9
       '@buildkitgg/scaffolder':
         specifier: 'catalog:'
-        version: 0.6.0
+        version: 0.9.0
       '@clack/prompts':
         specifier: 1.8.1
         version: 1.8.1
@@ -640,7 +640,7 @@ importers:
     dependencies:
       '@buildkitgg/scaffolder':
         specifier: 'catalog:'
-        version: 0.6.0
+        version: 0.9.0
       '@spawn/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -745,8 +745,8 @@ packages:
     engines: {node: '>=24'}
     hasBin: true
 
-  '@buildkitgg/scaffolder@0.6.0':
-    resolution: {integrity: sha512-OYVqBu0F7aUkVXtyoTF8nwM4AulQ1iiTPow4tPAHcGp8u2r7camdTepHeC1rZF5OaNPlpCeNbEpCSsydaqWWVQ==}
+  '@buildkitgg/scaffolder@0.9.0':
+    resolution: {integrity: sha512-RpFeEwBr2uCrhU5U5gPQ0c97HkHq2VNlwR0YPjNY8cXMbld8Tn0iiMEeb1kxcs5Gq9+xXKYKjEjgXXm2kczqnw==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -5970,7 +5970,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@buildkitgg/scaffolder@0.6.0':
+  '@buildkitgg/scaffolder@0.9.0':
     dependencies:
       '@clack/prompts': 1.8.1
       citty: 0.2.2
@@ -5979,6 +5979,7 @@ snapshots:
       magic-string: 1.4.5
       node-diff3: 3.2.1
       oxc-parser: 0.156.0
+      semver: 7.8.5
       yaml: 2.9.1
       zod: 4.6.7
 
