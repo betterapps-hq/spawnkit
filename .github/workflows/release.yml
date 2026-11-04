@@ -48,7 +48,7 @@ jobs:
           RELEASE_SHA: ${{ inputs.ref }}
         run: test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$RELEASE_SHA"
       # PRs never deploy their backend changes into the shared staging API.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.environment == 'preview' && 'main' || inputs.ref }}
           persist-credentials: false
@@ -76,7 +76,7 @@ jobs:
       - name: Clean temporary credentials before switching commits
         if: inputs.environment == 'preview' && !inputs.cleanup
         run: node scripts/ci-credentials.mjs clean
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7
         if: inputs.environment == 'preview' && !inputs.cleanup
         with:
           ref: ${{ inputs.ref }}
