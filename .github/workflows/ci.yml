@@ -19,7 +19,7 @@ jobs:
   # prepare and command. A newer push to the same branch or pull request cancels it.
   verify:
     name: Verify
-    uses: betterapps-hq/pipelines/.github/workflows/ci-verify.yml@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
+    uses: betterapps-hq/pipelines/.github/workflows/ci-verify.yml@main
     with:
       os: '["ubuntu-24.04"]'
       timeout-minutes: 30
@@ -49,7 +49,7 @@ jobs:
       group: browser-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: betterapps-hq/pipelines/github/actions/setup@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
+      - uses: betterapps-hq/pipelines/github/actions/setup@main
       - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec turbo run build --filter=@spawnkit/cli --filter=@spawn/stories
@@ -57,7 +57,7 @@ jobs:
         env:
           SPAWN_E2E_STATIC_STORIES: "1"
       - run: pnpm exec playwright test --config playwright.community.config.ts --project=${{ matrix.project }} --workers=2 --reporter=line,html
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: browser-failures-${{ matrix.project }}
@@ -80,11 +80,11 @@ jobs:
       group: templates-${{ matrix.shard }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: betterapps-hq/pipelines/github/actions/setup@c3b85f070cf22fbf7a4dae841461f82e2b16ea20 # v1.2.0
+      - uses: betterapps-hq/pipelines/github/actions/setup@main
       - run: mkdir -p work
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:templates --shard ${{ matrix.shard }}/2
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: template-failures-${{ matrix.shard }}

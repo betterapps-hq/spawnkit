@@ -15,7 +15,7 @@ jobs start from fresh checkouts and do not inherit the verification job's artifa
 
 The verification job calls the `ci-verify` workflow from the shared
 [betterapps-hq/pipelines](https://github.com/betterapps-hq/pipelines), and the browser and
-template jobs use its setup action, each pinned to a release's commit. The release and
+template jobs use its setup action, each at `main`, so Spawn gets each change as it merges. The release and
 weekly template-matrix workflows still use the local `.github/actions/setup`.
 
 A passing push to `main` deploys services, app and Storybook to staging, applies pending
@@ -106,7 +106,7 @@ branch protection becomes available.
 
 Temporary credential files are ignored, created with restricted permissions and removed
 after each job. They are never uploaded as artifacts. Failed browser runs retain traces
-for seven days. Actions are pinned to commit SHAs; Dependabot proposes weekly updates.
+for seven days. Other actions are used at their major version's tag; Dependabot proposes new majors weekly.
 
 ## Database schema
 
