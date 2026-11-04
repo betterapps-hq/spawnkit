@@ -66,7 +66,7 @@ Repository Actions secrets:
 
 | Secret | Value |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Dedicated deployment API token, scoped to the SpawnKit account and zone |
+| `CLOUDFLARE_API_TOKEN` | Dedicated deployment API token, scoped to the SpawnKit account and zones |
 | `STAGING_DASHBOARD_ENV` | Contents of `apps/dashboard/.env` (development Clerk keys and CLI OAuth settings) |
 | `STAGING_GITHUB_APP_ENV` | Contents of `deploy/.env.github.staging`, only when enabled in `deploy/github.json` |
 | `HOSTING_API_TOKEN` | Existing runtime domain-provisioning token from `deploy/.env.domains` |
@@ -80,8 +80,9 @@ Production environment secrets:
 
 The deployment token needs Workers Scripts edit, Workers KV Storage edit, D1 edit,
 Workers R2 Storage edit, and Account Settings read for account
-`544b5bfd594cd02a5da4b79a2038cc9f`; Workers Routes edit, Zone read and DNS edit for zone
-`2a8126a122d81d58aafe2535a2219e7c` (`spawnkit.cloud`). Hosted builds are enabled;
+`544b5bfd594cd02a5da4b79a2038cc9f`; Workers Routes edit, Zone read and DNS edit for zones
+`2a8126a122d81d58aafe2535a2219e7c` (`spawnkit.cloud`) and `b0f105530cc52d9f3a95ee4fd5592531`
+(`spawnkit.games`), since the game host's routes are on `spawnkit.games`. Hosted builds are enabled;
 the deployment token also requires account-scoped **Workers Containers Write**.
 `deploy/builds.json` keeps production and staging enabled, with local builds disabled.
 The existing runtime hosting token is narrower and must not be reused as a deployment token.
